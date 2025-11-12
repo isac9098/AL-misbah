@@ -353,7 +353,7 @@ function CampaignsManager() {
 
     if (error) {
       console.error("❌ خطأ أثناء رفع صورة الحملة:", error);
-      toast.error("فشل رفع الصورة!");
+      showToast("فشل رفع الصورة!", "error");
       return null;
     }
 
@@ -367,7 +367,7 @@ function CampaignsManager() {
   async function addCampaignImage(e) {
     e.preventDefault();
     if (!imageFile) {
-      toast.warning("⚠️ الرجاء اختيار صورة أولاً");
+      showToast("⚠️ الرجاء اختيار صورة أولاً", "warning");
       return;
     }
 
@@ -383,10 +383,10 @@ function CampaignsManager() {
       .select();
 
     if (error) {
-      toast.error("❌ حدث خطأ أثناء إضافة الصورة!");
+      showToast("❌ حدث خطأ أثناء إضافة الصورة!", "error");
       console.error(error);
     } else {
-      toast.success("✅ تمت إضافة الصورة بنجاح!");
+      showToast("✅ تمت إضافة الصورة بنجاح!", "success");
       setCampaigns([data[0], ...campaigns]);
       setImageFile(null);
     }
@@ -406,7 +406,7 @@ function CampaignsManager() {
 
     if (dbError) {
       // ❌ إذا فشل الحذف في قاعدة البيانات، نتوقف ونعرض رسالة واضحة
-      toast.error(`❌ فشل حذف السجل من قاعدة البيانات. قد تكون المشكلة في الصلاحيات. الخطأ: ${dbError.message}`);
+      showToast(`❌ فشل حذف السجل من قاعدة البيانات. قد تكون المشكلة في الصلاحيات. الخطأ: ${dbError.message}`, "error");
       console.error("Database Delete Failed:", dbError);
       return;
     }
@@ -425,7 +425,7 @@ function CampaignsManager() {
 
     // 4. تحديث حالة الواجهة
     setCampaigns(campaigns.filter((c) => c.id !== id));
-    toast.success("✅ تم حذف الحملة والصورة المرتبطة بها بنجاح!");
+    showToast("✅ تم حذف الحملة والصورة المرتبطة بها بنجاح!", "success");
   }
 
   return (
