@@ -142,6 +142,7 @@ function SearchButton() {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null); // ✅ حالة للدورة المحددة
 
   // ✅ البحث المباشر من Supabase
   useEffect(() => {
@@ -152,15 +153,15 @@ function SearchButton() {
 
     const delayDebounce = setTimeout(async () => {
       setLoading(true);
-      console.log('🔍 جاري البحث عن:', query); // للتحقق
+      console.log('🔍 جاري البحث عن:', query);
 
       const { data, error } = await supabase
         .from("courses")
-        .select("id, title, category")
+        .select("id, title, category, description, price, image, instructor, duration, level")
         .ilike("title", `%${query}%`)
         .limit(6);
 
-      console.log('📊 نتائج البحث:', data); // للتحقق
+      console.log('📊 نتائج البحث:', data);
 
       if (!error) {
         setSuggestions(data || []);
@@ -182,18 +183,33 @@ function SearchButton() {
     setOpen(false);
   };
 
-  // ✅ عند الضغط على اقتراح
+  // ✅ عند الضغط على اقتراح - فتح النافذة المنبثقة
   const handleSelect = (course) => {
-    localStorage.setItem("searchQuery", course.title.toLowerCase());
-    localStorage.setItem("selectedCourseId", course.id);
+    setSelectedCourse(course); // ✅ تعيين الدورة المحددة
     setQuery("");
     setOpen(false);
     setSuggestions([]);
+  };
 
-    // الانتقال إلى قسم الدورات
-    setTimeout(() => {
-      scrollToCourses();
-    }, 100);
+  // ✅ إغلاق النافذة المنبثقة
+  const handleClosePopup = () => {
+    setSelectedCourse(null);
+  };
+
+  // ✅ إضافة الدورة إلى السلة
+  const handleAddToCart = (course) => {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const existingItem = cart.find(item => item.id === course.id);
+    
+    if (!existingItem) {
+      cart.push(course);
+      localStorage.setItem("cart", JSON.stringify(cart));
+      window.dispatchEvent(new Event("cartUpdated"));
+      alert("تمت إضافة الدورة إلى السلة!");
+    } else {
+      alert("هذه الدورة موجودة بالفعل في السلة!");
+    }
+    handleClosePopup();
   };
 
   // ✅ الانتقال إلى قسم الدورات
@@ -201,22 +217,6 @@ function SearchButton() {
     const section = document.getElementById("courses-section");
     if (section) {
       section.scrollIntoView({ behavior: "smooth" });
-
-      // إذا كان هناك دورة محددة مختارة، قم بتمييزها
-      setTimeout(() => {
-        const selectedCourseId = localStorage.getItem("selectedCourseId");
-        if (selectedCourseId) {
-          const courseElement = document.getElementById(`course-${selectedCourseId}`);
-          if (courseElement) {
-            courseElement.scrollIntoView({ behavior: "smooth", block: "center" });
-            courseElement.classList.add("ring-2", "ring-[#7b0b4c]");
-            setTimeout(() => {
-              courseElement.classList.remove("ring-2", "ring-[#7b0b4c]");
-            }, 3000);
-          }
-          localStorage.removeItem("selectedCourseId");
-        }
-      }, 500);
     }
   };
 
@@ -243,7 +243,7 @@ function SearchButton() {
         <Search className="w-5 h-5 text-gray-700" />
       </button>
 
-      {/* مربع البحث - في المنتصف الآن */}
+      {/* مربع البحث */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/20 backdrop-blur-sm animate-fade-in">
           <div className="mx-4 w-full max-w-md bg-white border border-gray-200 rounded-xl shadow-2xl p-4 animate-scale-in">
@@ -301,6 +301,9 @@ function SearchButton() {
                         {course.category}
                       </div>
                     )}
+                    <div className="text-xs text-gray-600 mt-1">
+                      {course.instructor && `المدرب: ${course.instructor}`}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -322,7 +325,121 @@ function SearchButton() {
           </div>
         </div>
       )}
+
+      {/* ✅ النافذة المنبثقة لتفاصيل الدورة */}
+      {selectedCourse && (
+        <CoursePopup 
+          course={selectedCourse} 
+          onClose={handleClosePopup}
+          onAddToCart={handleAddToCart}
+        />
+      )}
     </div>
+  );
+}
+
+/* ======================= CoursePopup ======================= */
+function CoursePopup({ course, onClose, onAddToCart }) {
+  const { formatCurrency } = useApp();
+
+  useEffect(() => {
+    const handleEsc = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-scale-in">
+        {/* Header */}
+        <div className="relative p-6 border-b border-gray-200">
+          <button
+            onClick={onClose}
+            className="absolute top-4 left-4 text-gray-500 hover:text-gray-700 text-xl"
+          >
+            ✕
+          </button>
+          <h2 className="text-2xl font-bold text-[#7b0b4c] text-center pr-8">
+            {course.title}
+          </h2>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {/* Course Image */}
+          {course.image && (
+            <div className="mb-6">
+              <img
+                src={course.image}
+                alt={course.title}
+                className="w-full h-64 object-cover rounded-lg"
+              />
+            </div>
+          )}
+
+          {/* Course Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <h3 className="font-semibold text-gray-800 mb-2">معلومات الدورة</h3>
+              <div className="space-y-2 text-sm">
+                {course.category && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">التصنيف:</span>
+                    <span className="text-[#7b0b4c] font-medium">{course.category}</span>
+                  </div>
+                )}
+                {course.level && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">المستوى:</span>
+                    <span className="text-[#7b0b4c] font-medium">{course.level}</span>
+                  </div>
+                )}
+                {course.duration && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">المدة:</span>
+                    <span className="text-[#7b0b4c] font-medium">{course.duration}</span>
+                  </div>
+                )}
+                {course.instructor && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">المدرب:</span>
+                    <span className="text-[#7b0b4c] font-medium">{course.instructor}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Price Section */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-center mb-4">
+                <div className="text-3xl font-bold text-[#7b0b4c]">
+                  {formatCurrency(parseFloat(course.price?.replace(/[^\d.]/g, "") || 0))}
+                </div>
+                <div className="text-sm text-gray-600 mt-1">سعر الدورة</div>
+              </div>
+              
+              <button
+                onClick={() => onAddToCart(course)}
+                className="w-full bg-[#7b0b4c] text-white py-3 rounded-lg font-semibold hover:bg-[#5e0839] transition-colors"
+              >
+                أضف إلى السلة
+              </button>
+            </div>
+          </div>
+
+          {/* Description */}
+          {course.description && (
+            <div>
+              <h3 className="font-semibold text-gray-800 mb-3">وصف الدورة</h3>
+              <p className="text-gray-600 leading-relaxed text-sm">
+                {course.description}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
