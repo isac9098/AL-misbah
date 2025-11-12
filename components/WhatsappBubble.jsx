@@ -130,12 +130,10 @@ export default function WhatsappBubble() {
         font-size: 13px;
         opacity: 0.9;
         font-weight: 400;
+        margin-bottom: 4px;
       }
       
-      .edna-status {
-        position: absolute;
-        top: 20px;
-        right: 20px;
+      .edna-online-status {
         display: flex;
         align-items: center;
         gap: 6px;
@@ -314,10 +312,10 @@ export default function WhatsappBubble() {
         <div class="edna-brand-info">
           <div class="edna-brand-name">${widgetData.brandName}</div>
           <div class="edna-brand-subtitle">${widgetData.brandSubtitle}</div>
-        </div>
-        <div class="edna-status">
-          <div class="edna-status-dot"></div>
-          <span>Online</span>
+          <div class="edna-online-status">
+            <div class="edna-status-dot"></div>
+            <span>Online</span>
+          </div>
         </div>
         <button class="edna-close-button">&times;</button>
       </div>
