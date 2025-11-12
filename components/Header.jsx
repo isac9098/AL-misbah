@@ -526,6 +526,17 @@ function CartButton() {
   const { currency, formatCurrency, t } = useApp();
   const [open, setOpen] = useState(false);
   const [cart, setCart] = useState([]);
+  const [toast, setToast] = useState(null); // ✅ إضافة حالة للـ Toast
+
+  // ✅ إظهار Toast
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+  };
+
+  // ✅ إغلاق Toast
+  const closeToast = () => {
+    setToast(null);
+  };
 
   useEffect(() => {
     const loadCart = () => setCart(JSON.parse(localStorage.getItem("cart") || "[]"));
@@ -548,10 +559,15 @@ function CartButton() {
     setCart(updated);
     localStorage.setItem("cart", JSON.stringify(updated));
     window.dispatchEvent(new Event("cartUpdated"));
+    showToast("تم إزالة الدورة من السلة", "success"); // ✅ استخدام Toast
   };
 
   const handleWhatsAppOrder = () => {
-    if (!cart.length) return alert("السلة فارغة!");
+    if (!cart.length) {
+      showToast("السلة فارغة!", "warning"); // ✅ استخدام Toast
+      return;
+    }
+    
     const message =
       "مرحباً! أود طلب الدورات التالية:\n\n" +
       cart
@@ -559,45 +575,73 @@ function CartButton() {
         .join("\n") +
       `\n\n${t("cart")} الإجمالي: ${formatCurrency(totalPrice)}`;
     window.open("https://wa.me/+97472041794?text=" + encodeURIComponent(message), "_blank");
+    setOpen(false);
+    showToast("جاري فتح واتساب لإكمال الطلب...", "success"); // ✅ استخدام Toast
   };
 
   const modal = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative animate-scale-in text-right">
-        <button onClick={() => setOpen(false)} className="absolute top-3 left-3 text-gray-500 hover:text-gray-800 text-xl">
+        <button 
+          onClick={() => setOpen(false)} 
+          className="absolute top-3 left-3 text-gray-500 hover:text-gray-700 text-xl transition-colors"
+        >
           ✕
         </button>
-        <h3 className="font-bold text-[#7b0b4c] mb-4 text-lg">{t("cart")}</h3>
+        
+        <h3 className="font-bold text-[#7b0b4c] mb-4 text-lg border-b pb-2 border-gray-100">
+          {t("cart")}
+        </h3>
+        
         {cart.length === 0 ? (
-          <p className="text-sm text-gray-500">السلة فارغة.</p>
+          <div className="text-center py-8">
+            <div className="text-4xl mb-3">🛒</div>
+            <p className="text-gray-500 text-sm">السلة فارغة</p>
+            <p className="text-gray-400 text-xs mt-1">قم بإضافة دورات لتظهر هنا</p>
+          </div>
         ) : (
           <>
-            <ul className="space-y-2 mb-3 max-h-64 overflow-y-auto">
+            <ul className="space-y-3 mb-4 max-h-64 overflow-y-auto">
               {cart.map((c) => (
-                <li key={c.id} className="flex items-center justify-between border-b pb-1 text-sm">
-                  <div>
-                    <div className="font-medium">{c.title}</div>
-                    {c.category && <div className="text-xs text-gray-500">{c.category}</div>}
+                <li key={c.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-800 text-sm">{c.title}</div>
+                    {c.category && (
+                      <div className="text-xs text-gray-500 mt-1 bg-white px-2 py-1 rounded-full inline-block border border-gray-200">
+                        {c.category}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#7b0b4c] font-semibold">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[#7b0b4c] font-semibold text-sm whitespace-nowrap">
                       {formatCurrency(parseFloat(c.price.replace(/[^\d.]/g, "")))}
                     </span>
-                    <button onClick={() => handleRemove(c.id)} className="text-gray-400 hover:text-red-500 text-xs">
+                    <button 
+                      onClick={() => handleRemove(c.id)} 
+                      className="text-gray-400 hover:text-red-500 text-xs p-1 rounded-full hover:bg-red-50 transition-colors"
+                      aria-label="إزالة"
+                    >
                       ✕
                     </button>
                   </div>
                 </li>
               ))}
             </ul>
-            <div className="flex justify-between text-sm font-medium mb-4">
-              <span>الإجمالي:</span>
-              <span className="text-[#7b0b4c]">{formatCurrency(totalPrice)}</span>
+            
+            <div className="flex justify-between items-center text-sm font-medium mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <span className="text-gray-700 font-semibold">الإجمالي:</span>
+              <span className="text-[#7b0b4c] font-bold text-lg">
+                {formatCurrency(totalPrice)}
+              </span>
             </div>
+            
             <button
               onClick={handleWhatsAppOrder}
-              className="w-full bg-[#25D366] text-white py-2 rounded-lg text-sm font-bold hover:bg-[#1eb15a]"
+              className="w-full bg-[#25D366] text-white py-3 rounded-lg text-sm font-bold hover:bg-[#1eb15a] transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
             >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893c0-3.18-1.24-6.169-3.495-8.418"/>
+              </svg>
               طلب عبر واتساب
             </button>
           </>
@@ -608,13 +652,29 @@ function CartButton() {
 
   return (
     <div className="relative">
-      <button className="relative p-2 rounded-full hover:bg-gray-100" aria-label="السلة" onClick={() => setOpen(true)}>
+      <button 
+        className="relative p-2 rounded-full hover:bg-gray-100 transition-colors" 
+        aria-label="السلة" 
+        onClick={() => setOpen(true)}
+      >
         <ShoppingCart className="w-5 h-5 text-gray-700" />
         {cart.length > 0 && (
-          <span className="absolute -top-1 -left-1 bg-[#7b0b4c] text-white text-xs rounded-full px-1.5">{cart.length}</span>
+          <span className="absolute -top-1 -left-1 bg-[#7b0b4c] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+            {cart.length}
+          </span>
         )}
       </button>
+      
       {open && typeof window !== "undefined" && createPortal(modal, document.body)}
+      
+      {/* ✅ عرض Toast */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={closeToast}
+        />
+      )}
     </div>
   );
 }
