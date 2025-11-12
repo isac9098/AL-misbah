@@ -1,17 +1,62 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { createPortal } from "react-dom";
 
 // ✅ إعداد Supabase
 const supabaseUrl = "https://kyazwzdyodysnmlqmljv.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5YXp3emR5b2R5c25tbHFtbGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjI4ODcsImV4cCI6MjA3NTc5ODg4N30.5oPcHui5y6onGAr9EYkq8fSihKeb4iC8LQFsLijIco4";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// ✅ مكون Toast
+function Toast({ message, type = "success", onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgColor = type === "success" ? "bg-green-500" : "bg-yellow-500";
+  const textColor = "text-white";
+
+  return createPortal(
+    <div className="fixed top-4 right-4 z-[10000] animate-scale-in">
+      <div className={`${bgColor} ${textColor} px-6 py-3 rounded-lg shadow-lg font-medium flex items-center gap-2`}>
+        {type === "success" ? (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+        )}
+        {message}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export default function Hero() {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [toast, setToast] = useState(null); // ✅ حالة للـ Toast
   const searchContainerRef = useRef(null);
+
+  // ✅ إظهار Toast
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+  };
+
+  // ✅ إغلاق Toast
+  const closeToast = () => {
+    setToast(null);
+  };
 
   // ✅ إغلاق القائمة عند النقر خارجها
   useEffect(() => {
@@ -38,7 +83,7 @@ export default function Hero() {
       setLoading(true);
       const { data, error } = await supabase
         .from("courses")
-        .select("id, title, category")
+        .select("id, title, category, description, price, image")
         .ilike("title", `%${searchQuery}%`)
         .limit(6);
 
@@ -61,7 +106,6 @@ export default function Hero() {
     const coursesSection = document.getElementById("CoursesCarousel");
     if (coursesSection) {
       coursesSection.scrollIntoView({ behavior: "smooth" });
-      // تخزين قيمة البحث مؤقتاً لتصفية الدورات
       localStorage.setItem("searchQuery", searchQuery);
     }
 
@@ -69,33 +113,39 @@ export default function Hero() {
     setSuggestions([]);
   };
 
-  // ✅ عند الضغط على اقتراح من القائمة
+  // ✅ عند الضغط على اقتراح من القائمة - فتح النافذة المنبثقة
   const handleSelect = (course) => {
-    localStorage.setItem("searchQuery", course.title.toLowerCase());
-    localStorage.setItem("selectedCourseId", course.id);
+    setSelectedCourse(course);
     setSearchQuery(course.title);
     setSuggestions([]);
+  };
 
-    // الانتقال إلى قسم CoursesCarousel في نفس الصفحة
-    setTimeout(() => {
-      const coursesSection = document.getElementById("CoursesCarousel");
-      if (coursesSection) {
-        coursesSection.scrollIntoView({ behavior: "smooth" });
+  // ✅ إغلاق النافذة المنبثقة
+  const handleClosePopup = () => {
+    setSelectedCourse(null);
+  };
 
-        // تمييز الدورة المحددة بعد الانتقال
-        setTimeout(() => {
-          const selectedCourseId = localStorage.getItem("selectedCourseId");
-          if (selectedCourseId) {
-            highlightAndScrollToCourse(selectedCourseId);
-          }
-        }, 800); // زيادة الوقت لضمان تحميل الكاروسيل
-      }
-    }, 100);
+  // ✅ إضافة الدورة إلى السلة
+  const handleAddToCart = (course) => {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const existingItem = cart.find(item => item.id === course.id);
+    
+    if (!existingItem) {
+      cart.push({
+        ...course,
+        price: course.price || "0 QAR"
+      });
+      localStorage.setItem("cart", JSON.stringify(cart));
+      window.dispatchEvent(new Event("cartUpdated"));
+      showToast("تمت إضافة الدورة إلى السلة بنجاح!", "success");
+    } else {
+      showToast("هذه الدورة موجودة بالفعل في السلة!", "warning");
+    }
+    handleClosePopup();
   };
 
   // ✅ وظيفة للتمرير وتمييز الدورة في الكاروسيل
   const highlightAndScrollToCourse = (courseId) => {
-    // محاولة العثور على العنصر عدة مرات لأن الكاروسيل قد يحتاج وقت للتحميل
     let attempts = 0;
     const maxAttempts = 10;
 
@@ -103,14 +153,12 @@ export default function Hero() {
       const courseElement = document.getElementById(`course-${courseId}`);
 
       if (courseElement) {
-        // التمرير إلى الدورة في الكاروسيل
         courseElement.scrollIntoView({ 
           behavior: "smooth", 
           block: "nearest",
           inline: "center"
         });
 
-        // إضافة تأثير التمييز
         courseElement.classList.add(
           "ring-4", 
           "ring-[#7b0b4c]", 
@@ -120,7 +168,6 @@ export default function Hero() {
           "duration-500"
         );
 
-        // إزالة التمييز بعد 4 ثوان
         setTimeout(() => {
           courseElement.classList.remove(
             "ring-4", 
@@ -129,14 +176,9 @@ export default function Hero() {
             "scale-105"
           );
         }, 4000);
-
-        localStorage.removeItem("selectedCourseId");
       } else if (attempts < maxAttempts) {
         attempts++;
-        setTimeout(tryFindCourse, 200); // المحاولة مرة أخرى بعد 200ms
-      } else {
-        console.log("لم يتم العثور على الدورة في الكاروسيل");
-        localStorage.removeItem("selectedCourseId");
+        setTimeout(tryFindCourse, 200);
       }
     };
 
@@ -151,7 +193,7 @@ export default function Hero() {
           alt="Laptop hero"
           className="w-full h-[56vh] lg:h-[64vh] object-cover"
         />
-        <div className="absolute inset-0 bg-gray-900/60" /> {/* Overlay شفاف */}
+        <div className="absolute inset-0 bg-gray-900/60" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col justify-center h-[56vh] lg:h-[64vh]">
@@ -200,10 +242,21 @@ export default function Hero() {
                     <div
                       key={course.id}
                       onClick={() => handleSelect(course)}
-                      className="p-4 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 transition-colors"
+                      className="p-4 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 transition-colors group"
                     >
-                      <div className="font-medium text-gray-900">{course.title}</div>
-                      <div className="text-sm text-gray-500 mt-1">{course.category}</div>
+                      <div className="font-medium text-gray-900 group-hover:text-[#7b0b4c]">
+                        {course.title}
+                      </div>
+                      {course.category && (
+                        <div className="text-sm text-gray-500 mt-1 bg-gray-100 px-2 py-1 rounded-full inline-block">
+                          {course.category}
+                        </div>
+                      )}
+                      {course.price && (
+                        <div className="text-xs text-gray-600 mt-1">
+                          السعر: {course.price}
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
@@ -212,6 +265,126 @@ export default function Hero() {
           </div>
         </div>
       </div>
+
+      {/* ✅ النافذة المنبثقة لتفاصيل الدورة */}
+      {selectedCourse && (
+        <CoursePopup 
+          course={selectedCourse} 
+          onClose={handleClosePopup}
+          onAddToCart={handleAddToCart}
+        />
+      )}
+
+      {/* ✅ عرض Toast */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={closeToast}
+        />
+      )}
     </section>
+  );
+}
+
+/* ======================= CoursePopup ======================= */
+function CoursePopup({ course, onClose, onAddToCart }) {
+  // ✅ دالة لتنسيق السعر
+  const formatCurrency = (price) => {
+    const priceNumber = parseFloat(price?.replace(/[^\d.]/g, "") || 0);
+    return `${priceNumber.toLocaleString('ar-QA')} QAR`;
+  };
+
+  useEffect(() => {
+    const handleEsc = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-scale-in">
+        {/* Header */}
+        <div className="relative p-6 border-b border-gray-200">
+          <button
+            onClick={onClose}
+            className="absolute top-4 left-4 text-gray-500 hover:text-gray-700 text-xl"
+          >
+            ✕
+          </button>
+          <h2 className="text-2xl font-bold text-[#7b0b4c] text-center pr-8">
+            {course.title}
+          </h2>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {/* Course Image */}
+          {course.image && (
+            <div className="mb-6">
+              <img
+                src={course.image}
+                alt={course.title}
+                className="w-full h-64 object-cover rounded-lg"
+              />
+            </div>
+          )}
+
+          {/* Course Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <h3 className="font-semibold text-gray-800 mb-2">معلومات الدورة</h3>
+              <div className="space-y-2 text-sm">
+                {course.category && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">التصنيف:</span>
+                    <span className="text-[#7b0b4c] font-medium">{course.category}</span>
+                  </div>
+                )}
+                {course.duration && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">المدة:</span>
+                    <span className="text-[#7b0b4c] font-medium">{course.duration}</span>
+                  </div>
+                )}
+                {course.instructor && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">المدرب:</span>
+                    <span className="text-[#7b0b4c] font-medium">{course.instructor}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Price Section */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-center mb-4">
+                <div className="text-3xl font-bold text-[#7b0b4c]">
+                  {formatCurrency(course.price)}
+                </div>
+                <div className="text-sm text-gray-600 mt-1">سعر الدورة</div>
+              </div>
+              
+              <button
+                onClick={() => onAddToCart(course)}
+                className="w-full bg-[#7b0b4c] text-white py-3 rounded-lg font-semibold hover:bg-[#5e0839] transition-colors"
+              >
+                أضف إلى السلة
+              </button>
+            </div>
+          </div>
+
+          {/* Description */}
+          {course.description && (
+            <div>
+              <h3 className="font-semibold text-gray-800 mb-3">وصف الدورة</h3>
+              <p className="text-gray-600 leading-relaxed text-sm">
+                {course.description}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
