@@ -23,7 +23,7 @@ export default function Footer() {
     { label: "التدريب عن بُعد", href: "/training/online" },
     { label: "ندوات تفاعلية", href: "/training/webinars" },
     { label: "الحملات الإعلانية", href: "/campaigns" },
-    { label: "أسئلة متكررة", href: "/faq" },
+    { label: "أسئلة متكررة", href: "/faq-page" },
     { label: "الأحكام والشروط", href: "/terms" },
     { label: "سياسة الخصوصية", href: "/privacy" },
   ];
@@ -165,24 +165,7 @@ export default function Footer() {
               >
                 <FaInstagram size={22} />
               </a>
-              <a
-                href={social.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="لينكدإن"
-                className="hover:text-[#7a1353] transition-transform transform hover:scale-110"
-              >
-                <FaLinkedinIn size={22} />
-              </a>
-              <a
-                href={social.youtube}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="يوتيوب"
-                className="hover:text-[#7a1353] transition-transform transform hover:scale-110"
-              >
-                <FaYoutube size={22} />
-              </a>
+             
               <a
                 href={social.whatsapp}
                 target="_blank"
@@ -194,11 +177,17 @@ export default function Footer() {
               </a>
             </div>
 
-            <p className="text-sm text-[#3a0f24]">
-              © {new Date().getFullYear()} مركز المصباح للتدريب المهني. جميع
-           الحقوق محفوظة.
-             شركة Deevsed للتطوير البرمجي
-            </p>
+           <p className="text-sm text-[#3a0f24]">
+  © {new Date().getFullYear()} مركز المصباح للتدريب المهني. جميع الحقوق محفوظة.
+  شركة <a 
+    href="https://www.facebook.com/profile.php?id=61578234835457" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="text-[#7a1353] hover:underline"
+  >
+     DevSeed
+  </a> للتطوير البرمجي
+</p>
           </div>
         </motion.div>
       </div>

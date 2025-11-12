@@ -80,7 +80,7 @@ export default function RecordedCoursesPage() {
       {/* 🔴 Hero Section - رأس الصفحة */}
       <section className="relative bg-[#381125] overflow-hidden"> 
         <Image 
-          src={HERO_BG_IMAGE} 
+          src="/images/3784896-scaled.jpg" 
           alt="خلفية الدورات المسجلة"
           layout="fill"
           objectFit="cover"
@@ -149,18 +149,6 @@ export default function RecordedCoursesPage() {
           ))}
         </div>
       </section>
-
-      {/* 💬 زر Chat with us العائم (يعمل كرابط واتساب عادي) */}
-      <Link 
-        href="https://wa.me/XXXXXXXXXXX"
-        target="_blank" 
-        className="fixed bottom-6 right-6 z-50 bg-green-500 text-white flex items-center gap-2 p-3 rounded-full shadow-lg hover:bg-green-600 transition"
-      >
-        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12.031 0C5.392 0 0 5.392 0 12.031c0 2.001.53 3.91 1.542 5.584l-1.542 5.75c-.066.246.012.508.204.686.096.089.21.133.322.133.116 0 .23-.047.336-.145l5.584-1.542c1.674 1.012 3.583 1.542 5.584 1.542 6.639 0 12.031-5.392 12.031-12.031S18.67 0 12.031 0zm3.84 16.92c-.22-.095-1.294-.637-1.5-.714-.207-.078-.358-.116-.504.116-.146.233-.568.714-.698.854-.13.14-.26.155-.48.038-.22-.116-.92-1.378-1.766-2.176-.653-.615-1.088-1.1-1.344-1.523-.257-.423-.028-.598.188-.795.172-.15.385-.401.504-.606.12-.206.15-.353.1-.504-.047-.152-.469-1.127-.643-1.514-.173-.387-.348-.34-.504-.34-.156 0-.328-.023-.497-.023-.17 0-.448.06-.688.31-.24.25-.92 1.042-.92 2.535 0 1.493.945 2.923 1.077 3.117.13.195 1.84 2.808 4.414 3.953 2.573 1.144 2.573.763 2.873.715.3-.047 1.294-.528 1.472-1.033.179-.505.179-.933.126-1.033-.053-.102-.206-.164-.426-.258z"/>
-        </svg>
-        <span className="font-semibold">Chat with us</span>
-      </Link>
       
       {/* 🔔 عرض رسالة قريباً */}
       <Toast message={toastMessage} isVisible={isToastVisible} />

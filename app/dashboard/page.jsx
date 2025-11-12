@@ -1,20 +1,44 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
 
+// 🧩 مكون Toast بسيط
+function Toast({ message, type = "info", onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgColor =
+    type === "error"
+      ? "bg-red-600"
+      : type === "success"
+      ? "bg-green-600"
+      : "bg-[#7b0b4c]";
+
+  return (
+    <div
+      className={`fixed left-1/2 transform -translate-x-1/2 ${bgColor} text-white 
+      px-5 py-3 rounded-xl shadow-lg text-sm md:text-base z-[9999] transition-all duration-500`}
+      style={{ top: "70px" }}
+    >
+      {message}
+    </div>
+  );
+}
+
 // دالة مساعدة لاستخراج اسم الملف من رابط Supabase Storage
-// مثال: https://<project-ref>.supabase.co/storage/v1/object/public/bucket-name/fileName.jpg -> fileName.jpg
 function getFileNameFromUrl(url, bucketName) {
   if (!url) return null;
-  const path = url.split(bucketName + '/')[1];
+  const path = url.split(bucketName + "/")[1];
   return path || null;
 }
 
-
 export default function CoursesDashboard() {
   const router = useRouter();
+  const [toast, setToast] = useState(null);
+  const showToast = (msg, type = "info") => setToast({ msg, type });
 
   const [courses, setCourses] = useState([]);
   const [newCourse, setNewCourse] = useState({
@@ -26,20 +50,21 @@ export default function CoursesDashboard() {
     category: "",
   });
   const [imageFile, setImageFile] = useState(null);
-  const COURSES_BUCKET = "courses-images"; // اسم باكت الدورات
+  const COURSES_BUCKET = "courses-images";
 
   useEffect(() => {
     fetchCourses();
   }, []);
 
   async function fetchCourses() {
-    // جلب الدورات بترتيب تنازلي حسب تاريخ الإنشاء لضمان ظهور الأحدث أولاً
-    const { data, error } = await supabase.from("courses").select("*").order("id", { ascending: false });
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .order("id", { ascending: false });
     if (error) console.error("❌ خطأ في جلب الدورات:", error);
     else setCourses(data);
   }
 
-  // ✅ رفع صورة الدورة في bucket الصحيح
   async function uploadImage(file) {
     const fileName = `${Date.now()}-${file.name}`;
     const { data, error } = await supabase.storage
@@ -48,12 +73,12 @@ export default function CoursesDashboard() {
 
     if (error) {
       console.error("❌ خطأ أثناء رفع الصورة:", error);
-      alert("فشل رفع الصورة!");
+      showToast("فشل رفع الصورة!", "error");
       return null;
     }
 
     const { data: publicUrlData } = supabase.storage
-      .from(COURSES_BUCKET) // ✅ نفس الباكت
+      .from(COURSES_BUCKET)
       .getPublicUrl(fileName);
 
     return publicUrlData.publicUrl;
@@ -68,7 +93,7 @@ export default function CoursesDashboard() {
       !newCourse.price ||
       !newCourse.category
     ) {
-      alert("⚠️ الرجاء إدخال جميع البيانات المطلوبة");
+      showToast("⚠️ الرجاء إدخال جميع البيانات المطلوبة", "error");
       return;
     }
 
@@ -86,11 +111,10 @@ export default function CoursesDashboard() {
 
     if (error) {
       console.error("❌ خطأ أثناء الإضافة:", error);
-      alert(`حدث خطأ أثناء الإضافة:\n${error.message}`);
+      showToast(`حدث خطأ أثناء الإضافة: ${error.message}`, "error");
     } else {
-      alert("✅ تمت إضافة الدورة بنجاح!");
-      // نستخدم data[0] (الذي يحتوي على رابط الصورة الصحيح) ونضعه في بداية القائمة
-      setCourses([data[0], ...courses]); 
+      showToast("✅ تمت إضافة الدورة بنجاح!", "success");
+      setCourses([data[0], ...courses]);
       setNewCourse({
         title: "",
         description: "",
@@ -103,42 +127,36 @@ export default function CoursesDashboard() {
     }
   }
 
-  // 🗑️ دالة حذف الدورة المُعدّلة لحذف الصورة من التخزين أيضاً
   async function deleteCourse(id) {
-    const courseToDelete = courses.find(c => c.id === id);
+    const courseToDelete = courses.find((c) => c.id === id);
     if (!courseToDelete) return;
-    
-    // 1. حذف السجل من قاعدة البيانات
-    const { error: dbError } = await supabase.from("courses").delete().eq("id", id);
-    
+
+    const { error: dbError } = await supabase
+      .from("courses")
+      .delete()
+      .eq("id", id);
+
     if (dbError) {
-      alert(`❌ فشل حذف الدورة من قاعدة البيانات. الخطأ: ${dbError.message}`);
-      console.error("Database Delete Failed:", dbError);
+      showToast(`❌ فشل حذف الدورة: ${dbError.message}`, "error");
       return;
     }
 
-    // 2. حذف الملف من Supabase Storage (إذا كان الرابط موجوداً)
     if (courseToDelete.image) {
       const fileName = getFileNameFromUrl(courseToDelete.image, COURSES_BUCKET);
       if (fileName) {
         const { error: storageError } = await supabase.storage
           .from(COURSES_BUCKET)
           .remove([fileName]);
-
-        if (storageError) {
+        if (storageError)
           console.warn("⚠️ فشل حذف الصورة من التخزين:", storageError);
-        }
       }
     }
 
-    // 3. تحديث حالة الواجهة
     setCourses(courses.filter((c) => c.id !== id));
-    alert("✅ تم حذف الدورة والصورة المرتبطة بها بنجاح!");
+    showToast("✅ تم حذف الدورة بنجاح!", "success");
   }
 
-
   return (
-    // ✅ تحسين التوافق: استخدام max-w-full على الهواتف ثم max-w-5xl على الشاشات الكبيرة
     <div
       className="min-h-screen bg-cover bg-center bg-fixed flex flex-col items-center p-4 sm:p-8 text-right"
       style={{
@@ -146,6 +164,14 @@ export default function CoursesDashboard() {
           "url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1400&q=80')",
       }}
     >
+      {toast && (
+        <Toast
+          message={toast.msg}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-4 sm:p-8 w-full max-w-5xl animate-fade-in">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
           <div className="mb-4 sm:mb-0">
@@ -163,19 +189,24 @@ export default function CoursesDashboard() {
           </button>
         </div>
 
-        {/* ✅ نموذج إضافة دورة */}
-        <form onSubmit={addCourse} className="bg-gray-50 rounded-xl p-4 mb-8 shadow-inner">
+        {/* نموذج إضافة دورة */}
+        <form
+          onSubmit={addCourse}
+          className="bg-gray-50 rounded-xl p-4 mb-8 shadow-inner"
+        >
           <h2 className="text-lg font-semibold mb-4 text-[#7b0b4c]">
             ➕ إضافة دورة جديدة
           </h2>
-          {/* ✅ تحسين التوافق: Grid يبدأ من عمود واحد ثم عمودين */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               type="text"
               placeholder="عنوان الدورة"
               value={newCourse.title}
-              onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
-              className="border rounded-lg px-3 py-2 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+              onChange={(e) =>
+                setNewCourse({ ...newCourse, title: e.target.value })
+              }
+              className="border rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
             />
             <input
               type="text"
@@ -184,22 +215,22 @@ export default function CoursesDashboard() {
               onChange={(e) =>
                 setNewCourse({ ...newCourse, description: e.target.value })
               }
-              className="border rounded-lg px-3 py-2 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+              className="border rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
             />
-
             <input
               type="file"
               accept="image/*"
               onChange={(e) => setImageFile(e.target.files[0])}
-              className="border rounded-lg px-3 py-2 text-gray-800 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-none file:bg-[#7b0b4c] file:text-white file:cursor-pointer"
+              className="border rounded-lg px-3 py-2 text-gray-800 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:bg-[#7b0b4c] file:text-white"
             />
-
             <input
               type="text"
               placeholder="السعر"
               value={newCourse.price}
-              onChange={(e) => setNewCourse({ ...newCourse, price: e.target.value })}
-              className="border rounded-lg px-3 py-2 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+              onChange={(e) =>
+                setNewCourse({ ...newCourse, price: e.target.value })
+              }
+              className="border rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
             />
             <input
               type="text"
@@ -208,7 +239,7 @@ export default function CoursesDashboard() {
               onChange={(e) =>
                 setNewCourse({ ...newCourse, discount: e.target.value })
               }
-              className="border rounded-lg px-3 py-2 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+              className="border rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
             />
             <input
               type="text"
@@ -217,7 +248,7 @@ export default function CoursesDashboard() {
               onChange={(e) =>
                 setNewCourse({ ...newCourse, category: e.target.value })
               }
-              className="border rounded-lg px-3 py-2 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+              className="border rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
             />
           </div>
 
@@ -229,14 +260,15 @@ export default function CoursesDashboard() {
           </button>
         </form>
 
-        {/* ✅ قائمة الدورات */}
+        {/* قائمة الدورات */}
         <div>
-          <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">📚 الدورات الحالية</h2>
+          <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">
+            📚 الدورات الحالية
+          </h2>
           {courses.length === 0 ? (
             <p className="text-gray-500">لا توجد دورات حالياً.</p>
           ) : (
-            // ✅ تم إصلاح خطأ التعليق هنا
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"> 
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
                 <div
                   key={course.id}
@@ -248,8 +280,12 @@ export default function CoursesDashboard() {
                     className="w-full h-40 object-cover"
                   />
                   <div className="p-4">
-                    <h3 className="text-gray-900 font-bold mb-1">{course.title}</h3>
-                    <p className="text-gray-700 text-sm mb-2">{course.description}</p>
+                    <h3 className="text-gray-900 font-bold mb-1">
+                      {course.title}
+                    </h3>
+                    <p className="text-gray-700 text-sm mb-2">
+                      {course.description}
+                    </p>
                     <p className="text-[#5e0839] font-semibold mb-1">
                       السعر: {course.price}
                     </p>
@@ -273,155 +309,6 @@ export default function CoursesDashboard() {
             </div>
           )}
         </div>
-
-        {/* 🖼️ إدارة الحملات الإعلانية */}
-        <div className="mt-12 border-t pt-8">
-          <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">
-            🖼️ إدارة الحملات الإعلانية
-          </h2>
-          <CampaignsManager />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* 👇 الكومبوننت الخاص بالحملات */
-function CampaignsManager() {
-  const [campaigns, setCampaigns] = useState([]);
-  const [imageFile, setImageFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const CAMPAIGN_BUCKET = "campaigns-images"; // اسم الباكت
-
-  useEffect(() => {
-    fetchCampaigns();
-  }, []);
-
-  async function fetchCampaigns() {
-    const { data, error } = await supabase
-      .from("campaigns")
-      .select("*")
-      .order("id", { ascending: false });
-
-    if (error) console.error("❌ خطأ في جلب الحملات:", error);
-    else setCampaigns(data || []);
-  }
-
-  async function uploadImage(file) {
-    const fileName = `${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage
-      .from(CAMPAIGN_BUCKET)
-      .upload(fileName, file);
-
-    if (error) {
-      console.error("❌ خطأ أثناء رفع صورة الحملة:", error);
-      alert("فشل رفع الصورة!");
-      return null;
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from(CAMPAIGN_BUCKET)
-      .getPublicUrl(fileName);
-
-    return publicUrlData.publicUrl;
-  }
-
-  async function addCampaignImage(e) {
-    e.preventDefault();
-    if (!imageFile) {
-      alert("⚠️ الرجاء اختيار صورة أولاً");
-      return;
-    }
-
-    setUploading(true);
-    const imageUrl = await uploadImage(imageFile);
-    setUploading(false);
-
-    if (!imageUrl) return;
-
-    const { data, error } = await supabase
-      .from("campaigns")
-      .insert([{ image: imageUrl }])
-      .select();
-
-    if (error) {
-      alert("❌ حدث خطأ أثناء إضافة الصورة!");
-      console.error(error);
-    } else {
-      alert("✅ تمت إضافة الصورة بنجاح!");
-      setCampaigns([data[0], ...campaigns]);
-      setImageFile(null);
-    }
-  }
-
-  // 🗑️ دالة حذف الحملة المُعدّلة لحل مشكلة عدم الحذف الدائم
-  async function deleteCampaign(id) {
-    const campaignToDelete = campaigns.find(c => c.id === id);
-    if (!campaignToDelete) return;
-
-    // 1. استخراج اسم الملف
-    const fileName = getFileNameFromUrl(campaignToDelete.image, CAMPAIGN_BUCKET);
-
-    // 2. حذف السجل من قاعدة البيانات (الأولوية للحذف من DB)
-    const { error: dbError } = await supabase.from("campaigns").delete().eq("id", id);
-    
-    if (dbError) {
-      // ❌ إذا فشل الحذف في قاعدة البيانات، نتوقف ونعرض رسالة واضحة
-      alert(`❌ فشل حذف السجل من قاعدة البيانات. قد تكون المشكلة في الصلاحيات. الخطأ: ${dbError.message}`);
-      console.error("Database Delete Failed:", dbError);
-      return;
-    }
-
-    // 3. حذف الملف من Supabase Storage (فقط إذا نجح حذف السجل من DB)
-    if (fileName) {
-      const { error: storageError } = await supabase.storage
-        .from(CAMPAIGN_BUCKET)
-        .remove([fileName]);
-
-      if (storageError) {
-        console.warn("⚠️ فشل حذف الصورة من التخزين (السجل حُذف):", storageError);
-      }
-    }
-    
-    // 4. تحديث حالة الواجهة
-    setCampaigns(campaigns.filter((c) => c.id !== id));
-    alert("✅ تم حذف الحملة والصورة المرتبطة بها بنجاح!");
-  }
-
-  return (
-    <div className="bg-gray-50 rounded-xl p-4 shadow-inner">
-      <form onSubmit={addCampaignImage} className="flex flex-col sm:flex-row gap-4 items-center">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImageFile(e.target.files[0])}
-          className="border rounded-lg px-3 py-2 text-gray-800 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-none file:bg-[#7b0b4c] file:text-white file:cursor-pointer w-full sm:w-auto"
-        />
-        <button
-          type="submit"
-          disabled={uploading}
-          className="bg-[#7b0b4c] text-white px-6 py-2 rounded-lg hover:bg-[#5e0839] transition w-full sm:w-auto"
-        >
-          {uploading ? "جاري الرفع..." : "رفع الصورة"}
-        </button>
-      </form>
-
-      {/* ✅ تحسين التوافق: Grid يبدأ من عمود واحد، ثم عمودين، ثم 3 أعمدة */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        {campaigns.map((c) => (
-          <div key={c.id} className="bg-white rounded-xl shadow overflow-hidden hover:shadow-lg transition">
-            <img src={c.image} alt="campaign" className="w-full h-48 object-cover" />
-            <div className="p-3 flex justify-between items-center">
-              <span className="text-gray-600 text-sm">حملة #{c.id}</span>
-              <button
-                onClick={() => deleteCampaign(c.id)}
-                className="text-red-600 hover:text-red-800 text-sm font-semibold"
-              >
-                حذف
-              </button>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );

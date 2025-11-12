@@ -1,26 +1,26 @@
 import "./globals.css";
 import { Cairo } from "next/font/google";
+import { AppProvider } from "./context/AppContext";
 
-// استدعاء الخط
 const cairo = Cairo({
   subsets: ["arabic"],
-  weight: ["400", "700"], // الأوزان الممكن تختارها
+  weight: ["400", "700"],
 });
 
 export const metadata = {
-  title: "مركز المصباح",
-  description: "أكاديمية تدريب متكاملة لتطوير المهارات",
+  title: "مركز المصباح للتدريب. ",
+  description: "موقع تدريب ودورات أونلاين",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar">
       <head>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
       <body className={`${cairo.className} bg-white text-gray-900`}>
-        {children}
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
   );

@@ -25,7 +25,13 @@ export default function OnlineTrainingPage() {
           اكتساب مهارات عملية ومهنية باستخدام أحدث أساليب التعليم الرقمي، 
           مع الحفاظ على جودة التدريب والتفاعل المستمر بين المدرب والمتدرب.
         </p>
+
+      </div>
+{/* الفاصل السفلي */}
+      <div className="absolute bottom-4 left-0 right-0 text-center text-gray-50 text-sm">
+        © {new Date().getFullYear()} مركز المصباح للتدريب المهني — جميع الحقوق محفوظة.
       </div>
     </div>
+      
   );
 }

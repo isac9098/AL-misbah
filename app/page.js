@@ -1,19 +1,25 @@
+"use client";
+
+import { useApp } from "./context/AppContext";
+
 import Header from "../components/Header";
 import Hero from "../components/Hero";
 import FeaturesBar from "../components/FeaturesBar";
 import CoursesCarousel from "../components/CoursesCarousel";
 import OnlineLearningSection from "../components/OnlineLearningSection";
+import TestimonialsSection from "../components/TestimonialsSection";
+import Footer from "../components/Footer";
 import WhatsappBubble from "../components/WhatsappBubble";
-import TestimonialsSection from "../components/TestimonialsSection"; 
-import Footer from "../components/Footer"; // استدعاء الفوتر الجديد
 
 export default function LandingPage() {
+  const { t, lang } = useApp();
+
   return (
-    <div dir="rtl" className="min-h-screen bg-white text-gray-900 font-sans">
+    <div className="min-h-screen bg-white text-gray-900 font-sans transition-all">
       {/* الهيدر */}
       <Header />
 
-      {/* قسم البطل (Hero) */}
+      {/* قسم البطل */}
       <Hero />
 
       {/* شريط المميزات */}
@@ -22,7 +28,7 @@ export default function LandingPage() {
       {/* الكاروسيل الخاص بالدورات */}
       <CoursesCarousel />
 
-      {/* القسم الجديد (التعلم عن بعد + مكتبة الدورات + جدول الدورات) */}
+      {/* القسم الجديد (التعلم عن بعد) */}
       <OnlineLearningSection />
 
       {/* قسم آراء العملاء */}
@@ -33,6 +39,7 @@ export default function LandingPage() {
 
       {/* فقاعة واتساب */}
       <WhatsappBubble />
+
     </div>
   );
 }
