@@ -5,10 +5,11 @@ import { useEffect, useRef, useState } from "react";
 export default function WhatsappBubble() {
   const containerRef = useRef(null);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isWidgetOpen, setIsWidgetOpen] = useState(false);
   const lastScroll = useRef(0);
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // حماية SSR
+    if (typeof window === "undefined") return;
 
     if (window.__ednaLoaded) return;
     window.__ednaLoaded = true;
@@ -19,6 +20,20 @@ export default function WhatsappBubble() {
     document.body.appendChild(host);
 
     const shadow = host.attachShadow({ mode: "open" });
+
+    // إضافة CSS لضمان الاتجاه من اليسار لليمين
+    const style = document.createElement("style");
+    style.textContent = `
+      * {
+        direction: ltr !important;
+        text-align: left !important;
+      }
+      .edna-whatsapp-widget * {
+        direction: ltr !important;
+        text-align: left !important;
+      }
+    `;
+    shadow.appendChild(style);
 
     const widgetWrapper = document.createElement("div");
     widgetWrapper.setAttribute(
@@ -33,6 +48,7 @@ export default function WhatsappBubble() {
         transition: transform 0.3s ease, opacity 0.3s ease;
       `
     );
+    widgetWrapper.className = "edna-whatsapp-widget";
     shadow.appendChild(widgetWrapper);
 
     const s = document.createElement("script");
@@ -64,6 +80,16 @@ export default function WhatsappBubble() {
     s.onload = () => {
       if (typeof CreateWhatsappChatWidget !== "undefined") {
         CreateWhatsappChatWidget(options);
+        
+        // إضافة مستمع حدث لاكتشاف فتح وإغلاق الـ widget
+        setTimeout(() => {
+          const chatButton = shadow.querySelector('.edna-open-chat');
+          if (chatButton) {
+            chatButton.addEventListener('click', () => {
+              setIsWidgetOpen(true);
+            });
+          }
+        }, 1000);
       }
     };
 
@@ -80,13 +106,40 @@ export default function WhatsappBubble() {
       lastScroll.current = currentScroll;
     };
 
+    // إغلاق الـ widget عند الضغط خارجها
+    const handleClickOutside = (event) => {
+      if (!containerRef.current) return;
+      
+      const shadow = containerRef.current.shadowRoot;
+      if (!shadow) return;
+      
+      const widget = shadow.querySelector('.edna-whatsapp-widget');
+      if (!widget) return;
+      
+      // التحقق إذا كان النقر خارج الـ widget
+      const isClickInsideWidget = widget.contains(event.target);
+      const isClickOnHost = containerRef.current.contains(event.target);
+      
+      if (!isClickInsideWidget && !isClickOnHost && isWidgetOpen) {
+        // البحث عن زر الإغلاق في الـ widget والضغط عليه برمجياً
+        const closeButton = shadow.querySelector('.edna-close-chat, [onclick*="close"], .close-button');
+        if (closeButton) {
+          closeButton.click();
+          setIsWidgetOpen(false);
+        }
+      }
+    };
+
     window.addEventListener("scroll", handleScroll);
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("mousedown", handleClickOutside);
       if (containerRef.current) containerRef.current.remove();
+      window.__ednaLoaded = false;
     };
-  }, []);
+  }, [isWidgetOpen]);
 
   // تحديث CSS للعرض المصغر
   useEffect(() => {
@@ -104,6 +157,26 @@ export default function WhatsappBubble() {
       widgetWrapper.style.opacity = "1";
     }
   }, [isMinimized]);
+
+  // إضافة CSS إضافي لضمان الاتجاه
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const shadow = containerRef.current.shadowRoot;
+    if (!shadow) return;
+
+    // إضافة CSS إضافي بشكل دوري لضمان تطبيق الاتجاه
+    const interval = setInterval(() => {
+      const allElements = shadow.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (el.style) {
+          el.style.direction = 'ltr';
+          el.style.textAlign = 'left';
+        }
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return null;
 }
