@@ -142,37 +142,87 @@ function SearchButton() {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState(null); // ✅ حالة للدورة المحددة
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [error, setError] = useState(null); // ✅ إضافة حالة للخطأ
 
   // ✅ البحث المباشر من Supabase
   useEffect(() => {
     if (!query.trim()) {
       setSuggestions([]);
+      setError(null);
       return;
     }
 
     const delayDebounce = setTimeout(async () => {
       setLoading(true);
+      setError(null);
       console.log('🔍 جاري البحث عن:', query);
 
-      const { data, error } = await supabase
-        .from("courses")
-        .select("id, title, category, description, price, image, instructor, duration, level")
-        .ilike("title", `%${query}%`)
-        .limit(6);
+      try {
+        // ✅ استعلام أكثر مرونة
+        const { data, error } = await supabase
+          .from("courses")
+          .select("id, title, category, description, price, image, instructor, duration, level")
+          .or(`title.ilike.%${query}%,category.ilike.%${query}%,description.ilike.%${query}%,instructor.ilike.%${query}%`)
+          .limit(10);
 
-      console.log('📊 نتائج البحث:', data);
+        console.log('📊 نتائج البحث:', data);
+        console.log('❌ خطأ البحث:', error);
 
-      if (!error) {
-        setSuggestions(data || []);
-      } else {
-        console.error("خطأ في جلب نتائج البحث:", error);
+        if (error) {
+          console.error("خطأ في جلب نتائج البحث:", error);
+          setError(`خطأ في البحث: ${error.message}`);
+          setSuggestions([]);
+        } else {
+          setSuggestions(data || []);
+          if (data && data.length === 0) {
+            console.log('⚠️ لا توجد نتائج، جرب البحث بكلمات أخرى');
+          }
+        }
+      } catch (err) {
+        console.error("خطأ غير متوقع:", err);
+        setError(`خطأ غير متوقع: ${err.message}`);
+        setSuggestions([]);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, 400);
+    }, 500);
 
     return () => clearTimeout(delayDebounce);
   }, [query]);
+
+  // ✅ اختبار الاتصال بقاعدة البيانات
+  const testConnection = async () => {
+    console.log('🧪 اختبار الاتصال بقاعدة البيانات...');
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('count')
+        .limit(1);
+
+      if (error) {
+        console.error('❌ فشل الاتصال:', error);
+      } else {
+        console.log('✅ الاتصال ناجح:', data);
+        
+        // ✅ جلب عينة من البيانات للتحقق
+        const sampleData = await supabase
+          .from('courses')
+          .select('*')
+          .limit(3);
+        console.log('📋 عينة من البيانات:', sampleData);
+      }
+    } catch (err) {
+      console.error('❌ خطأ في الاختبار:', err);
+    }
+  };
+
+  // ✅ اختبار الاتصال عند فتح البحث
+  useEffect(() => {
+    if (open) {
+      testConnection();
+    }
+  }, [open]);
 
   // ✅ عند تنفيذ البحث الكامل
   const handleSearch = (e) => {
@@ -183,9 +233,9 @@ function SearchButton() {
     setOpen(false);
   };
 
-  // ✅ عند الضغط على اقتراح - فتح النافذة المنبثقة
+  // ✅ عند الضغط على اقتراح
   const handleSelect = (course) => {
-    setSelectedCourse(course); // ✅ تعيين الدورة المحددة
+    setSelectedCourse(course);
     setQuery("");
     setOpen(false);
     setSuggestions([]);
@@ -202,7 +252,10 @@ function SearchButton() {
     const existingItem = cart.find(item => item.id === course.id);
     
     if (!existingItem) {
-      cart.push(course);
+      cart.push({
+        ...course,
+        price: course.price || "0 QAR"
+      });
       localStorage.setItem("cart", JSON.stringify(cart));
       window.dispatchEvent(new Event("cartUpdated"));
       alert("تمت إضافة الدورة إلى السلة!");
@@ -258,12 +311,20 @@ function SearchButton() {
               </button>
             </div>
 
+            {/* ✅ زر اختبار الاتصال (للتحقق فقط) */}
+            <button
+              onClick={testConnection}
+              className="mb-3 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
+            >
+              اختبار الاتصال بقاعدة البيانات
+            </button>
+
             <form onSubmit={handleSearch} className="flex gap-2 items-center mb-3">
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="اكتب اسم الدورة..."
+                placeholder="اكتب اسم الدورة أو المدرب أو التصنيف..."
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7b0b4c] focus:border-transparent"
                 autoFocus
               />
@@ -275,10 +336,21 @@ function SearchButton() {
               </button>
             </form>
 
+            {/* ✅ عرض الخطأ إذا وجد */}
+            {error && (
+              <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="text-red-700 text-sm font-medium">{error}</div>
+                <div className="text-red-600 text-xs mt-1">
+                  تحقق من اتصال الإنترنت أو حاول لاحقاً
+                </div>
+              </div>
+            )}
+
             {/* قائمة النتائج */}
             {loading && (
               <div className="flex justify-center py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#7b0b4c]"></div>
+                <span className="mr-2 text-sm text-gray-500">جاري البحث...</span>
               </div>
             )}
 
@@ -301,18 +373,23 @@ function SearchButton() {
                         {course.category}
                       </div>
                     )}
-                    <div className="text-xs text-gray-600 mt-1">
-                      {course.instructor && `المدرب: ${course.instructor}`}
-                    </div>
+                    {course.instructor && (
+                      <div className="text-xs text-gray-600 mt-1">
+                        المدرب: {course.instructor}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
 
-            {!loading && query && suggestions.length === 0 && (
+            {!loading && query && suggestions.length === 0 && !error && (
               <div className="text-center py-4 text-gray-500 text-sm">
                 <div className="text-2xl mb-2">🔍</div>
                 لا توجد نتائج مطابقة لـ "{query}"
+                <div className="text-xs text-gray-400 mt-2">
+                  جرب كلمات بحث مختلفة أو تحقق من كتابة الكلمات
+                </div>
               </div>
             )}
 
@@ -320,13 +397,16 @@ function SearchButton() {
               <div className="text-center py-4 text-gray-400 text-sm">
                 <div className="text-2xl mb-2">📚</div>
                 ابدأ بالكتابة للبحث عن الدورات المتاحة
+                <div className="text-xs text-gray-400 mt-2">
+                  يمكنك البحث باسم الدورة، المدرب، أو التصنيف
+                </div>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* ✅ النافذة المنبثقة لتفاصيل الدورة */}
+      {/* النافذة المنبثقة لتفاصيل الدورة */}
       {selectedCourse && (
         <CoursePopup 
           course={selectedCourse} 
