@@ -178,9 +178,9 @@ export default function CoursesDashboard() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
           <div className="mb-4 sm:mb-0">
             <h1 className="text-2xl font-bold text-[#7b0b4c]">🎓 إدارة الدورات</h1>
-            <p className="text-gray-700 mt-1 text-sm font-medium">
-              مرحباً 👋 مدير الموارد البشرية
-            </p>
+                           <span className="text-sm font-bold text-[#7b0b4c]">
+                  {t("welcome")}, {user.name}
+                </span>
           </div>
 
           <button
