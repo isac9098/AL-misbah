@@ -179,7 +179,7 @@ export default function CoursesDashboard() {
           <div className="mb-4 sm:mb-0">
             <h1 className="text-2xl font-bold text-[#7b0b4c]">🎓 إدارة الدورات</h1>
                            <span className="text-sm font-bold text-[#7b0b4c]">
-                  {t("welcome")}, {user.name}
+                مرحباً 👋, {user.name}
                 </span>
           </div>
 
