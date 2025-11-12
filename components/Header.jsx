@@ -55,9 +55,9 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <img src="/logo1.png" alt="AL Misbah Logo" className="w-10 h-10 object-contain" />
-            <span className="hidden sm:block font-extrabold tracking-wide text-[#7b0b4c]">
-              مركز المصباح
-            </span>
+            <span className="font-extrabold tracking-wide text-[#7b0b4c]">
+  مركز المصباح
+</span>
           </Link>
 
           {/* Controls */}
