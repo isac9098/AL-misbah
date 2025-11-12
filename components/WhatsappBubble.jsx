@@ -25,7 +25,7 @@ export default function WhatsappBubble() {
 
     const shadow = host.attachShadow({ mode: "open" });
 
-    // CSS مطابق لـ Edna
+    // CSS معدل
     const style = document.createElement("style");
     style.textContent = `
       .edna-whatsapp-widget {
@@ -97,12 +97,23 @@ export default function WhatsappBubble() {
         position: relative;
       }
       
+      .edna-brand-img-container {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+      
       .edna-brand-img {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
         object-fit: cover;
-        border: 2px solid rgba(255, 255, 255, 0.3);
       }
       
       .edna-brand-info {
@@ -148,26 +159,53 @@ export default function WhatsappBubble() {
       
       .edna-chat-body {
         padding: 20px;
-        background: #f8f9fa;
+        background: #e5ddd5;
+        background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%2390a4ae' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
         min-height: 120px;
         border-bottom: 1px solid #e9ecef;
       }
       
-      .edna-welcome-text {
-        background: white;
-        padding: 16px;
-        border-radius: 12px;
+      .edna-message-container {
+        display: flex;
+        justify-content: flex-start;
+        margin-bottom: 16px;
+      }
+      
+      .edna-welcome-message {
+        background: #ffffff;
+        padding: 12px 16px 8px 16px;
+        border-radius: 8px 8px 8px 0;
         font-size: 14px;
         line-height: 1.5;
-        color: #495057;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        color: #303030;
+        max-width: 80%;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        position: relative;
         direction: rtl;
         text-align: right;
-        margin-bottom: 12px;
+      }
+      
+      .edna-message-tail {
+        position: absolute;
+        bottom: 0;
+        left: -8px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 0 8px 8px;
+        border-color: transparent transparent #ffffff transparent;
+      }
+      
+      .edna-message-time {
+        font-size: 11px;
+        color: #667781;
+        text-align: left;
+        margin-top: 4px;
+        direction: ltr;
       }
       
       .edna-response-time {
-        background: white;
+        background: rgba(255, 255, 255, 0.9);
         padding: 12px 16px;
         border-radius: 12px;
         font-size: 13px;
@@ -176,6 +214,7 @@ export default function WhatsappBubble() {
         align-items: center;
         gap: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        backdrop-filter: blur(10px);
       }
       
       .edna-clock-icon {
@@ -269,7 +308,9 @@ export default function WhatsappBubble() {
     chatWindow.className = `edna-chat-window ${isOpen ? '' : 'edna-hidden'}`;
     chatWindow.innerHTML = `
       <div class="edna-chat-header">
-        <img src="${widgetData.brandImage}" alt="${widgetData.brandName}" class="edna-brand-img">
+        <div class="edna-brand-img-container">
+          <img src="${widgetData.brandImage}" alt="${widgetData.brandName}" class="edna-brand-img">
+        </div>
         <div class="edna-brand-info">
           <div class="edna-brand-name">${widgetData.brandName}</div>
           <div class="edna-brand-subtitle">${widgetData.brandSubtitle}</div>
@@ -282,7 +323,13 @@ export default function WhatsappBubble() {
       </div>
       
       <div class="edna-chat-body">
-        <div class="edna-welcome-text">${widgetData.welcomeMessage}</div>
+        <div class="edna-message-container">
+          <div class="edna-welcome-message">
+            ${widgetData.welcomeMessage}
+            <div class="edna-message-tail"></div>
+            <div class="edna-message-time">${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
+          </div>
+        </div>
         <div class="edna-response-time">
           <svg class="edna-clock-icon" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M12.5 13H7V11.5H11V7H12.5V13Z"/>
