@@ -143,7 +143,7 @@ function SearchButton() {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [error, setError] = useState(null); // ✅ إضافة حالة للخطأ
+  const [error, setError] = useState(null);
 
   // ✅ البحث المباشر من Supabase
   useEffect(() => {
@@ -159,11 +159,11 @@ function SearchButton() {
       console.log('🔍 جاري البحث عن:', query);
 
       try {
-        // ✅ استعلام أكثر مرونة
+        // ✅ استعلام بالأعمدة الموجودة فقط
         const { data, error } = await supabase
           .from("courses")
-          .select("id, title, category, description, price, image, instructor, duration, level")
-          .or(`title.ilike.%${query}%,category.ilike.%${query}%,description.ilike.%${query}%,instructor.ilike.%${query}%`)
+          .select("id, title, category, description, price, image")
+          .or(`title.ilike.%${query}%,category.ilike.%${query}%,description.ilike.%${query}%`)
           .limit(10);
 
         console.log('📊 نتائج البحث:', data);
@@ -191,26 +191,22 @@ function SearchButton() {
     return () => clearTimeout(delayDebounce);
   }, [query]);
 
-  // ✅ اختبار الاتصال بقاعدة البيانات
+  // ✅ اختبار الاتصال بقاعدة البيانات ومعرفة الأعمدة المتاحة
   const testConnection = async () => {
     console.log('🧪 اختبار الاتصال بقاعدة البيانات...');
     try {
+      // ✅ جلب سجل واحد لمعرفة الأعمدة المتاحة
       const { data, error } = await supabase
         .from('courses')
-        .select('count')
+        .select('*')
         .limit(1);
 
       if (error) {
         console.error('❌ فشل الاتصال:', error);
       } else {
-        console.log('✅ الاتصال ناجح:', data);
-        
-        // ✅ جلب عينة من البيانات للتحقق
-        const sampleData = await supabase
-          .from('courses')
-          .select('*')
-          .limit(3);
-        console.log('📋 عينة من البيانات:', sampleData);
+        console.log('✅ الاتصال ناجح');
+        console.log('📋 الأعمدة المتاحة في جدول courses:', data.length > 0 ? Object.keys(data[0]) : 'لا توجد بيانات');
+        console.log('📋 عينة من البيانات:', data);
       }
     } catch (err) {
       console.error('❌ خطأ في الاختبار:', err);
@@ -316,7 +312,7 @@ function SearchButton() {
               onClick={testConnection}
               className="mb-3 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
             >
-              اختبار الاتصال بقاعدة البيانات
+              اختبار الاتصال ومعرفة الأعمدة
             </button>
 
             <form onSubmit={handleSearch} className="flex gap-2 items-center mb-3">
@@ -324,7 +320,7 @@ function SearchButton() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="اكتب اسم الدورة أو المدرب أو التصنيف..."
+                placeholder="اكتب اسم الدورة أو التصنيف..."
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7b0b4c] focus:border-transparent"
                 autoFocus
               />
@@ -373,9 +369,9 @@ function SearchButton() {
                         {course.category}
                       </div>
                     )}
-                    {course.instructor && (
+                    {course.price && (
                       <div className="text-xs text-gray-600 mt-1">
-                        المدرب: {course.instructor}
+                        السعر: {course.price}
                       </div>
                     )}
                   </div>
@@ -398,7 +394,7 @@ function SearchButton() {
                 <div className="text-2xl mb-2">📚</div>
                 ابدأ بالكتابة للبحث عن الدورات المتاحة
                 <div className="text-xs text-gray-400 mt-2">
-                  يمكنك البحث باسم الدورة، المدرب، أو التصنيف
+                  يمكنك البحث باسم الدورة أو التصنيف
                 </div>
               </div>
             )}
@@ -474,18 +470,7 @@ function CoursePopup({ course, onClose, onAddToCart }) {
                     <span className="text-[#7b0b4c] font-medium">{course.level}</span>
                   </div>
                 )}
-                {course.duration && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">المدة:</span>
-                    <span className="text-[#7b0b4c] font-medium">{course.duration}</span>
-                  </div>
-                )}
-                {course.instructor && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">المدرب:</span>
-                    <span className="text-[#7b0b4c] font-medium">{course.instructor}</span>
-                  </div>
-                )}
+                {/* ✅ إزالة الحقول غير الموجودة */}
               </div>
             </div>
 
