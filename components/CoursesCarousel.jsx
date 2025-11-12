@@ -54,26 +54,26 @@ function CourseCard({ course, onClick, formatCurrency }) {
       <img
         src={course.image || fallback}
         alt={course.title}
-        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+        className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         onError={(e) => (e.currentTarget.src = fallback)}
       />
-      <div className="p-5">
-        <h3 className="text-xl font-bold text-[#7b0b4c] mb-3 group-hover:text-[#5e0839] transition-colors line-clamp-2">
+      <div className="p-4 sm:p-5">
+        <h3 className="text-lg sm:text-xl font-bold text-[#7b0b4c] mb-2 sm:mb-3 group-hover:text-[#5e0839] transition-colors line-clamp-2">
           {course.title}
         </h3>
         <p
-          className="text-sm text-gray-600 mb-4 leading-relaxed line-clamp-3"
+          className="text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed line-clamp-3"
         >
           {course.description}
         </p>
         <div className="flex items-center justify-between">
           <div className="text-sm">
             {course.price && course.price !== course.discount && (
-              <span className="line-through text-gray-400 text-sm mr-2">
+              <span className="line-through text-gray-400 text-xs sm:text-sm mr-2">
                 {formatCurrency(parseFloat(course.price.replace(/[^\d.]/g, "") || 0))}
               </span>
             )}
-            <span className="font-bold text-[#7b0b4c] text-lg">
+            <span className="font-bold text-[#7b0b4c] text-base sm:text-lg">
               {formatCurrency(parseFloat(course.discount?.replace(/[^\d.]/g, "") || course.price?.replace(/[^\d.]/g, "") || 0))}
             </span>
           </div>
@@ -360,72 +360,72 @@ export default function CoursesCarousel() {
         </div>
 
         {/* ✅ منطقة عرض الدورة الواحدة مع الأسهم */}
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7b0b4c]"></div>
-          </div>
-        ) : filteredCourses.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-4xl mb-4">🔍</div>
-            <p className="text-gray-500 text-lg">لا توجد دورات مطابقة للبحث</p>
-            <p className="text-gray-400 text-sm mt-2">جرب تغيير الفئة أو كلمات البحث</p>
-          </div>
-        ) : (
-          <div className="relative">
-            {/* ✅ زر السابق */}
-            <button
-              onClick={prevCourse}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-300 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:border-[#7b0b4c] group"
-              aria-label="الدورة السابقة"
-            >
-              <ChevronRight className="w-6 h-6 text-gray-600 group-hover:text-[#7b0b4c] transition-colors" />
-            </button>
+{loading ? (
+  <div className="flex justify-center py-12">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7b0b4c]"></div>
+  </div>
+) : filteredCourses.length === 0 ? (
+  <div className="text-center py-12">
+    <div className="text-4xl mb-4">🔍</div>
+    <p className="text-gray-500 text-lg">لا توجد دورات مطابقة للبحث</p>
+    <p className="text-gray-400 text-sm mt-2">جرب تغيير الفئة أو كلمات البحث</p>
+  </div>
+) : (
+  <div className="relative">
+    {/* ✅ زر السابق */}
+    <button
+      onClick={prevCourse}
+      className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-300 rounded-full p-2 sm:p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:border-[#7b0b4c] group"
+      aria-label="الدورة السابقة"
+    >
+      <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 group-hover:text-[#7b0b4c] transition-colors" />
+    </button>
 
-            {/* ✅ منطقة عرض الدورة الحالية */}
-            <div className="mx-16 flex justify-center">
-              <div className="w-full max-w-md transform transition-all duration-500 ease-in-out">
-                {filteredCourses[currentIndex] && (
-                  <CourseCard
-                    key={filteredCourses[currentIndex].id}
-                    course={filteredCourses[currentIndex]}
-                    formatCurrency={formatCurrency}
-                    onClick={() => setSelectedCourse(filteredCourses[currentIndex])}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* ✅ زر التالي */}
-            <button
-              onClick={nextCourse}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-300 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:border-[#7b0b4c] group"
-              aria-label="الدورة التالية"
-            >
-              <ChevronLeft className="w-6 h-6 text-gray-600 group-hover:text-[#7b0b4c] transition-colors" />
-            </button>
-
-            {/* ✅ مؤشر التقدم */}
-            <div className="flex justify-center mt-8 space-x-2">
-              {filteredCourses.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentIndex
-                      ? "bg-[#7b0b4c] scale-125"
-                      : "bg-gray-300 hover:bg-gray-400"
-                  }`}
-                  aria-label={`انتقل إلى الدورة ${index + 1}`}
-                />
-              ))}
-            </div>
-
-            {/* ✅ عداد الدورات */}
-            <div className="text-center mt-4 text-sm text-gray-500">
-              {currentIndex + 1} من {filteredCourses.length}
-            </div>
-          </div>
+    {/* ✅ منطقة عرض الدورة الحالية - حجم أكبر في الهاتف */}
+    <div className="mx-12 sm:mx-16 flex justify-center">
+      <div className="w-full max-w-sm sm:max-w-md transform transition-all duration-500 ease-in-out">
+        {filteredCourses[currentIndex] && (
+          <CourseCard
+            key={filteredCourses[currentIndex].id}
+            course={filteredCourses[currentIndex]}
+            formatCurrency={formatCurrency}
+            onClick={() => setSelectedCourse(filteredCourses[currentIndex])}
+          />
         )}
+      </div>
+    </div>
+
+    {/* ✅ زر التالي */}
+    <button
+      onClick={nextCourse}
+      className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-300 rounded-full p-2 sm:p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:border-[#7b0b4c] group"
+      aria-label="الدورة التالية"
+    >
+      <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 group-hover:text-[#7b0b4c] transition-colors" />
+    </button>
+
+    {/* ✅ مؤشر التقدم */}
+    <div className="flex justify-center mt-6 sm:mt-8 space-x-2">
+      {filteredCourses.map((_, index) => (
+        <button
+          key={index}
+          onClick={() => setCurrentIndex(index)}
+          className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
+            index === currentIndex
+              ? "bg-[#7b0b4c] scale-125"
+              : "bg-gray-300 hover:bg-gray-400"
+          }`}
+          aria-label={`انتقل إلى الدورة ${index + 1}`}
+        />
+      ))}
+    </div>
+
+    {/* ✅ عداد الدورات */}
+    <div className="text-center mt-3 sm:mt-4 text-sm text-gray-500">
+      {currentIndex + 1} من {filteredCourses.length}
+    </div>
+  </div>
+)}
       </div>
 
       {/* النافذة المنبثقة لتفاصيل الدورة */}
