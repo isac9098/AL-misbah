@@ -7,7 +7,6 @@ const supabaseUrl = "https://kyazwzdyodysnmlqmljv.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5YXp3emR5b2R5c25tbHFtbGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjI4ODcsImV4cCI6MjA3NTc5ODg4N30.5oPcHui5y6onGAr9EYkq8fSihKeb4iC8LQFsLijIco4";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-import { useState } from "react";
 export default function Hero() {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -65,7 +64,7 @@ export default function Hero() {
       // تخزين قيمة البحث مؤقتاً لتصفية الدورات
       localStorage.setItem("searchQuery", searchQuery);
     }
-    
+
     // إغلاق القائمة بعد البحث
     setSuggestions([]);
   };
@@ -76,13 +75,13 @@ export default function Hero() {
     localStorage.setItem("selectedCourseId", course.id);
     setSearchQuery(course.title);
     setSuggestions([]);
-    
+
     // الانتقال إلى قسم CoursesCarousel في نفس الصفحة
     setTimeout(() => {
       const coursesSection = document.getElementById("CoursesCarousel");
       if (coursesSection) {
         coursesSection.scrollIntoView({ behavior: "smooth" });
-        
+
         // تمييز الدورة المحددة بعد الانتقال
         setTimeout(() => {
           const selectedCourseId = localStorage.getItem("selectedCourseId");
@@ -102,7 +101,7 @@ export default function Hero() {
 
     const tryFindCourse = () => {
       const courseElement = document.getElementById(`course-${courseId}`);
-      
+
       if (courseElement) {
         // التمرير إلى الدورة في الكاروسيل
         courseElement.scrollIntoView({ 
@@ -110,7 +109,7 @@ export default function Hero() {
           block: "nearest",
           inline: "center"
         });
-        
+
         // إضافة تأثير التمييز
         courseElement.classList.add(
           "ring-4", 
@@ -120,7 +119,7 @@ export default function Hero() {
           "transition-all", 
           "duration-500"
         );
-        
+
         // إزالة التمييز بعد 4 ثوان
         setTimeout(() => {
           courseElement.classList.remove(
@@ -130,7 +129,7 @@ export default function Hero() {
             "scale-105"
           );
         }, 4000);
-        
+
         localStorage.removeItem("selectedCourseId");
       } else if (attempts < maxAttempts) {
         attempts++;
@@ -164,52 +163,55 @@ export default function Hero() {
             تعلّم.. طوِّر.. وحقق نجاحك مع مركز المصباح للتدريب الفني والعمالة
           </p>
 
+          {/* ✅ شريط البحث مع الاقتراحات */}
+          <div ref={searchContainerRef} className="mt-6 w-full max-w-md relative">
+            <form onSubmit={handleSearch}>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="ابحث عن دورة تدريبية..."
+                  className="w-full rounded-2xl bg-white/95 shadow-lg focus:outline-none focus:ring-4 focus:ring-[#7b0b4c]/40 px-14 py-4 text-lg placeholder-gray-400"
+                />
 
+                <button
+                  type="submit"
+                  className="absolute inset-y-0 left-0 flex items-center pl-4 text-[#7b0b4c]"
+                  aria-label="بحث"
+                >
+                  <svg viewBox="0 0 24 24" className="w-6 h-6">
+                    <path
+                      fill="currentColor"
+                      d="M10 2a8 8 0 1 1 5.293 13.707l4 4-1.414 1.414-4-4A8 8 0 0 1 10 2Zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </form>
 
-function SearchBar() {
-  const [query, setQuery] = useState("");
-
-  const handleSearch = (e) => {
-    e.preventDefault(); // لمنع إعادة تحميل الصفحة
-    if (!query.trim()) return;
-
-    // هنا ضع منطق البحث الحقيقي مثلاً:
-    alert(`جاري البحث عن: ${query}`);
-
-    // يمكنك استبدال alert بـ:
-    // router.push(`/search?query=${encodeURIComponent(query)}`);
-    // أو استدعاء API للبحث عن النتائج
-  };
-
-  return (
-    <form
-      onSubmit={handleSearch}
-      className="mt-6 w-full max-w-md"
-    >
-      <div className="relative">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="ابحث عن..."
-          className="w-full rounded-2xl bg-white/95 shadow-lg focus:outline-none focus:ring-4 focus:ring-[#7b0b4c]/40 px-14 py-4 text-lg placeholder-gray-400"
-        />
-
-        <button
-          type="submit"
-          className="absolute inset-y-0 left-0 flex items-center pl-4 text-[#7b0b4c]"
-          aria-label="بحث"
-        >
-          <svg viewBox="0 0 24 24" className="w-6 h-6">
-            <path
-              fill="currentColor"
-              d="M10 2a8 8 0 1 1 5.293 13.707l4 4-1.414 1.414-4-4A8 8 0 0 1 10 2Zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z"
-            />
-          </svg>
-        </button>
+            {/* ✅ قائمة الاقتراحات */}
+            {suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white rounded-2xl shadow-xl mt-2 max-h-60 overflow-y-auto z-50">
+                {loading ? (
+                  <div className="p-4 text-center text-gray-500">جاري البحث...</div>
+                ) : (
+                  suggestions.map((course) => (
+                    <div
+                      key={course.id}
+                      onClick={() => handleSelect(course)}
+                      className="p-4 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 transition-colors"
+                    >
+                      <div className="font-medium text-gray-900">{course.title}</div>
+                      <div className="text-sm text-gray-500 mt-1">{course.category}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </form>
+    </section>
   );
 }
-
-export default SearchBar;
