@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useApp } from "../app/context/AppContext";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react"; // ✅ استيراد الأيقونات
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // إعداد Supabase
 const supabaseUrl = "https://kyazwzdyodysnmlqmljv.supabase.co";
@@ -11,7 +11,7 @@ const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5YXp3emR5b2R5c25tbHFtbGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjI4ODcsImV4cCI6MjA3NTc5ODg4N30.5oPcHui5y6onGAr9EYkq8fSihKeb4iC8LQFsLijIco4";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// ✅ Toast مخصص ومحسّن بنفس التصميم السابق
+// ✅ Toast مخصص ومحسّن
 function Toast({ message, type = "success", onClose }) {
   useEffect(() => {
     const timer = setTimeout(onClose, 3000);
@@ -203,7 +203,7 @@ export default function CoursesCarousel() {
   const [loading, setLoading] = useState(true);
   const [searchFilter, setSearchFilter] = useState("");
   const [toast, setToast] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0); // ✅ حالة الفهرس الحالي
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -211,46 +211,6 @@ export default function CoursesCarousel() {
 
   const closeToast = () => {
     setToast(null);
-  };
-
-  // ✅ دوال التصفح بالأسهم
-  const nextCourse = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex === filteredCourses.length - 1 ? 0 : prevIndex + 1
-    );
-  };
-
-  const prevCourse = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex === 0 ? filteredCourses.length - 1 : prevIndex - 1
-    );
-  };
-
-  // ✅ التصبح بالسهام على الكيبورد
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'ArrowRight') {
-        nextCourse();
-      } else if (e.key === 'ArrowLeft') {
-        prevCourse();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [filteredCourses.length]);
-
-  // دالة إضافة الدورة للسلة
-  const addToCart = (course) => {
-    const currentCart = JSON.parse(localStorage.getItem("cart") || "[]");
-    if (!currentCart.find((c) => c.id === course.id)) {
-      currentCart.push(course);
-      localStorage.setItem("cart", JSON.stringify(currentCart));
-      window.dispatchEvent(new Event("cartUpdated"));
-      showToast("تمت إضافة الدورة إلى السلة بنجاح!", "success");
-    } else {
-      showToast("هذه الدورة موجودة بالفعل في السلة!", "warning");
-    }
   };
 
   // جلب البيانات من Supabase
@@ -307,10 +267,50 @@ export default function CoursesCarousel() {
           .filter((c) => c.category === activeTab)
           .filter((c) => c.title.toLowerCase().includes(searchFilter));
 
+  // ✅ دوال التصفح بالأسهم - بعد تعريف filteredCourses
+  const nextCourse = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex === filteredCourses.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const prevCourse = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex === 0 ? filteredCourses.length - 1 : prevIndex - 1
+    );
+  };
+
+  // ✅ التصبح بالسهام على الكيبورد
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowRight') {
+        nextCourse();
+      } else if (e.key === 'ArrowLeft') {
+        prevCourse();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [filteredCourses.length]);
+
   // ✅ إعادة تعيين الفهرس عند تغيير التبويب أو البحث
   useEffect(() => {
     setCurrentIndex(0);
   }, [activeTab, searchFilter]);
+
+  // دالة إضافة الدورة للسلة
+  const addToCart = (course) => {
+    const currentCart = JSON.parse(localStorage.getItem("cart") || "[]");
+    if (!currentCart.find((c) => c.id === course.id)) {
+      currentCart.push(course);
+      localStorage.setItem("cart", JSON.stringify(currentCart));
+      window.dispatchEvent(new Event("cartUpdated"));
+      showToast("تمت إضافة الدورة إلى السلة بنجاح!", "success");
+    } else {
+      showToast("هذه الدورة موجودة بالفعل في السلة!", "warning");
+    }
+  };
 
   return (
     <section className="py-16 bg-gradient-to-b from-gray-50 to-white" id="courses-section">
@@ -384,12 +384,14 @@ export default function CoursesCarousel() {
             {/* ✅ منطقة عرض الدورة الحالية */}
             <div className="mx-16 flex justify-center">
               <div className="w-full max-w-md transform transition-all duration-500 ease-in-out">
-                <CourseCard
-                  key={filteredCourses[currentIndex]?.id}
-                  course={filteredCourses[currentIndex]}
-                  formatCurrency={formatCurrency}
-                  onClick={() => setSelectedCourse(filteredCourses[currentIndex])}
-                />
+                {filteredCourses[currentIndex] && (
+                  <CourseCard
+                    key={filteredCourses[currentIndex].id}
+                    course={filteredCourses[currentIndex]}
+                    formatCurrency={formatCurrency}
+                    onClick={() => setSelectedCourse(filteredCourses[currentIndex])}
+                  />
+                )}
               </div>
             </div>
 
