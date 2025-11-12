@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useApp } from "../app/context/AppContext";
 import { createPortal } from "react-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react"; // ✅ استيراد الأيقونات
 
 // إعداد Supabase
 const supabaseUrl = "https://kyazwzdyodysnmlqmljv.supabase.co";
@@ -48,21 +49,20 @@ function CourseCard({ course, onClick, formatCurrency }) {
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       onClick={onClick}
-      className="cursor-pointer bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 overflow-hidden hover:border-[#7b0b4c]/30 group"
+      className="cursor-pointer bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 overflow-hidden hover:border-[#7b0b4c]/30 group w-full"
     >
       <img
         src={course.image || fallback}
         alt={course.title}
-        className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         onError={(e) => (e.currentTarget.src = fallback)}
       />
-      <div className="p-4">
-        <h3 className="text-lg font-bold text-[#7b0b4c] mb-2 group-hover:text-[#5e0839] transition-colors">
+      <div className="p-5">
+        <h3 className="text-xl font-bold text-[#7b0b4c] mb-3 group-hover:text-[#5e0839] transition-colors line-clamp-2">
           {course.title}
         </h3>
         <p
-          className="text-sm text-gray-600 mb-3 leading-relaxed"
-          style={{ minHeight: "2.4rem" }}
+          className="text-sm text-gray-600 mb-4 leading-relaxed line-clamp-3"
         >
           {course.description}
         </p>
@@ -77,6 +77,9 @@ function CourseCard({ course, onClick, formatCurrency }) {
               {formatCurrency(parseFloat(course.discount?.replace(/[^\d.]/g, "") || course.price?.replace(/[^\d.]/g, "") || 0))}
             </span>
           </div>
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+            {course.category}
+          </span>
         </div>
       </div>
     </div>
@@ -200,6 +203,7 @@ export default function CoursesCarousel() {
   const [loading, setLoading] = useState(true);
   const [searchFilter, setSearchFilter] = useState("");
   const [toast, setToast] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0); // ✅ حالة الفهرس الحالي
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -208,6 +212,33 @@ export default function CoursesCarousel() {
   const closeToast = () => {
     setToast(null);
   };
+
+  // ✅ دوال التصفح بالأسهم
+  const nextCourse = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex === filteredCourses.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const prevCourse = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex === 0 ? filteredCourses.length - 1 : prevIndex - 1
+    );
+  };
+
+  // ✅ التصبح بالسهام على الكيبورد
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowRight') {
+        nextCourse();
+      } else if (e.key === 'ArrowLeft') {
+        prevCourse();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [filteredCourses.length]);
 
   // دالة إضافة الدورة للسلة
   const addToCart = (course) => {
@@ -276,7 +307,10 @@ export default function CoursesCarousel() {
           .filter((c) => c.category === activeTab)
           .filter((c) => c.title.toLowerCase().includes(searchFilter));
 
-  const visible = filteredCourses.slice(0, 4);
+  // ✅ إعادة تعيين الفهرس عند تغيير التبويب أو البحث
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [activeTab, searchFilter]);
 
   return (
     <section className="py-16 bg-gradient-to-b from-gray-50 to-white" id="courses-section">
@@ -325,7 +359,7 @@ export default function CoursesCarousel() {
           </div>
         </div>
 
-        {/* عرض الدورات */}
+        {/* ✅ منطقة عرض الدورة الواحدة مع الأسهم */}
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7b0b4c]"></div>
@@ -337,15 +371,57 @@ export default function CoursesCarousel() {
             <p className="text-gray-400 text-sm mt-2">جرب تغيير الفئة أو كلمات البحث</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {visible.map((c) => (
-              <CourseCard
-                key={c.id}
-                course={c}
-                formatCurrency={formatCurrency}
-                onClick={() => setSelectedCourse(c)}
-              />
-            ))}
+          <div className="relative">
+            {/* ✅ زر السابق */}
+            <button
+              onClick={prevCourse}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-300 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:border-[#7b0b4c] group"
+              aria-label="الدورة السابقة"
+            >
+              <ChevronRight className="w-6 h-6 text-gray-600 group-hover:text-[#7b0b4c] transition-colors" />
+            </button>
+
+            {/* ✅ منطقة عرض الدورة الحالية */}
+            <div className="mx-16 flex justify-center">
+              <div className="w-full max-w-md transform transition-all duration-500 ease-in-out">
+                <CourseCard
+                  key={filteredCourses[currentIndex]?.id}
+                  course={filteredCourses[currentIndex]}
+                  formatCurrency={formatCurrency}
+                  onClick={() => setSelectedCourse(filteredCourses[currentIndex])}
+                />
+              </div>
+            </div>
+
+            {/* ✅ زر التالي */}
+            <button
+              onClick={nextCourse}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/90 hover:bg-white border border-gray-300 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:border-[#7b0b4c] group"
+              aria-label="الدورة التالية"
+            >
+              <ChevronLeft className="w-6 h-6 text-gray-600 group-hover:text-[#7b0b4c] transition-colors" />
+            </button>
+
+            {/* ✅ مؤشر التقدم */}
+            <div className="flex justify-center mt-8 space-x-2">
+              {filteredCourses.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    index === currentIndex
+                      ? "bg-[#7b0b4c] scale-125"
+                      : "bg-gray-300 hover:bg-gray-400"
+                  }`}
+                  aria-label={`انتقل إلى الدورة ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* ✅ عداد الدورات */}
+            <div className="text-center mt-4 text-sm text-gray-500">
+              {currentIndex + 1} من {filteredCourses.length}
+            </div>
           </div>
         )}
       </div>
