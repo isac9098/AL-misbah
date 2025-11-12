@@ -30,6 +30,8 @@ export default function Header() {
   const { currency, setCurrency, t, lang, toggleLang } = useApp();
   const [authMode, setAuthMode] = useState(null);
   const [user, setUser] = useState(null);
+  // ✅ حالة التحكم في إظهار/إخفاء زر اللغة
+  const [showLanguageButton, setShowLanguageButton] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -67,6 +69,7 @@ export default function Header() {
               toggleCurrency={toggleCurrency}
               lang={lang}
               toggleLang={toggleLang}
+              showLanguageButton={showLanguageButton} // ✅ تمرير الحالة
             />
           </div>
         </div>
@@ -148,7 +151,7 @@ function SearchButton() {
     const delayDebounce = setTimeout(async () => {
       setLoading(true);
       console.log('🔍 جاري البحث عن:', query); // للتحقق
-      
+
       const { data, error } = await supabase
         .from("courses")
         .select("id, title, category")
@@ -156,7 +159,7 @@ function SearchButton() {
         .limit(6);
 
       console.log('📊 نتائج البحث:', data); // للتحقق
-      
+
       if (!error) {
         setSuggestions(data || []);
       } else {
@@ -184,7 +187,7 @@ function SearchButton() {
     setQuery("");
     setOpen(false);
     setSuggestions([]);
-    
+
     // الانتقال إلى قسم الدورات
     setTimeout(() => {
       scrollToCourses();
@@ -196,7 +199,7 @@ function SearchButton() {
     const section = document.getElementById("courses-section");
     if (section) {
       section.scrollIntoView({ behavior: "smooth" });
-      
+
       // إذا كان هناك دورة محددة مختارة، قم بتمييزها
       setTimeout(() => {
         const selectedCourseId = localStorage.getItem("selectedCourseId");
@@ -420,7 +423,7 @@ function CartButton() {
 }
 
 /* ======================= LangCurrencyFixed ======================= */
-function LangCurrencyFixed({ currency, toggleCurrency, lang, toggleLang }) {
+function LangCurrencyFixed({ currency, toggleCurrency, lang, toggleLang, showLanguageButton = false }) {
   return (
     <div className="flex items-center gap-3 text-sm">
       <div
@@ -430,13 +433,17 @@ function LangCurrencyFixed({ currency, toggleCurrency, lang, toggleLang }) {
         <DollarSign className="w-4 h-4" />
         <span>{currency}</span>
       </div>
-      <div
-        onClick={toggleLang}
-        className="flex items-center gap-1 px-3 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer"
-      >
-        <Globe className="w-4 h-4" />
-        <span>{lang}</span>
-      </div>
+      
+      {/* ✅ زر اللغة - مخفي افتراضياً */}
+      {showLanguageButton && (
+        <div
+          onClick={toggleLang}
+          className="flex items-center gap-1 px-3 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer"
+        >
+          <Globe className="w-4 h-4" />
+          <span>{lang}</span>
+        </div>
+      )}
     </div>
   );
 }
