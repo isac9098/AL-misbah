@@ -309,6 +309,159 @@ export default function CoursesDashboard() {
             </div>
           )}
         </div>
+
+      {/* 🖼️ إدارة الحملات الإعلانية */}
+
+        <div className="mt-12 border-t pt-8">
+          <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">
+            🖼️ إدارة الحملات الإعلانية
+          </h2>
+          <CampaignsManager />
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+/* 👇 الكومبوننت الخاص بالحملات */
+function CampaignsManager() {
+  const [campaigns, setCampaigns] = useState([]);
+  const [imageFile, setImageFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const CAMPAIGN_BUCKET = "campaigns-images"; // اسم الباكت
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
+
+  async function fetchCampaigns() {
+    const { data, error } = await supabase
+      .from("campaigns")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if (error) console.error("❌ خطأ في جلب الحملات:", error);
+    else setCampaigns(data || []);
+  }
+
+  async function uploadImage(file) {
+    const fileName = `${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage
+      .from(CAMPAIGN_BUCKET)
+      .upload(fileName, file);
+
+    if (error) {
+      console.error("❌ خطأ أثناء رفع صورة الحملة:", error);
+      toast.error("فشل رفع الصورة!");
+      return null;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(CAMPAIGN_BUCKET)
+      .getPublicUrl(fileName);
+
+    return publicUrlData.publicUrl;
+  }
+
+  async function addCampaignImage(e) {
+    e.preventDefault();
+    if (!imageFile) {
+      toast.warning("⚠️ الرجاء اختيار صورة أولاً");
+      return;
+    }
+
+    setUploading(true);
+    const imageUrl = await uploadImage(imageFile);
+    setUploading(false);
+
+    if (!imageUrl) return;
+
+    const { data, error } = await supabase
+      .from("campaigns")
+      .insert([{ image: imageUrl }])
+      .select();
+
+    if (error) {
+      toast.error("❌ حدث خطأ أثناء إضافة الصورة!");
+      console.error(error);
+    } else {
+      toast.success("✅ تمت إضافة الصورة بنجاح!");
+      setCampaigns([data[0], ...campaigns]);
+      setImageFile(null);
+    }
+  }
+
+  // 🗑️ دالة حذف الحملة المُعدّلة لحل مشكلة عدم الحذف الدائم
+  async function deleteCampaign(id) {
+    const campaignToDelete = campaigns.find(c => c.id === id);
+    if (!campaignToDelete) return;
+
+    // 1. استخراج اسم الملف
+    const fileName = getFileNameFromUrl(campaignToDelete.image, CAMPAIGN_BUCKET);
+
+    // 2. حذف السجل من قاعدة البيانات (الأولوية للحذف من DB)
+    const { error: dbError } = await supabase.from("campaigns").delete().eq("id", id);
+    
+
+    if (dbError) {
+      // ❌ إذا فشل الحذف في قاعدة البيانات، نتوقف ونعرض رسالة واضحة
+      toast.error(`❌ فشل حذف السجل من قاعدة البيانات. قد تكون المشكلة في الصلاحيات. الخطأ: ${dbError.message}`);
+      console.error("Database Delete Failed:", dbError);
+      return;
+    }
+
+    // 3. حذف الملف من Supabase Storage (فقط إذا نجح حذف السجل من DB)
+    if (fileName) {
+      const { error: storageError } = await supabase.storage
+        .from(CAMPAIGN_BUCKET)
+        .remove([fileName]);
+
+      if (storageError) {
+        console.warn("⚠️ فشل حذف الصورة من التخزين (السجل حُذف):", storageError);
+      }
+    }
+    
+
+    // 4. تحديث حالة الواجهة
+    setCampaigns(campaigns.filter((c) => c.id !== id));
+    toast.success("✅ تم حذف الحملة والصورة المرتبطة بها بنجاح!");
+  }
+
+  return (
+    <div className="bg-gray-50 rounded-xl p-4 shadow-inner">
+      <form onSubmit={addCampaignImage} className="flex flex-col sm:flex-row gap-4 items-center">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setImageFile(e.target.files[0])}
+          className="border rounded-lg px-3 py-2 text-gray-800 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-none file:bg-[#7b0b4c] file:text-white file:cursor-pointer w-full sm:w-auto"
+        />
+        <button
+          type="submit"
+          disabled={uploading}
+          className="bg-[#7b0b4c] text-white px-6 py-2 rounded-lg hover:bg-[#5e0839] transition w-full sm:w-auto"
+        >
+          {uploading ? "جاري الرفع..." : "رفع الصورة"}
+        </button>
+      </form>
+
+      {/* ✅ تحسين التوافق: Grid يبدأ من عمود واحد، ثم عمودين، ثم 3 أعمدة */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        {campaigns.map((c) => (
+          <div key={c.id} className="bg-white rounded-xl shadow overflow-hidden hover:shadow-lg transition">
+            <img src={c.image} alt="campaign" className="w-full h-48 object-cover" />
+            <div className="p-3 flex justify-between items-center">
+              <span className="text-gray-600 text-sm">حملة #{c.id}</span>
+              <button
+                onClick={() => deleteCampaign(c.id)}
+                className="text-red-600 hover:text-red-800 text-sm font-semibold"
+              >
+                حذف
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
