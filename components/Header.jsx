@@ -52,10 +52,12 @@ export default function Header() {
       {/* Top Bar */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 relative z-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Logo */}
+        
+  {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <img src="/logo1.png" alt="AL Misbah Logo" className="w-10 h-10 object-contain" />
-            <span className="font-extrabold tracking-wide text-[#7b0b4c]">
+            
+<span className="font-extrabold tracking-wide text-[#7b0b4c]" style={{ fontFamily: 'var(--font-aref)' }}>
   مركز المصباح
 </span>
           </Link>
