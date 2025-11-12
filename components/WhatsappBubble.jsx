@@ -8,9 +8,8 @@ export default function WhatsappBubble() {
   const [isOpen, setIsOpen] = useState(false);
   const lastScroll = useRef(0);
 
-  // بيانات الـ widget - يمكن تعديلها بسهولة
   const widgetData = {
-    phoneNumber: "97472041794", // رقم الهاتف هنا
+    phoneNumber: "97472041794",
     welcomeMessage: "مرحباً بك في مركز المصباح!",
     brandName: "Al Misbah Center",
     brandSubtitle: "Learn to Lead",
@@ -20,187 +19,284 @@ export default function WhatsappBubble() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // إنشاء العنصر الرئيسي
     const host = document.createElement("div");
     containerRef.current = host;
     document.body.appendChild(host);
 
     const shadow = host.attachShadow({ mode: "open" });
 
-    // إضافة CSS
+    // CSS مطابق لـ Edna
     const style = document.createElement("style");
     style.textContent = `
-      .whatsapp-widget {
+      .edna-whatsapp-widget {
         position: fixed;
         bottom: 20px;
         right: 20px;
-        z-index: 9999;
-        font-family: Arial, sans-serif;
+        z-index: 99999;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         direction: ltr;
       }
       
-      .whatsapp-button {
+      .edna-whatsapp-button {
         width: 60px;
         height: 60px;
-        background-color: #22c55e;
+        background: #22c55e;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        transition: all 0.3s ease;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+        outline: none;
       }
       
-      .whatsapp-button:hover {
-        transform: scale(1.1);
+      .edna-whatsapp-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
       }
       
-      .whatsapp-icon {
+      .edna-whatsapp-icon {
         width: 30px;
         height: 30px;
-        color: white;
+        fill: white;
       }
       
-      .chat-window {
+      .edna-chat-window {
         position: absolute;
         bottom: 70px;
         right: 0;
-        width: 300px;
+        width: 320px;
         background: white;
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
         overflow: hidden;
+        animation: edna-slideUp 0.3s ease-out;
         direction: ltr;
-        text-align: left;
       }
       
-      .chat-header {
-        background: #7b0b4c;
-        padding: 15px;
+      @keyframes edna-slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      .edna-chat-header {
+        background: linear-gradient(135deg, #7b0b4c, #9a2c6e);
+        padding: 20px;
         color: white;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
+        position: relative;
       }
       
-      .brand-img {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
+      .edna-brand-img {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
         object-fit: cover;
+        border: 2px solid rgba(255, 255, 255, 0.3);
       }
       
-      .brand-info {
+      .edna-brand-info {
         flex: 1;
       }
       
-      .brand-name {
-        font-weight: bold;
-        font-size: 14px;
+      .edna-brand-name {
+        font-weight: 700;
+        font-size: 16px;
+        margin-bottom: 4px;
       }
       
-      .brand-subtitle {
+      .edna-brand-subtitle {
+        font-size: 13px;
+        opacity: 0.9;
+        font-weight: 400;
+      }
+      
+      .edna-status {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
         font-size: 12px;
         opacity: 0.9;
       }
       
-      .chat-body {
-        padding: 15px;
-        background: #f8f9fa;
-        min-height: 100px;
+      .edna-status-dot {
+        width: 8px;
+        height: 8px;
+        background: #22c55e;
+        border-radius: 50%;
+        animation: edna-pulse 2s infinite;
       }
       
-      .welcome-text {
+      @keyframes edna-pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+      }
+      
+      .edna-chat-body {
+        padding: 20px;
+        background: #f8f9fa;
+        min-height: 120px;
+        border-bottom: 1px solid #e9ecef;
+      }
+      
+      .edna-welcome-text {
         background: white;
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 10px;
+        padding: 16px;
+        border-radius: 12px;
         font-size: 14px;
+        line-height: 1.5;
+        color: #495057;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         direction: rtl;
         text-align: right;
+        margin-bottom: 12px;
       }
       
-      .phone-info {
+      .edna-response-time {
         background: white;
-        padding: 10px;
-        border-radius: 8px;
-        font-size: 14px;
-        margin-bottom: 10px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 13px;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
       }
       
-      .chat-footer {
-        padding: 15px;
+      .edna-clock-icon {
+        width: 14px;
+        height: 14px;
+        fill: #6c757d;
+      }
+      
+      .edna-chat-footer {
+        padding: 20px;
         background: white;
       }
       
-      .start-chat-btn {
+      .edna-start-chat-btn {
         width: 100%;
-        padding: 12px;
+        padding: 14px 20px;
         background: #22c55e;
         color: white;
         border: none;
-        border-radius: 6px;
+        border-radius: 12px;
         cursor: pointer;
-        font-size: 14px;
-        font-weight: bold;
+        font-size: 15px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
       }
       
-      .start-chat-btn:hover {
+      .edna-start-chat-btn:hover {
         background: #16a34a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
       }
       
-      .minimized {
+      .edna-whatsapp-btn-icon {
+        width: 18px;
+        height: 18px;
+        fill: white;
+      }
+      
+      .edna-close-button {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 18px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease;
+      }
+      
+      .edna-close-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+      
+      .edna-minimized {
         transform: translateY(60px);
         opacity: 0.8;
       }
       
-      .close-button {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-        font-size: 16px;
+      .edna-hidden {
+        display: none !important;
       }
     `;
     shadow.appendChild(style);
 
-    // إنشاء واجهة الـ widget
+    // إنشاء الـ widget
     const widgetContainer = document.createElement("div");
-    widgetContainer.className = `whatsapp-widget ${isMinimized ? 'minimized' : ''}`;
+    widgetContainer.className = `edna-whatsapp-widget ${isMinimized ? 'edna-minimized' : ''}`;
     
-    // زر الواتساب
-    const whatsappButton = document.createElement("div");
-    whatsappButton.className = "whatsapp-button";
+    // زر الواتساب الرئيسي
+    const whatsappButton = document.createElement("button");
+    whatsappButton.className = "edna-whatsapp-button";
     whatsappButton.innerHTML = `
-      <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="currentColor">
+      <svg class="edna-whatsapp-icon" viewBox="0 0 24 24" fill="currentColor">
         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893c0-3.176-1.24-6.165-3.495-8.411"/>
       </svg>
     `;
     
     // نافذة الدردشة
     const chatWindow = document.createElement("div");
-    chatWindow.className = "chat-window";
-    chatWindow.style.display = isOpen ? 'block' : 'none';
+    chatWindow.className = `edna-chat-window ${isOpen ? '' : 'edna-hidden'}`;
     chatWindow.innerHTML = `
-      <div class="chat-header">
-        <img src="${widgetData.brandImage}" alt="${widgetData.brandName}" class="brand-img">
-        <div class="brand-info">
-          <div class="brand-name">${widgetData.brandName}</div>
-          <div class="brand-subtitle">${widgetData.brandSubtitle}</div>
+      <div class="edna-chat-header">
+        <img src="${widgetData.brandImage}" alt="${widgetData.brandName}" class="edna-brand-img">
+        <div class="edna-brand-info">
+          <div class="edna-brand-name">${widgetData.brandName}</div>
+          <div class="edna-brand-subtitle">${widgetData.brandSubtitle}</div>
         </div>
-        <button class="close-button">&times;</button>
+        <div class="edna-status">
+          <div class="edna-status-dot"></div>
+          <span>Online</span>
+        </div>
+        <button class="edna-close-button">&times;</button>
       </div>
-      <div class="chat-body">
-        <div class="welcome-text">${widgetData.welcomeMessage}</div>
-        <div class="phone-info">Phone: ${widgetData.phoneNumber}</div>
+      
+      <div class="edna-chat-body">
+        <div class="edna-welcome-text">${widgetData.welcomeMessage}</div>
+        <div class="edna-response-time">
+          <svg class="edna-clock-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M12.5 13H7V11.5H11V7H12.5V13Z"/>
+          </svg>
+          We typically reply within minutes
+        </div>
       </div>
-      <div class="chat-footer">
-        <button class="start-chat-btn">
-          Start Chat on WhatsApp
+      
+      <div class="edna-chat-footer">
+        <button class="edna-start-chat-btn">
+          <svg class="edna-whatsapp-btn-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893c0-3.176-1.24-6.165-3.495-8.411"/>
+          </svg>
+          Start Chat
         </button>
       </div>
     `;
@@ -210,36 +306,31 @@ export default function WhatsappBubble() {
     widgetContainer.appendChild(chatWindow);
     shadow.appendChild(widgetContainer);
 
-    // إضافة event listeners
+    // Event Listeners
     whatsappButton.addEventListener('click', (e) => {
       e.stopPropagation();
       setIsOpen(!isOpen);
     });
 
-    // زر الإغلاق
-    const closeButton = chatWindow.querySelector('.close-button');
+    const closeButton = chatWindow.querySelector('.edna-close-button');
     closeButton.addEventListener('click', (e) => {
       e.stopPropagation();
       setIsOpen(false);
     });
 
-    // زر بدء المحادثة
-    const startChatBtn = chatWindow.querySelector('.start-chat-btn');
+    const startChatBtn = chatWindow.querySelector('.edna-start-chat-btn');
     startChatBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      // فتح رابط الواتساب مع رقم الهاتف
       window.open(`https://wa.me/${widgetData.phoneNumber}`, '_blank');
       setIsOpen(false);
     });
 
-    // إغلاق النافذة عند الضغط خارجها
     const handleClickOutside = (event) => {
       if (!widgetContainer.contains(event.target)) {
         setIsOpen(false);
       }
     };
 
-    // مراقبة السحب
     const handleScroll = () => {
       const currentScroll = window.scrollY;
       if (currentScroll > lastScroll.current + 10) {
@@ -262,32 +353,34 @@ export default function WhatsappBubble() {
     };
   }, []);
 
-  // تحديث حالة التصغير
   useEffect(() => {
     if (!containerRef.current) return;
     const shadow = containerRef.current.shadowRoot;
     if (!shadow) return;
     
-    const widget = shadow.querySelector('.whatsapp-widget');
+    const widget = shadow.querySelector('.edna-whatsapp-widget');
     if (!widget) return;
 
     if (isMinimized) {
-      widget.classList.add('minimized');
+      widget.classList.add('edna-minimized');
     } else {
-      widget.classList.remove('minimized');
+      widget.classList.remove('edna-minimized');
     }
   }, [isMinimized]);
 
-  // تحديث حالة الفتح والإغلاق
   useEffect(() => {
     if (!containerRef.current) return;
     const shadow = containerRef.current.shadowRoot;
     if (!shadow) return;
     
-    const chatWindow = shadow.querySelector('.chat-window');
+    const chatWindow = shadow.querySelector('.edna-chat-window');
     if (!chatWindow) return;
 
-    chatWindow.style.display = isOpen ? 'block' : 'none';
+    if (isOpen) {
+      chatWindow.classList.remove('edna-hidden');
+    } else {
+      chatWindow.classList.add('edna-hidden');
+    }
   }, [isOpen]);
 
   return null;
