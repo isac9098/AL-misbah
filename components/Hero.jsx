@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { createPortal } from "react-dom";
+import { useApp } from "../app/context/AppContext"; // ✅ استيراد Context
 
 // ✅ إعداد Supabase
 const supabaseUrl = "https://kyazwzdyodysnmlqmljv.supabase.co";
@@ -45,8 +46,11 @@ export default function Hero() {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [toast, setToast] = useState(null); // ✅ حالة للـ Toast
+  const [toast, setToast] = useState(null);
   const searchContainerRef = useRef(null);
+  
+  // ✅ استخدام Context للعملة
+  const { currency, formatCurrency } = useApp();
 
   // ✅ إظهار Toast
   const showToast = (message, type = "success") => {
@@ -254,7 +258,7 @@ export default function Hero() {
                       )}
                       {course.price && (
                         <div className="text-xs text-gray-600 mt-1">
-                          السعر: {course.price}
+                          السعر: {formatCurrency(parseFloat(course.price.replace(/[^\d.]/g, "") || 0))}
                         </div>
                       )}
                     </div>
@@ -289,11 +293,8 @@ export default function Hero() {
 
 /* ======================= CoursePopup ======================= */
 function CoursePopup({ course, onClose, onAddToCart }) {
-  // ✅ دالة لتنسيق السعر
-  const formatCurrency = (price) => {
-    const priceNumber = parseFloat(price?.replace(/[^\d.]/g, "") || 0);
-    return `${priceNumber.toLocaleString('ar-QA')} QAR`;
-  };
+  // ✅ استخدام Context للعملة
+  const { formatCurrency } = useApp();
 
   useEffect(() => {
     const handleEsc = (e) => e.key === "Escape" && onClose();
@@ -360,7 +361,7 @@ function CoursePopup({ course, onClose, onAddToCart }) {
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="text-center mb-4">
                 <div className="text-3xl font-bold text-[#7b0b4c]">
-                  {formatCurrency(course.price)}
+                  {formatCurrency(parseFloat(course.price?.replace(/[^\d.]/g, "") || 0))}
                 </div>
                 <div className="text-sm text-gray-600 mt-1">سعر الدورة</div>
               </div>
