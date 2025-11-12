@@ -144,6 +144,20 @@ function SearchButton() {
   const [loading, setLoading] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null); // ✅ إضافة حالة للـ Toast
+  
+  // ✅ استخدام Context للعملة
+  const { formatCurrency } = useApp();
+
+  // ✅ إظهار Toast
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+  };
+
+  // ✅ إغلاق Toast
+  const closeToast = () => {
+    setToast(null);
+  };
 
   // ✅ البحث المباشر من Supabase
   useEffect(() => {
@@ -167,7 +181,6 @@ function SearchButton() {
           .limit(10);
 
         console.log('📊 نتائج البحث:', data);
-        console.log('❌ خطأ البحث:', error);
 
         if (error) {
           console.error("خطأ في جلب نتائج البحث:", error);
@@ -175,9 +188,6 @@ function SearchButton() {
           setSuggestions([]);
         } else {
           setSuggestions(data || []);
-          if (data && data.length === 0) {
-            console.log('⚠️ لا توجد نتائج، جرب البحث بكلمات أخرى');
-          }
         }
       } catch (err) {
         console.error("خطأ غير متوقع:", err);
@@ -190,35 +200,6 @@ function SearchButton() {
 
     return () => clearTimeout(delayDebounce);
   }, [query]);
-
-  // ✅ اختبار الاتصال بقاعدة البيانات ومعرفة الأعمدة المتاحة
-  const testConnection = async () => {
-    console.log('🧪 اختبار الاتصال بقاعدة البيانات...');
-    try {
-      // ✅ جلب سجل واحد لمعرفة الأعمدة المتاحة
-      const { data, error } = await supabase
-        .from('courses')
-        .select('*')
-        .limit(1);
-
-      if (error) {
-        console.error('❌ فشل الاتصال:', error);
-      } else {
-        console.log('✅ الاتصال ناجح');
-        console.log('📋 الأعمدة المتاحة في جدول courses:', data.length > 0 ? Object.keys(data[0]) : 'لا توجد بيانات');
-        console.log('📋 عينة من البيانات:', data);
-      }
-    } catch (err) {
-      console.error('❌ خطأ في الاختبار:', err);
-    }
-  };
-
-  // ✅ اختبار الاتصال عند فتح البحث
-  useEffect(() => {
-    if (open) {
-      testConnection();
-    }
-  }, [open]);
 
   // ✅ عند تنفيذ البحث الكامل
   const handleSearch = (e) => {
@@ -246,7 +227,7 @@ function SearchButton() {
   const handleAddToCart = (course) => {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
     const existingItem = cart.find(item => item.id === course.id);
-    
+
     if (!existingItem) {
       cart.push({
         ...course,
@@ -254,9 +235,9 @@ function SearchButton() {
       });
       localStorage.setItem("cart", JSON.stringify(cart));
       window.dispatchEvent(new Event("cartUpdated"));
-      alert("تمت إضافة الدورة إلى السلة!");
+      showToast("تمت إضافة الدورة إلى السلة بنجاح!", "success"); // ✅ استخدام Toast
     } else {
-      alert("هذه الدورة موجودة بالفعل في السلة!");
+      showToast("هذه الدورة موجودة بالفعل في السلة!", "warning"); // ✅ استخدام Toast
     }
     handleClosePopup();
   };
@@ -306,14 +287,6 @@ function SearchButton() {
                 ✕
               </button>
             </div>
-
-            {/* ✅ زر اختبار الاتصال (للتحقق فقط) */}
-            <button
-              onClick={testConnection}
-              className="mb-3 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
-            >
-              اختبار الاتصال ومعرفة الأعمدة
-            </button>
 
             <form onSubmit={handleSearch} className="flex gap-2 items-center mb-3">
               <input
@@ -371,7 +344,7 @@ function SearchButton() {
                     )}
                     {course.price && (
                       <div className="text-xs text-gray-600 mt-1">
-                        السعر: {course.price}
+                        السعر: {formatCurrency(parseFloat(course.price.replace(/[^\d.]/g, "") || 0))} {/* ✅ استخدام formatCurrency */}
                       </div>
                     )}
                   </div>
@@ -410,13 +383,22 @@ function SearchButton() {
           onAddToCart={handleAddToCart}
         />
       )}
+
+      {/* ✅ عرض Toast */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={closeToast}
+        />
+      )}
     </div>
   );
 }
 
 /* ======================= CoursePopup ======================= */
 function CoursePopup({ course, onClose, onAddToCart }) {
-  const { formatCurrency } = useApp();
+  const { formatCurrency } = useApp(); // ✅ استخدام Context للعملة
 
   useEffect(() => {
     const handleEsc = (e) => e.key === "Escape" && onClose();
@@ -470,7 +452,6 @@ function CoursePopup({ course, onClose, onAddToCart }) {
                     <span className="text-[#7b0b4c] font-medium">{course.level}</span>
                   </div>
                 )}
-                {/* ✅ إزالة الحقول غير الموجودة */}
               </div>
             </div>
 
@@ -478,11 +459,11 @@ function CoursePopup({ course, onClose, onAddToCart }) {
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="text-center mb-4">
                 <div className="text-3xl font-bold text-[#7b0b4c]">
-                  {formatCurrency(parseFloat(course.price?.replace(/[^\d.]/g, "") || 0))}
+                  {formatCurrency(parseFloat(course.price?.replace(/[^\d.]/g, "") || 0))} {/* ✅ استخدام formatCurrency */}
                 </div>
                 <div className="text-sm text-gray-600 mt-1">سعر الدورة</div>
               </div>
-              
+
               <button
                 onClick={() => onAddToCart(course)}
                 className="w-full bg-[#7b0b4c] text-white py-3 rounded-lg font-semibold hover:bg-[#5e0839] transition-colors"
@@ -502,6 +483,38 @@ function CoursePopup({ course, onClose, onAddToCart }) {
             </div>
           )}
         </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ✅ مكون Toast (يجب إضافته في نفس الملف)
+function Toast({ message, type = "success", onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgColor = type === "success" ? "bg-green-500" : "bg-yellow-500";
+  const textColor = "text-white";
+
+  return createPortal(
+    <div className="fixed top-4 right-4 z-[10000] animate-scale-in">
+      <div className={`${bgColor} ${textColor} px-6 py-3 rounded-lg shadow-lg font-medium flex items-center gap-2`}>
+        {type === "success" ? (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+        )}
+        {message}
       </div>
     </div>,
     document.body
