@@ -52,11 +52,40 @@ export default function CoursesDashboard() {
     category: "",
   });
   const [imageFile, setImageFile] = useState(null);
+  const [userName, setUserName] = useState(""); // حالة لتخزين اسم المستخدم
   const COURSES_BUCKET = "courses-images";
 
   useEffect(() => {
     fetchCourses();
+    getUserName();
   }, []);
+
+  // دالة لجلب اسم المستخدم من Supabase Auth
+  async function getUserName() {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error("❌ خطأ في جلب بيانات المستخدم:", error);
+        setUserName("مدير النظام"); // اسم افتراضي في حالة الخطأ
+        return;
+      }
+
+      if (user) {
+        // إذا كان هناك بيانات مستخدم في الجلسة
+        const name = user.user_metadata?.name || 
+                    user.user_metadata?.full_name || 
+                    user.email?.split('@')[0] || 
+                    "مدير النظام";
+        setUserName(name);
+      } else {
+        setUserName("مدير النظام");
+      }
+    } catch (error) {
+      console.error("❌ خطأ غير متوقع:", error);
+      setUserName("مدير النظام");
+    }
+  }
 
   async function fetchCourses() {
     const { data, error } = await supabase
@@ -178,7 +207,9 @@ export default function CoursesDashboard() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
           <div className="mb-4 sm:mb-0">
             <h1 className="text-2xl font-bold text-[#7b0b4c]">🎓 إدارة الدورات</h1>
-                    <p className="text-gray-800 mt-1 text-sm font-medium"> مرحباً👋, {user.name}</p>
+            <p className="text-gray-700 mt-1 text-sm font-medium">
+              مرحباً 👋 {userName || "مدير النظام"}
+            </p>
           </div>
 
           <button
