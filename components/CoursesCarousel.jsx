@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useApp } from "../app/context/AppContext";
+import { createPortal } from "react-dom";
 
 // إعداد Supabase
 const supabaseUrl = "https://kyazwzdyodysnmlqmljv.supabase.co";
@@ -9,62 +10,34 @@ const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5YXp3emR5b2R5c25tbHFtbGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjI4ODcsImV4cCI6MjA3NTc5ODg4N30.5oPcHui5y6onGAr9EYkq8fSihKeb4iC8LQFsLijIco4";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// ✅ Toast مخصص ومحسّن
-function Toast({ message, onClose }) {
-  // تحديد اللون حسب نوع الرسالة
-  const getToastStyle = () => {
-    if (message.includes("✅")) {
-      return "bg-green-100 border-green-500 text-green-700";
-    } else if (message.includes("⚠️")) {
-      return "bg-yellow-100 border-yellow-500 text-yellow-700";
-    } else if (message.includes("❌")) {
-      return "bg-red-100 border-red-500 text-red-700";
-    }
-    return "bg-white border-gray-300 text-gray-800";
-  };
-
+// ✅ Toast مخصص ومحسّن بنفس التصميم السابق
+function Toast({ message, type = "success", onClose }) {
   useEffect(() => {
     const timer = setTimeout(onClose, 3000);
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  return (
-    <div className="fixed inset-x-0 top-8 flex justify-center z-[1000] px-4">
-      <div
-        className={`shadow-xl border font-semibold px-6 py-3 rounded-xl animate-fade-in text-center ${getToastStyle()}`}
-      >
+  const bgColor = type === "success" ? "bg-green-500" : "bg-yellow-500";
+  const textColor = "text-white";
+
+  return createPortal(
+    <div className="fixed top-4 right-4 z-[10000] animate-scale-in">
+      <div className={`${bgColor} ${textColor} px-6 py-3 rounded-lg shadow-lg font-medium flex items-center gap-2`}>
+        {type === "success" ? (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+        )}
         {message}
       </div>
-
-      <style jsx>{`
-        .animate-fade-in {
-          animation: fadeIn 0.3s ease, fadeOut 0.3s ease 2.7s;
-        }
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes fadeOut {
-          from {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          to {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-        }
-      `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
-
 
 // -------- بطاقة الدورة --------
 function CourseCard({ course, onClick, formatCurrency }) {
@@ -75,40 +48,145 @@ function CourseCard({ course, onClick, formatCurrency }) {
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       onClick={onClick}
-      className="cursor-pointer bg-white rounded-xl border hover:shadow-lg transition overflow-hidden"
+      className="cursor-pointer bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 overflow-hidden hover:border-[#7b0b4c]/30 group"
     >
       <img
         src={course.image || fallback}
         alt={course.title}
-        className="w-full h-40 object-cover"
+        className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
         onError={(e) => (e.currentTarget.src = fallback)}
       />
       <div className="p-4">
-        <h3 className="text-lg font-bold text-[#7a1353] mb-2">
+        <h3 className="text-lg font-bold text-[#7b0b4c] mb-2 group-hover:text-[#5e0839] transition-colors">
           {course.title}
         </h3>
         <p
-          className="text-sm text-gray-600 mb-3"
+          className="text-sm text-gray-600 mb-3 leading-relaxed"
           style={{ minHeight: "2.4rem" }}
         >
           {course.description}
         </p>
         <div className="flex items-center justify-between">
           <div className="text-sm">
-            <span className="line-through text-gray-400 text-sm mr-2">
-              {isNaN(course.price)
-                ? course.price
-                : formatCurrency(course.price)}
-            </span>
-            <span className="font-bold text-[#7a1353]">
-              {isNaN(course.discount)
-                ? course.discount
-                : formatCurrency(course.discount)}
+            {course.price && course.price !== course.discount && (
+              <span className="line-through text-gray-400 text-sm mr-2">
+                {formatCurrency(parseFloat(course.price.replace(/[^\d.]/g, "") || 0))}
+              </span>
+            )}
+            <span className="font-bold text-[#7b0b4c] text-lg">
+              {formatCurrency(parseFloat(course.discount?.replace(/[^\d.]/g, "") || course.price?.replace(/[^\d.]/g, "") || 0))}
             </span>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// -------- النافذة المنبثقة لتفاصيل الدورة --------
+function CoursePopup({ course, onClose, onAddToCart }) {
+  const { formatCurrency } = useApp();
+
+  useEffect(() => {
+    const handleEsc = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
+
+  const fallbackImage = "https://source.unsplash.com/800x450/?education,course";
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-scale-in">
+        {/* Header */}
+        <div className="relative p-6 border-b border-gray-200">
+          <button
+            onClick={onClose}
+            className="absolute top-4 left-4 text-gray-500 hover:text-gray-700 text-xl transition-colors"
+          >
+            ✕
+          </button>
+          <h2 className="text-2xl font-bold text-[#7b0b4c] text-center pr-8">
+            {course.title}
+          </h2>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {/* Course Image */}
+          <div className="mb-6">
+            <img
+              src={course.image || fallbackImage}
+              alt={course.title}
+              className="w-full h-64 object-cover rounded-lg"
+              onError={(e) => (e.currentTarget.src = fallbackImage)}
+            />
+          </div>
+
+          {/* Course Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <h3 className="font-semibold text-gray-800 mb-3">معلومات الدورة</h3>
+              <div className="space-y-3 text-sm">
+                {course.category && (
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">التصنيف:</span>
+                    <span className="text-[#7b0b4c] font-medium bg-gray-50 px-3 py-1 rounded-full text-xs">
+                      {course.category}
+                    </span>
+                  </div>
+                )}
+                {course.duration && (
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">المدة:</span>
+                    <span className="text-gray-800 font-medium">{course.duration}</span>
+                  </div>
+                )}
+                {course.level && (
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">المستوى:</span>
+                    <span className="text-gray-800 font-medium">{course.level}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Price Section */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="text-center mb-4">
+                <div className="text-3xl font-bold text-[#7b0b4c] mb-2">
+                  {formatCurrency(parseFloat(course.discount?.replace(/[^\d.]/g, "") || course.price?.replace(/[^\d.]/g, "") || 0))}
+                </div>
+                {course.price && course.price !== course.discount && (
+                  <div className="text-lg text-gray-500 line-through mb-1">
+                    {formatCurrency(parseFloat(course.price.replace(/[^\d.]/g, "") || 0))}
+                  </div>
+                )}
+                <div className="text-sm text-gray-600">سعر الدورة</div>
+              </div>
+              
+              <button
+                onClick={() => onAddToCart(course)}
+                className="w-full bg-[#7b0b4c] text-white py-3 rounded-lg font-semibold hover:bg-[#5e0839] transition-colors shadow-md hover:shadow-lg"
+              >
+                أضف إلى السلة
+              </button>
+            </div>
+          </div>
+
+          {/* Description */}
+          {course.description && (
+            <div className="border-t border-gray-200 pt-4">
+              <h3 className="font-semibold text-gray-800 mb-3">وصف الدورة</h3>
+              <p className="text-gray-600 leading-relaxed text-sm">
+                {course.description}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -121,11 +199,14 @@ export default function CoursesCarousel() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchFilter, setSearchFilter] = useState("");
-  const [toast, setToast] = useState(null); // 👈 متغير لتخزين رسالة التوست
+  const [toast, setToast] = useState(null);
 
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+  };
+
+  const closeToast = () => {
+    setToast(null);
   };
 
   // دالة إضافة الدورة للسلة
@@ -135,9 +216,9 @@ export default function CoursesCarousel() {
       currentCart.push(course);
       localStorage.setItem("cart", JSON.stringify(currentCart));
       window.dispatchEvent(new Event("cartUpdated"));
-      showToast("✅ تمت إضافة الدورة إلى السلة!");
+      showToast("تمت إضافة الدورة إلى السلة بنجاح!", "success");
     } else {
-      showToast("⚠️ الدورة موجودة بالفعل في السلة.");
+      showToast("هذه الدورة موجودة بالفعل في السلة!", "warning");
     }
   };
 
@@ -198,10 +279,10 @@ export default function CoursesCarousel() {
   const visible = filteredCourses.slice(0, 4);
 
   return (
-    <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+    <section className="py-16 bg-gradient-to-b from-gray-50 to-white" id="courses-section">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-6">
-          تصفّح <span className="text-[#7a1353]">الدورات</span> الأكثر طلبًا
+        <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-6 text-right">
+          تصفّح <span className="text-[#7b0b4c]">الدورات</span> الأكثر طلبًا
         </h2>
 
         {/* ✅ Dropdown في الهاتف */}
@@ -213,7 +294,7 @@ export default function CoursesCarousel() {
                 setActiveTab(e.target.value);
                 setSearchFilter("");
               }}
-              className="w-full border rounded-lg px-3 py-2 text-gray-700"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#7b0b4c] focus:border-transparent"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -224,7 +305,7 @@ export default function CoursesCarousel() {
           </div>
 
           {/* أزرار الفئات للشاشات الكبيرة */}
-          <div className="hidden sm:flex flex-wrap items-center gap-4">
+          <div className="hidden sm:flex flex-wrap items-center gap-3">
             {categories.map((cat) => (
               <button
                 key={cat}
@@ -232,10 +313,10 @@ export default function CoursesCarousel() {
                   setActiveTab(cat);
                   setSearchFilter("");
                 }}
-                className={`px-4 py-2 rounded-full text-sm md:text-base transition border ${
+                className={`px-5 py-2.5 rounded-full text-sm md:text-base transition-all duration-300 border ${
                   activeTab === cat
-                    ? "bg-[#7a1353] text-white border-[#7a1353] shadow"
-                    : "bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-700"
+                    ? "bg-[#7b0b4c] text-white border-[#7b0b4c] shadow-lg shadow-[#7b0b4c]/20"
+                    : "bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:border-[#7b0b4c] hover:text-[#7b0b4c]"
                 }`}
               >
                 {cat}
@@ -246,11 +327,15 @@ export default function CoursesCarousel() {
 
         {/* عرض الدورات */}
         {loading ? (
-          <p className="text-center text-gray-500">جاري تحميل الدورات...</p>
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7b0b4c]"></div>
+          </div>
         ) : filteredCourses.length === 0 ? (
-          <p className="text-center text-gray-500">
-            لا توجد دورات مطابقة للبحث.
-          </p>
+          <div className="text-center py-12">
+            <div className="text-4xl mb-4">🔍</div>
+            <p className="text-gray-500 text-lg">لا توجد دورات مطابقة للبحث</p>
+            <p className="text-gray-400 text-sm mt-2">جرب تغيير الفئة أو كلمات البحث</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {visible.map((c) => (
@@ -265,57 +350,23 @@ export default function CoursesCarousel() {
         )}
       </div>
 
-      {/* نافذة تفاصيل الدورة */}
+      {/* النافذة المنبثقة لتفاصيل الدورة */}
       {selectedCourse && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
-            <button
-              onClick={() => setSelectedCourse(null)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl"
-            >
-              ✕
-            </button>
-
-            <img
-              src={
-                selectedCourse.image ||
-                "https://source.unsplash.com/800x450/?education,course"
-              }
-              alt={selectedCourse.title}
-              className="w-full h-48 object-cover rounded-lg mb-4"
-            />
-
-            <h3 className="text-2xl font-bold mb-2 text-[#7a1353]">
-              {selectedCourse.title}
-            </h3>
-            <p className="text-sm text-gray-500 mb-2">
-              التصنيف:{" "}
-              <span className="font-medium">{selectedCourse.category}</span>
-            </p>
-            <p className="text-sm text-gray-500 mb-2">
-              السعر:{" "}
-              <span className="font-medium">
-                {formatCurrency(
-                  parseFloat(selectedCourse.discount.replace(/[^\d.]/g, ""))
-                )}
-              </span>
-            </p>
-            <p className="text-gray-700 mb-4 leading-relaxed">
-              {selectedCourse.description}
-            </p>
-
-            <button
-              onClick={() => addToCart(selectedCourse)}
-              className="w-full bg-[#7a1353] text-white py-2 rounded-lg mt-4"
-            >
-              سجل في الدورة
-            </button>
-          </div>
-        </div>
+        <CoursePopup 
+          course={selectedCourse} 
+          onClose={() => setSelectedCourse(null)}
+          onAddToCart={addToCart}
+        />
       )}
 
       {/* ✅ عرض Toast */}
-      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={closeToast}
+        />
+      )}
     </section>
   );
 }
