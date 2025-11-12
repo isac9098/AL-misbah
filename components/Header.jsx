@@ -80,7 +80,9 @@ export default function Header() {
       {/* Bottom Bar */}
       <div className="absolute top-16 left-0 w-full bg-white/10 backdrop-blur-sm z-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between">
-          
+          <button className="flex items-center gap-2 text-gray-800 hover:text-[#7b0b4c]">
+            
+          </button>
 
           <div className="flex items-center gap-3">
             {!user ? (
