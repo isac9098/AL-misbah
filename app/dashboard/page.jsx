@@ -15,6 +15,8 @@ function Toast({ message, type = "info", onClose }) {
       ? "bg-red-600"
       : type === "success"
       ? "bg-green-600"
+      : type === "warning"
+      ? "bg-yellow-600"
       : "bg-[#7b0b4c]";
 
   return (
@@ -310,22 +312,20 @@ export default function CoursesDashboard() {
           )}
         </div>
 
-      {/* 🖼️ إدارة الحملات الإعلانية */}
-
+        {/* 🖼️ إدارة الحملات الإعلانية */}
         <div className="mt-12 border-t pt-8">
           <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">
             🖼️ إدارة الحملات الإعلانية
           </h2>
-          <CampaignsManager />
+          <CampaignsManager showToast={showToast} />
         </div>
-
       </div>
     </div>
   );
 }
 
 /* 👇 الكومبوننت الخاص بالحملات */
-function CampaignsManager() {
+function CampaignsManager({ showToast }) {
   const [campaigns, setCampaigns] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -402,7 +402,6 @@ function CampaignsManager() {
 
     // 2. حذف السجل من قاعدة البيانات (الأولوية للحذف من DB)
     const { error: dbError } = await supabase.from("campaigns").delete().eq("id", id);
-    
 
     if (dbError) {
       // ❌ إذا فشل الحذف في قاعدة البيانات، نتوقف ونعرض رسالة واضحة
@@ -421,7 +420,6 @@ function CampaignsManager() {
         console.warn("⚠️ فشل حذف الصورة من التخزين (السجل حُذف):", storageError);
       }
     }
-    
 
     // 4. تحديث حالة الواجهة
     setCampaigns(campaigns.filter((c) => c.id !== id));
