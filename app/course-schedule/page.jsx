@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { supabase } from "@/lib/supabaseClient"; // تأكد من المسار الصحيح
+import { supabase } from "../lib/supabaseClient";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function CourseSchedulePage() {
