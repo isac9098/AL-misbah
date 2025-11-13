@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
 
 // 🧩 مكون Toast بسيط
 function Toast({ message, type = "info", onClose }) {
@@ -27,52 +29,6 @@ function Toast({ message, type = "info", onClose }) {
     >
       {message}
     </div>
-  );
-}
-
-// مكون Header بديل إذا لم يكن موجوداً
-function Header() {
-  const router = useRouter();
-  
-  return (
-    <header className="bg-white shadow-lg">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-4 space-x-reverse">
-            <div className="w-12 h-12 bg-[#7b0b4c] rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-lg">م</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-[#7b0b4c]">مركز المصباح</h1>
-              <p className="text-gray-600 text-sm">Learn to Lead</p>
-            </div>
-          </div>
-          <button
-            onClick={() => router.push("/")}
-            className="px-4 py-2 bg-[#7b0b4c] text-white rounded-lg hover:bg-[#5e0839] transition"
-          >
-            الرجوع للرئيسية
-          </button>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-// مكون Footer بديل إذا لم يكن موجوداً
-function Footer() {
-  return (
-    <footer className="bg-[#7b0b4c] text-white py-8">
-      <div className="container mx-auto px-4 text-center">
-        <div className="mb-4">
-          <h3 className="text-2xl font-bold mb-2">مركز المصباح</h3>
-          <p className="opacity-90">Learn to Lead</p>
-        </div>
-        <div className="border-t border-white/20 pt-4">
-          <p>&copy; 2024 مركز المصباح. جميع الحقوق محفوظة.</p>
-        </div>
-      </div>
-    </footer>
   );
 }
 
@@ -127,7 +83,6 @@ export default function CoursesSchedule() {
       // استخراج الفئات الفريدة
       const uniqueCategories = [...new Set(data.map(course => course.category).filter(Boolean))];
       setCategories(uniqueCategories);
-      showToast("✅ تم تحميل الدورات بنجاح", "success");
     }
     setLoading(false);
   }
@@ -202,7 +157,7 @@ export default function CoursesSchedule() {
         }}
       >
         <div className="container mx-auto px-4 text-center text-white">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 animate-fade-in">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">
             📅 جدول الدورات القادمة
           </h1>
           <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed">
