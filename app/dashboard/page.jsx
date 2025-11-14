@@ -1,3 +1,699 @@
-"use client"; 
-import { useEffect, useState } from "react"; import { useRouter } from "next/navigation"; import { supabase } from "../lib/supabaseClient"; 
- // 🧩 مكون Toast بسيط function Toast({ message, type = "info", onClose }) {   useEffect(() => {     const timer = setTimeout(onClose, 3000);     return () => clearTimeout(timer);   }, [onClose]);    const bgColor =     type === "error"       ? "bg-red-600"       : type === "success"       ? "bg-green-600"       : type === "warning"       ? "bg-yellow-600"       : "bg-[#7b0b4c]";    return (     <div       className={`fixed left-1/2 transform -translate-x-1/2 ${bgColor} text-white        px-5 py-3 rounded-xl shadow-lg text-sm md:text-base z-[9999] transition-all duration-500`}       style={{ top: "70px" }}     >       {message}     </div>   ); }  // دالة مساعدة لاستخراج اسم الملف من رابط Supabase Storage function getFileNameFromUrl(url, bucketName) {   if (!url) return null;   const path = url.split(bucketName + "/")[1];   return path || null; }  export default function CoursesDashboard() {   const router = useRouter();   const [toast, setToast] = useState(null);   const showToast = (msg, type = "info") => setToast({ msg, type });    const [courses, setCourses] = useState([]);   const [newCourse, setNewCourse] = useState({     title: "",     description: "",     image: "",     price: "",     discount: "",     category: "",   });   const [imageFile, setImageFile] = useState(null);   const [userName, setUserName] = useState("");   const [editingCourse, setEditingCourse] = useState(null);   const COURSES_BUCKET = "courses-images";    useEffect(() => {     fetchCourses();     getUserName();   }, []);    // دالة لجلب اسم المستخدم من Supabase Auth   async function getUserName() {     try {       const { data: { user }, error } = await supabase.auth.getUser();        if (error) {         console.error("❌ خطأ في جلب بيانات المستخدم:", error);         setUserName("مدير النظام");         return;       }        if (user) {         const name = user.user_metadata?.name ||                      user.user_metadata?.full_name ||                      user.email?.split('@')[0] ||                      "مدير النظام";         setUserName(name);       } else {         setUserName("مدير النظام");       }     } catch (error) {       console.error("❌ خطأ غير متوقع:", error);       setUserName("مدير النظام");     }   }    async function fetchCourses() {     const { data, error } = await supabase       .from("courses")       .select("*")       .order("id", { ascending: false });      if (error) {       console.error("❌ خطأ في جلب الدورات:", error);       showToast("❌ فشل في تحميل الدورات", "error");       return;     }      // معالجة البيانات لاستخراج الحقول من metadata إذا كانت موجودة     const processedData = data.map(course => {       if (course.metadata && typeof course.metadata === 'object') {         return {           ...course,           ...course.metadata         };       }       return course;     });      setCourses(processedData);   }    async function uploadImage(file) {     const fileName = `${Date.now()}-${file.name}`;     const { data, error } = await supabase.storage       .from(COURSES_BUCKET)       .upload(fileName, file);      if (error) {       console.error("❌ خطأ أثناء رفع الصورة:", error);       showToast("فشل رفع الصورة!", "error");       return null;     }      const { data: publicUrlData } = supabase.storage       .from(COURSES_BUCKET)       .getPublicUrl(fileName);      return publicUrlData.publicUrl;   }    async function addCourse(e) {     e.preventDefault();      if (       !newCourse.title ||       !newCourse.description ||       !newCourse.price ||       !newCourse.category     ) {       showToast("⚠️ الرجاء إدخال جميع البيانات المطلوبة", "error");       return;     }      let imageUrl = newCourse.image;      if (imageFile) {       imageUrl = await uploadImage(imageFile);       if (!imageUrl) return;     }      const { data, error } = await supabase       .from("courses")       .insert([{ ...newCourse, image: imageUrl }])       .select();      if (error) {       console.error("❌ خطأ أثناء الإضافة:", error);       showToast(`حدث خطأ أثناء الإضافة: ${error.message}`, "error");     } else {       showToast("✅ تمت إضافة الدورة بنجاح!", "success");       setCourses([data[0], ...courses]);       setNewCourse({         title: "",         description: "",         image: "",         price: "",         discount: "",         category: "",       });       setImageFile(null);     }   }    async function updateCourseSchedule(courseId, updates) {     try {       // الحقول الأساسية الموجودة في الجدول       const existingFields = ['title', 'description', 'image', 'price', 'discount', 'category'];        // تصفية التحديثات لتحتوي فقط على الحقول الموجودة       const safeUpdates = {};        // إضافة الحقول الأساسية إذا كانت موجودة في التحديثات       existingFields.forEach(field => {         if (updates[field] !== undefined) {           safeUpdates[field] = updates[field];         }       });        // إضافة الحقول الجديدة في حقل metadata       const newFields = ['level', 'duration', 'schedule', 'start_date', 'end_date', 'instructor'];       const metadata = {};        newFields.forEach(field => {         if (updates[field] !== undefined && updates[field] !== '') {           metadata[field] = updates[field];         }       });        // إذا كان هناك بيانات للحقول الجديدة، نضيفها كـ JSON في metadata       if (Object.keys(metadata).length > 0) {         safeUpdates.metadata = metadata;       }        console.log('🔄 محاولة تحديث الدورة:', courseId, safeUpdates);        const { error } = await supabase         .from("courses")         .update(safeUpdates)         .eq("id", courseId);        if (error) {         console.error("❌ خطأ في تحديث الجدول:", error);         console.error("تفاصيل الخطأ:", error);          if (error.message.includes('column') && error.message.includes('does not exist')) {           showToast("❌ حقل metadata غير موجود. يرجى إضافته إلى الجدول أولاً", "error");           return false;         }          showToast(`❌ حدث خطأ أثناء التحديث: ${error.message}`, "error");         return false;       } else {         // تحديث البيانات المحلية         setCourses(courses.map(course =>            course.id === courseId ? {              ...course,              ...safeUpdates,             ...metadata // نضيف الحقول الجديدة للعرض المحلي           } : course         ));         setEditingCourse(null);         showToast("✅ تم تحديث جدول الدورة بنجاح!", "success");         return true;       }     } catch (error) {       console.error("❌ خطأ غير متوقع:", error);       showToast("❌ حدث خطأ غير متوقع أثناء التحديث", "error");       return false;     }   }    const handleSaveSchedule = async (courseId) => {     const course = courses.find(c => c.id === courseId);     if (course) {       const success = await updateCourseSchedule(courseId, {         level: course.level || "",         duration: course.duration || "",         schedule: course.schedule || "",         start_date: course.start_date || "",         end_date: course.end_date || "",         instructor: course.instructor || ""       });        if (success) {         setEditingCourse(null);       }     }   };    const handleCancelEdit = () => {     setEditingCourse(null);     fetchCourses();   };    const handleInputChange = (courseId, field, value) => {     setCourses(courses.map(course =>        course.id === courseId ? { ...course, [field]: value } : course     ));   };    async function deleteCourse(id) {     const courseToDelete = courses.find((c) => c.id === id);     if (!courseToDelete) return;      const { error: dbError } = await supabase       .from("courses")       .delete()       .eq("id", id);      if (dbError) {       showToast(`❌ فشل حذف الدورة: ${dbError.message}`, "error");       return;     }      if (courseToDelete.image) {       const fileName = getFileNameFromUrl(courseToDelete.image, COURSES_BUCKET);       if (fileName) {         const { error: storageError } = await supabase.storage           .from(COURSES_BUCKET)           .remove([fileName]);         if (storageError)           console.warn("⚠️ فشل حذف الصورة من التخزين:", storageError);       }     }      setCourses(courses.filter((c) => c.id !== id));     showToast("✅ تم حذف الدورة بنجاح!", "success");   }    return (     <div       className="min-h-screen bg-cover bg-center bg-fixed flex flex-col items-center p-4 sm:p-8 text-right"       style={{         backgroundImage:           "url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1400&q=80')",       }}     >       {toast && (         <Toast           message={toast.msg}           type={toast.type}           onClose={() => setToast(null)}         />       )}        <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-4 sm:p-8 w-full max-w-6xl animate-fade-in">         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">           <div className="mb-4 sm:mb-0">             <h1 className="text-2xl font-bold text-[#7b0b4c]">🎓 إدارة الدورات والمواعيد</h1>             <p className="text-gray-700 mt-1 text-sm font-medium">               مرحباً 👋 {userName || "مدير النظام"}             </p>           </div>            <button             onClick={() => router.push("/")}             className="px-4 py-2 bg-[#7b0b4c] text-white rounded-lg hover:bg-[#5e0839] transition w-full sm:w-auto"           >             ← الرجوع للصفحة الرئيسية           </button>         </div>          {/* نموذج إضافة دورة */}         <form           onSubmit={addCourse}           className="bg-gray-50 rounded-xl p-6 mb-8 shadow-inner border border-gray-200"         >           <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">             ➕ إضافة دورة جديدة           </h2>            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">             <input               type="text"               placeholder="عنوان الدورة *"               value={newCourse.title}               onChange={(e) =>                 setNewCourse({ ...newCourse, title: e.target.value })               }               className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"             />             <input               type="text"               placeholder="الوصف *"               value={newCourse.description}               onChange={(e) =>                 setNewCourse({ ...newCourse, description: e.target.value })               }               className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"             />             <input               type="file"               accept="image/*"               onChange={(e) => setImageFile(e.target.files[0])}               className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-[#7b0b4c] file:text-white file:border-none file:cursor-pointer transition-all duration-300"             />             <input               type="text"               placeholder="السعر *"               value={newCourse.price}               onChange={(e) =>                 setNewCourse({ ...newCourse, price: e.target.value })               }               className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"             />             <input               type="text"               placeholder="الخصم (اختياري)"               value={newCourse.discount}               onChange={(e) =>                 setNewCourse({ ...newCourse, discount: e.target.value })               }               className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"             />             <input               type="text"               placeholder="الفئة * (مثلاً: القانون / اللغة / التقنية)"               value={newCourse.category}               onChange={(e) =>                 setNewCourse({ ...newCourse, category: e.target.value })               }               className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"             />           </div>            <button             type="submit"             className="mt-6 bg-[#7b0b4c] text-white px-8 py-3 rounded-lg hover:bg-[#5e0839] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl"           >             إضافة الدورة           </button>         </form>          {/* قسم تعديل مواعيد الدورات */}         <div className="bg-gray-50 rounded-xl p-6 mb-8 shadow-inner border border-gray-200">           <h2 className="text-xl font-semibold mb-6 text-[#7b0b4c]">             🗓️ إدارة مواعيد وجداول الدورات           </h2>            {courses.length === 0 ? (             <p className="text-gray-500 text-center py-8">لا توجد دورات حالياً.</p>           ) : (             <div className="space-y-6">               {courses.map((course) => (                 <div key={course.id} className="bg-white rounded-xl p-6 shadow-md border border-gray-200">                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">                     <div>                       <h3 className="text-lg font-bold text-gray-800 mb-2">{course.title}</h3>                       <p className="text-gray-600 text-sm">{course.description}</p>                     </div>                     <div className="flex gap-2">                       <button                         onClick={() => setEditingCourse(editingCourse === course.id ? null : course.id)}                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm font-medium"                       >                         {editingCourse === course.id ? 'إلغاء التعديل' : '✏️ تعديل الجدول'}                       </button>                       <button                         onClick={() => deleteCourse(course.id)}                         className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium"                       >                         🗑️ حذف                       </button>                     </div>                   </div>                    {editingCourse === course.id ? (                     // وضع التعديل                     <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mt-4">                       <h4 className="font-semibold text-yellow-800 mb-4 text-lg">🛠️ تعديل جدول الدورة</h4>                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">                         <div>                           <label className="block text-sm font-medium text-gray-700 mb-2">🎯 المستوى</label>                           <input                             type="text"                             value={course.level || ""}                             onChange={(e) => handleInputChange(course.id, 'level', e.target.value)}                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"                             placeholder="مبتدئ - متوسط - متقدم"                           />                         </div>                         <div>                           <label className="block text-sm font-medium text-gray-700 mb-2">⏰ المدة</label>                           <input                             type="text"                             value={course.duration || ""}                             onChange={(e) => handleInputChange(course.id, 'duration', e.target.value)}                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"                             placeholder="4 أسابيع - 30 ساعة"                           />                         </div>                         <div>                           <label className="block text-sm font-medium text-gray-700 mb-2">👨‍🏫 المدرب</label>                           <input                             type="text"                             value={course.instructor || ""}                             onChange={(e) => handleInputChange(course.id, 'instructor', e.target.value)}                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"                             placeholder="اسم المدرب"                           />                         </div>                         <div>                           <label className="block text-sm font-medium text-gray-700 mb-2">📅 تاريخ البدء</label>                           <input                             type="date"                             value={course.start_date || ""}                             onChange={(e) => handleInputChange(course.id, 'start_date', e.target.value)}                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"                           />                         </div>                         <div>                           <label className="block text-sm font-medium text-gray-700 mb-2">📅 تاريخ الانتهاء</label>                           <input                             type="date"                             value={course.end_date || ""}                             onChange={(e) => handleInputChange(course.id, 'end_date', e.target.value)}                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"                           />                         </div>                         <div>                           <label className="block text-sm font-medium text-gray-700 mb-2">🕒 جدول المواعيد</label>                           <input                             type="text"                             value={course.schedule || ""}                             onChange={(e) => handleInputChange(course.id, 'schedule', e.target.value)}                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"                             placeholder="السبت والثلاثاء 6-8 مساءً"                           />                         </div>                       </div>                       <div className="flex space-x-3 space-x-reverse justify-end mt-4">                         <button                           onClick={handleCancelEdit}                           className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"                         >                           إلغاء                         </button>                         <button                           onClick={() => handleSaveSchedule(course.id)}                           className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"                         >                           حفظ التغييرات                         </button>                       </div>                     </div>                   ) : (                     // وضع العرض                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">                       <div className="bg-blue-50 p-4 rounded-lg">                         <p className="text-sm text-gray-600">🎯 المستوى</p>                         <p className="font-semibold text-gray-800">{course.level || "غير محدد"}</p>                       </div>                       <div className="bg-green-50 p-4 rounded-lg">                         <p className="text-sm text-gray-600">⏰ المدة</p>                         <p className="font-semibold text-gray-800">{course.duration || "غير محددة"}</p>                       </div>                       <div className="bg-purple-50 p-4 rounded-lg">                         <p className="text-sm text-gray-600">👨‍🏫 المدرب</p>                         <p className="font-semibold text-gray-800">{course.instructor || "غير محدد"}</p>                       </div>                       <div className="bg-orange-50 p-4 rounded-lg">                         <p className="text-sm text-gray-600">📅 موعد الإنعقاد</p>                         <p className="font-semibold text-gray-800">{course.schedule || "غير محدد"}</p>                       </div>                       <div className="bg-red-50 p-4 rounded-lg">                         <p className="text-sm text-gray-600">📅 تاريخ البدء</p>                         <p className="font-semibold text-gray-800">{course.start_date || "غير محدد"}</p>                       </div>                       <div className="bg-indigo-50 p-4 rounded-lg">                         <p className="text-sm text-gray-600">📅 تاريخ الانتهاء</p>                         <p className="font-semibold text-gray-800">{course.end_date || "غير محدد"}</p>                       </div>                     </div>                   )}                 </div>               ))}             </div>           )}         </div>          {/* 🖼️ إدارة الحملات الإعلانية */}         <div className="mt-12 border-t pt-8">           <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">             🖼️ إدارة الحملات الإعلانية           </h2>           <CampaignsManager showToast={showToast} />         </div>       </div>     </div>   ); }  /* 👇 الكومبوننت الخاص بالحملات */ function CampaignsManager({ showToast }) {   const [campaigns, setCampaigns] = useState([]);   const [imageFile, setImageFile] = useState(null);   const [uploading, setUploading] = useState(false);   const CAMPAIGN_BUCKET = "campaigns-images";    useEffect(() => {     fetchCampaigns();   }, []);    async function fetchCampaigns() {     const { data, error } = await supabase       .from("campaigns")       .select("*")       .order("id", { ascending: false });      if (error) console.error("❌ خطأ في جلب الحملات:", error);     else setCampaigns(data || []);   }    async function uploadImage(file) {     const fileName = `${Date.now()}-${file.name}`;     const { error } = await supabase.storage       .from(CAMPAIGN_BUCKET)       .upload(fileName, file);      if (error) {       console.error("❌ خطأ أثناء رفع صورة الحملة:", error);       showToast("فشل رفع الصورة!", "error");       return null;     }      const { data: publicUrlData } = supabase.storage       .from(CAMPAIGN_BUCKET)       .getPublicUrl(fileName);      return publicUrlData.publicUrl;   }    async function addCampaignImage(e) {     e.preventDefault();     if (!imageFile) {       showToast("⚠️ الرجاء اختيار صورة أولاً", "warning");       return;     }      setUploading(true);     const imageUrl = await uploadImage(imageFile);     setUploading(false);      if (!imageUrl) return;      const { data, error } = await supabase       .from("campaigns")       .insert([{ image: imageUrl }])       .select();      if (error) {       showToast("❌ حدث خطأ أثناء إضافة الصورة!", "error");       console.error(error);     } else {       showToast("✅ تمت إضافة الصورة بنجاح!", "success");       setCampaigns([data[0], ...campaigns]);       setImageFile(null);     }   }    async function deleteCampaign(id) {     const campaignToDelete = campaigns.find(c => c.id === id);     if (!campaignToDelete) return;      const fileName = getFileNameFromUrl(campaignToDelete.image, CAMPAIGN_BUCKET);      const { error: dbError } = await supabase.from("campaigns").delete().eq("id", id);      if (dbError) {       showToast(`❌ فشل حذف السجل من قاعدة البيانات. الخطأ: ${dbError.message}`, "error");       console.error("Database Delete Failed:", dbError);       return;     }      if (fileName) {       const { error: storageError } = await supabase.storage         .from(CAMPAIGN_BUCKET)         .remove([fileName]);        if (storageError) {         console.warn("⚠️ فشل حذف الصورة من التخزين (السجل حُذف):", storageError);       }     }      setCampaigns(campaigns.filter((c) => c.id !== id));     showToast("✅ تم حذف الحملة والصورة المرتبطة بها بنجاح!", "success");   }    return (     <div className="bg-gray-50 rounded-xl p-6 shadow-inner border border-gray-200">       <form onSubmit={addCampaignImage} className="flex flex-col sm:flex-row gap-4 items-center">         <input           type="file"           accept="image/*"           onChange={(e) => setImageFile(e.target.files[0])}           className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-[#7b0b4c] file:text-white file:border-none file:cursor-pointer w-full sm:w-auto transition-all duration-300"         />         <button           type="submit"           disabled={uploading}           className="bg-[#7b0b4c] text-white px-6 py-3 rounded-lg hover:bg-[#5e0839] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl disabled:opacity-50"         >           {uploading ? "جاري الرفع..." : "رفع الصورة"}         </button>       </form>        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">         {campaigns.map((c) => (           <div key={c.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200">             <img src={c.image} alt="campaign" className="w-full h-48 object-cover" />             <div className="p-4 flex justify-between items-center">               <span className="text-gray-600 text-sm">حملة #{c.id}</span>               <button                 onClick={() => deleteCampaign(c.id)}                 className="text-red-600 hover:text-red-800 text-sm font-semibold transition-colors"               >                 حذف               </button>             </div>           </div>         ))}       </div>     </div>   ); }
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "../lib/supabaseClient";
+
+// 🧩 مكون Toast بسيط
+function Toast({ message, type = "info", onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgColor =
+    type === "error"
+      ? "bg-red-600"
+      : type === "success"
+      ? "bg-green-600"
+      : type === "warning"
+      ? "bg-yellow-600"
+      : "bg-[#7b0b4c]";
+
+  return (
+    <div
+      className={`fixed left-1/2 transform -translate-x-1/2 ${bgColor} text-white 
+      px-5 py-3 rounded-xl shadow-lg text-sm md:text-base z-[9999] transition-all duration-500`}
+      style={{ top: "70px" }}
+    >
+      {message}
+    </div>
+  );
+}
+
+// دالة مساعدة لاستخراج اسم الملف من رابط Supabase Storage
+function getFileNameFromUrl(url, bucketName) {
+  if (!url) return null;
+  const path = url.split(bucketName + "/")[1];
+  return path || null;
+}
+
+export default function CoursesDashboard() {
+  const router = useRouter();
+  const [toast, setToast] = useState(null);
+  const showToast = (msg, type = "info") => setToast({ msg, type });
+
+  const [courses, setCourses] = useState([]);
+  const [newCourse, setNewCourse] = useState({
+    title: "",
+    description: "",
+    image: "",
+    price: "",
+    discount: "",
+    category: "",
+  });
+  const [imageFile, setImageFile] = useState(null);
+  const [userName, setUserName] = useState("");
+  const [editingCourse, setEditingCourse] = useState(null);
+  const COURSES_BUCKET = "courses-images";
+
+  useEffect(() => {
+    fetchCourses();
+    getUserName();
+  }, []);
+
+  // دالة لجلب اسم المستخدم من Supabase Auth
+  async function getUserName() {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      if (error) {
+        console.error("❌ خطأ في جلب بيانات المستخدم:", error);
+        setUserName("مدير النظام");
+        return;
+      }
+
+      if (user) {
+        const name = user.user_metadata?.name || 
+                    user.user_metadata?.full_name || 
+                    user.email?.split('@')[0] || 
+                    "مدير النظام";
+        setUserName(name);
+      } else {
+        setUserName("مدير النظام");
+      }
+    } catch (error) {
+      console.error("❌ خطأ غير متوقع:", error);
+      setUserName("مدير النظام");
+    }
+  }
+
+  async function fetchCourses() {
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .order("id", { ascending: false });
+    
+    if (error) {
+      console.error("❌ خطأ في جلب الدورات:", error);
+      showToast("❌ فشل في تحميل الدورات", "error");
+      return;
+    }
+    
+    // معالجة البيانات لاستخراج الحقول من metadata إذا كانت موجودة
+    const processedData = data.map(course => {
+      if (course.metadata && typeof course.metadata === 'object') {
+        return {
+          ...course,
+          ...course.metadata
+        };
+      }
+      return course;
+    });
+    
+    setCourses(processedData);
+  }
+
+  async function uploadImage(file) {
+    const fileName = `${Date.now()}-${file.name}`;
+    const { data, error } = await supabase.storage
+      .from(COURSES_BUCKET)
+      .upload(fileName, file);
+
+    if (error) {
+      console.error("❌ خطأ أثناء رفع الصورة:", error);
+      showToast("فشل رفع الصورة!", "error");
+      return null;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(COURSES_BUCKET)
+      .getPublicUrl(fileName);
+
+    return publicUrlData.publicUrl;
+  }
+
+  async function addCourse(e) {
+    e.preventDefault();
+
+    if (
+      !newCourse.title ||
+      !newCourse.description ||
+      !newCourse.price ||
+      !newCourse.category
+    ) {
+      showToast("⚠️ الرجاء إدخال جميع البيانات المطلوبة", "error");
+      return;
+    }
+
+    let imageUrl = newCourse.image;
+
+    if (imageFile) {
+      imageUrl = await uploadImage(imageFile);
+      if (!imageUrl) return;
+    }
+
+    const { data, error } = await supabase
+      .from("courses")
+      .insert([{ ...newCourse, image: imageUrl }])
+      .select();
+
+    if (error) {
+      console.error("❌ خطأ أثناء الإضافة:", error);
+      showToast(`حدث خطأ أثناء الإضافة: ${error.message}`, "error");
+    } else {
+      showToast("✅ تمت إضافة الدورة بنجاح!", "success");
+      setCourses([data[0], ...courses]);
+      setNewCourse({
+        title: "",
+        description: "",
+        image: "",
+        price: "",
+        discount: "",
+        category: "",
+      });
+      setImageFile(null);
+    }
+  }
+
+  async function updateCourseSchedule(courseId, updates) {
+    try {
+      // الحقول الأساسية الموجودة في الجدول
+      const existingFields = ['title', 'description', 'image', 'price', 'discount', 'category'];
+      
+      // تصفية التحديثات لتحتوي فقط على الحقول الموجودة
+      const safeUpdates = {};
+      
+      // إضافة الحقول الأساسية إذا كانت موجودة في التحديثات
+      existingFields.forEach(field => {
+        if (updates[field] !== undefined) {
+          safeUpdates[field] = updates[field];
+        }
+      });
+      
+      // إضافة الحقول الجديدة في حقل metadata
+      const newFields = ['level', 'duration', 'schedule', 'start_date', 'end_date', 'instructor'];
+      const metadata = {};
+      
+      newFields.forEach(field => {
+        if (updates[field] !== undefined && updates[field] !== '') {
+          metadata[field] = updates[field];
+        }
+      });
+      
+      // إذا كان هناك بيانات للحقول الجديدة، نضيفها كـ JSON في metadata
+      if (Object.keys(metadata).length > 0) {
+        safeUpdates.metadata = metadata;
+      }
+
+      console.log('🔄 محاولة تحديث الدورة:', courseId, safeUpdates);
+
+      const { error } = await supabase
+        .from("courses")
+        .update(safeUpdates)
+        .eq("id", courseId);
+
+      if (error) {
+        console.error("❌ خطأ في تحديث الجدول:", error);
+        console.error("تفاصيل الخطأ:", error);
+        
+        if (error.message.includes('column') && error.message.includes('does not exist')) {
+          showToast("❌ حقل metadata غير موجود. يرجى إضافته إلى الجدول أولاً", "error");
+          return false;
+        }
+        
+        showToast(`❌ حدث خطأ أثناء التحديث: ${error.message}`, "error");
+        return false;
+      } else {
+        // تحديث البيانات المحلية
+        setCourses(courses.map(course => 
+          course.id === courseId ? { 
+            ...course, 
+            ...safeUpdates,
+            ...metadata // نضيف الحقول الجديدة للعرض المحلي
+          } : course
+        ));
+        setEditingCourse(null);
+        showToast("✅ تم تحديث جدول الدورة بنجاح!", "success");
+        return true;
+      }
+    } catch (error) {
+      console.error("❌ خطأ غير متوقع:", error);
+      showToast("❌ حدث خطأ غير متوقع أثناء التحديث", "error");
+      return false;
+    }
+  }
+
+  const handleSaveSchedule = async (courseId) => {
+    const course = courses.find(c => c.id === courseId);
+    if (course) {
+      const success = await updateCourseSchedule(courseId, {
+        level: course.level || "",
+        duration: course.duration || "",
+        schedule: course.schedule || "",
+        start_date: course.start_date || "",
+        end_date: course.end_date || "",
+        instructor: course.instructor || ""
+      });
+      
+      if (success) {
+        setEditingCourse(null);
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCourse(null);
+    fetchCourses();
+  };
+
+  const handleInputChange = (courseId, field, value) => {
+    setCourses(courses.map(course => 
+      course.id === courseId ? { ...course, [field]: value } : course
+    ));
+  };
+
+  async function deleteCourse(id) {
+    const courseToDelete = courses.find((c) => c.id === id);
+    if (!courseToDelete) return;
+
+    const { error: dbError } = await supabase
+      .from("courses")
+      .delete()
+      .eq("id", id);
+
+    if (dbError) {
+      showToast(`❌ فشل حذف الدورة: ${dbError.message}`, "error");
+      return;
+    }
+
+    if (courseToDelete.image) {
+      const fileName = getFileNameFromUrl(courseToDelete.image, COURSES_BUCKET);
+      if (fileName) {
+        const { error: storageError } = await supabase.storage
+          .from(COURSES_BUCKET)
+          .remove([fileName]);
+        if (storageError)
+          console.warn("⚠️ فشل حذف الصورة من التخزين:", storageError);
+      }
+    }
+
+    setCourses(courses.filter((c) => c.id !== id));
+    showToast("✅ تم حذف الدورة بنجاح!", "success");
+  }
+
+  return (
+    <div
+      className="min-h-screen bg-cover bg-center bg-fixed flex flex-col items-center p-4 sm:p-8 text-right"
+      style={{
+        backgroundImage:
+          "url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1400&q=80')",
+      }}
+    >
+      {toast && (
+        <Toast
+          message={toast.msg}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-4 sm:p-8 w-full max-w-6xl animate-fade-in">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
+          <div className="mb-4 sm:mb-0">
+            <h1 className="text-2xl font-bold text-[#7b0b4c]">🎓 إدارة الدورات والمواعيد</h1>
+            <p className="text-gray-700 mt-1 text-sm font-medium">
+              مرحباً 👋 {userName || "مدير النظام"}
+            </p>
+          </div>
+
+          <button
+            onClick={() => router.push("/")}
+            className="px-4 py-2 bg-[#7b0b4c] text-white rounded-lg hover:bg-[#5e0839] transition w-full sm:w-auto"
+          >
+            ← الرجوع للصفحة الرئيسية
+          </button>
+        </div>
+
+        {/* نموذج إضافة دورة */}
+        <form
+          onSubmit={addCourse}
+          className="bg-gray-50 rounded-xl p-6 mb-8 shadow-inner border border-gray-200"
+        >
+          <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">
+            ➕ إضافة دورة جديدة
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <input
+              type="text"
+              placeholder="عنوان الدورة *"
+              value={newCourse.title}
+              onChange={(e) =>
+                setNewCourse({ ...newCourse, title: e.target.value })
+              }
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
+            />
+            <input
+              type="text"
+              placeholder="الوصف *"
+              value={newCourse.description}
+              onChange={(e) =>
+                setNewCourse({ ...newCourse, description: e.target.value })
+              }
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
+            />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImageFile(e.target.files[0])}
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-[#7b0b4c] file:text-white file:border-none file:cursor-pointer transition-all duration-300"
+            />
+            <input
+              type="text"
+              placeholder="السعر *"
+              value={newCourse.price}
+              onChange={(e) =>
+                setNewCourse({ ...newCourse, price: e.target.value })
+              }
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
+            />
+            <input
+              type="text"
+              placeholder="الخصم (اختياري)"
+              value={newCourse.discount}
+              onChange={(e) =>
+                setNewCourse({ ...newCourse, discount: e.target.value })
+              }
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
+            />
+            <input
+              type="text"
+              placeholder="الفئة * (مثلاً: القانون / اللغة / التقنية)"
+              value={newCourse.category}
+              onChange={(e) =>
+                setNewCourse({ ...newCourse, category: e.target.value })
+              }
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="mt-6 bg-[#7b0b4c] text-white px-8 py-3 rounded-lg hover:bg-[#5e0839] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl"
+          >
+            إضافة الدورة
+          </button>
+        </form>
+
+        {/* قسم تعديل مواعيد الدورات */}
+        <div className="bg-gray-50 rounded-xl p-6 mb-8 shadow-inner border border-gray-200">
+          <h2 className="text-xl font-semibold mb-6 text-[#7b0b4c]">
+            🗓️ إدارة مواعيد وجداول الدورات
+          </h2>
+          
+          {courses.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">لا توجد دورات حالياً.</p>
+          ) : (
+            <div className="space-y-6">
+              {courses.map((course) => (
+                <div key={course.id} className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800 mb-2">{course.title}</h3>
+                      <p className="text-gray-600 text-sm">{course.description}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditingCourse(editingCourse === course.id ? null : course.id)}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm font-medium"
+                      >
+                        {editingCourse === course.id ? 'إلغاء التعديل' : '✏️ تعديل الجدول'}
+                      </button>
+                      <button
+                        onClick={() => deleteCourse(course.id)}
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium"
+                      >
+                        🗑️ حذف
+                      </button>
+                    </div>
+                  </div>
+
+                  {editingCourse === course.id ? (
+                    // وضع التعديل
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mt-4">
+                      <h4 className="font-semibold text-yellow-800 mb-4 text-lg">🛠️ تعديل جدول الدورة</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">🎯 المستوى</label>
+                          <input
+                            type="text"
+                            value={course.level || ""}
+                            onChange={(e) => handleInputChange(course.id, 'level', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                            placeholder="مبتدئ - متوسط - متقدم"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">⏰ المدة</label>
+                          <input
+                            type="text"
+                            value={course.duration || ""}
+                            onChange={(e) => handleInputChange(course.id, 'duration', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                            placeholder="4 أسابيع - 30 ساعة"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">👨‍🏫 المدرب</label>
+                          <input
+                            type="text"
+                            value={course.instructor || ""}
+                            onChange={(e) => handleInputChange(course.id, 'instructor', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                            placeholder="اسم المدرب"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">📅 تاريخ البدء</label>
+                          <input
+                            type="date"
+                            value={course.start_date || ""}
+                            onChange={(e) => handleInputChange(course.id, 'start_date', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">📅 تاريخ الانتهاء</label>
+                          <input
+                            type="date"
+                            value={course.end_date || ""}
+                            onChange={(e) => handleInputChange(course.id, 'end_date', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">🕒 جدول المواعيد</label>
+                          <input
+                            type="text"
+                            value={course.schedule || ""}
+                            onChange={(e) => handleInputChange(course.id, 'schedule', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                            placeholder="السبت والثلاثاء 6-8 مساءً"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex space-x-3 space-x-reverse justify-end mt-4">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+                        >
+                          إلغاء
+                        </button>
+                        <button
+                          onClick={() => handleSaveSchedule(course.id)}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                        >
+                          حفظ التغييرات
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // وضع العرض
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">🎯 المستوى</p>
+                        <p className="font-semibold text-gray-800">{course.level || "غير محدد"}</p>
+                      </div>
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">⏰ المدة</p>
+                        <p className="font-semibold text-gray-800">{course.duration || "غير محددة"}</p>
+                      </div>
+                      <div className="bg-purple-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">👨‍🏫 المدرب</p>
+                        <p className="font-semibold text-gray-800">{course.instructor || "غير محدد"}</p>
+                      </div>
+                      <div className="bg-orange-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">📅 موعد الإنعقاد</p>
+                        <p className="font-semibold text-gray-800">{course.schedule || "غير محدد"}</p>
+                      </div>
+                      <div className="bg-red-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">📅 تاريخ البدء</p>
+                        <p className="font-semibold text-gray-800">{course.start_date || "غير محدد"}</p>
+                      </div>
+                      <div className="bg-indigo-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">📅 تاريخ الانتهاء</p>
+                        <p className="font-semibold text-gray-800">{course.end_date || "غير محدد"}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 🖼️ إدارة الحملات الإعلانية */}
+        <div className="mt-12 border-t pt-8">
+          <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">
+            🖼️ إدارة الحملات الإعلانية
+          </h2>
+          <CampaignsManager showToast={showToast} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 👇 الكومبوننت الخاص بالحملات */
+function CampaignsManager({ showToast }) {
+  const [campaigns, setCampaigns] = useState([]);
+  const [imageFile, setImageFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const CAMPAIGN_BUCKET = "campaigns-images";
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
+
+  async function fetchCampaigns() {
+    const { data, error } = await supabase
+      .from("campaigns")
+      .select("*")
+      .order("id", { ascending: false });
+
+    if (error) console.error("❌ خطأ في جلب الحملات:", error);
+    else setCampaigns(data || []);
+  }
+
+  async function uploadImage(file) {
+    const fileName = `${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage
+      .from(CAMPAIGN_BUCKET)
+      .upload(fileName, file);
+
+    if (error) {
+      console.error("❌ خطأ أثناء رفع صورة الحملة:", error);
+      showToast("فشل رفع الصورة!", "error");
+      return null;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(CAMPAIGN_BUCKET)
+      .getPublicUrl(fileName);
+
+    return publicUrlData.publicUrl;
+  }
+
+  async function addCampaignImage(e) {
+    e.preventDefault();
+    if (!imageFile) {
+      showToast("⚠️ الرجاء اختيار صورة أولاً", "warning");
+      return;
+    }
+
+    setUploading(true);
+    const imageUrl = await uploadImage(imageFile);
+    setUploading(false);
+
+    if (!imageUrl) return;
+
+    const { data, error } = await supabase
+      .from("campaigns")
+      .insert([{ image: imageUrl }])
+      .select();
+
+    if (error) {
+      showToast("❌ حدث خطأ أثناء إضافة الصورة!", "error");
+      console.error(error);
+    } else {
+      showToast("✅ تمت إضافة الصورة بنجاح!", "success");
+      setCampaigns([data[0], ...campaigns]);
+      setImageFile(null);
+    }
+  }
+
+  async function deleteCampaign(id) {
+    const campaignToDelete = campaigns.find(c => c.id === id);
+    if (!campaignToDelete) return;
+
+    const fileName = getFileNameFromUrl(campaignToDelete.image, CAMPAIGN_BUCKET);
+
+    const { error: dbError } = await supabase.from("campaigns").delete().eq("id", id);
+
+    if (dbError) {
+      showToast(`❌ فشل حذف السجل من قاعدة البيانات. الخطأ: ${dbError.message}`, "error");
+      console.error("Database Delete Failed:", dbError);
+      return;
+    }
+
+    if (fileName) {
+      const { error: storageError } = await supabase.storage
+        .from(CAMPAIGN_BUCKET)
+        .remove([fileName]);
+
+      if (storageError) {
+        console.warn("⚠️ فشل حذف الصورة من التخزين (السجل حُذف):", storageError);
+      }
+    }
+
+    setCampaigns(campaigns.filter((c) => c.id !== id));
+    showToast("✅ تم حذف الحملة والصورة المرتبطة بها بنجاح!", "success");
+  }
+
+  return (
+    <div className="bg-gray-50 rounded-xl p-6 shadow-inner border border-gray-200">
+      <form onSubmit={addCampaignImage} className="flex flex-col sm:flex-row gap-4 items-center">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setImageFile(e.target.files[0])}
+          className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-[#7b0b4c] file:text-white file:border-none file:cursor-pointer w-full sm:w-auto transition-all duration-300"
+        />
+        <button
+          type="submit"
+          disabled={uploading}
+          className="bg-[#7b0b4c] text-white px-6 py-3 rounded-lg hover:bg-[#5e0839] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl disabled:opacity-50"
+        >
+          {uploading ? "جاري الرفع..." : "رفع الصورة"}
+        </button>
+      </form>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        {campaigns.map((c) => (
+          <div key={c.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200">
+            <img src={c.image} alt="campaign" className="w-full h-48 object-cover" />
+            <div className="p-4 flex justify-between items-center">
+              <span className="text-gray-600 text-sm">حملة #{c.id}</span>
+              <button
+                onClick={() => deleteCampaign(c.id)}
+                className="text-red-600 hover:text-red-800 text-sm font-semibold transition-colors"
+              >
+                حذف
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
