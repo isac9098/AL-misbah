@@ -92,8 +92,25 @@ export default function CoursesDashboard() {
       .from("courses")
       .select("*")
       .order("id", { ascending: false });
-    if (error) console.error("❌ خطأ في جلب الدورات:", error);
-    else setCourses(data);
+    
+    if (error) {
+      console.error("❌ خطأ في جلب الدورات:", error);
+      showToast("❌ فشل في تحميل الدورات", "error");
+      return;
+    }
+    
+    // معالجة البيانات لاستخراج الحقول من metadata إذا كانت موجودة
+    const processedData = data.map(course => {
+      if (course.metadata && typeof course.metadata === 'object') {
+        return {
+          ...course,
+          ...course.metadata
+        };
+      }
+      return course;
+    });
+    
+    setCourses(processedData);
   }
 
   async function uploadImage(file) {
@@ -160,18 +177,60 @@ export default function CoursesDashboard() {
 
   async function updateCourseSchedule(courseId, updates) {
     try {
+      // الحقول الأساسية الموجودة في الجدول
+      const existingFields = ['title', 'description', 'image', 'price', 'discount', 'category'];
+      
+      // تصفية التحديثات لتحتوي فقط على الحقول الموجودة
+      const safeUpdates = {};
+      
+      // إضافة الحقول الأساسية إذا كانت موجودة في التحديثات
+      existingFields.forEach(field => {
+        if (updates[field] !== undefined) {
+          safeUpdates[field] = updates[field];
+        }
+      });
+      
+      // إضافة الحقول الجديدة في حقل metadata
+      const newFields = ['level', 'duration', 'schedule', 'start_date', 'end_date', 'instructor'];
+      const metadata = {};
+      
+      newFields.forEach(field => {
+        if (updates[field] !== undefined && updates[field] !== '') {
+          metadata[field] = updates[field];
+        }
+      });
+      
+      // إذا كان هناك بيانات للحقول الجديدة، نضيفها كـ JSON في metadata
+      if (Object.keys(metadata).length > 0) {
+        safeUpdates.metadata = metadata;
+      }
+
+      console.log('🔄 محاولة تحديث الدورة:', courseId, safeUpdates);
+
       const { error } = await supabase
         .from("courses")
-        .update(updates)
+        .update(safeUpdates)
         .eq("id", courseId);
 
       if (error) {
         console.error("❌ خطأ في تحديث الجدول:", error);
-        showToast("❌ حدث خطأ أثناء التحديث", "error");
+        console.error("تفاصيل الخطأ:", error);
+        
+        if (error.message.includes('column') && error.message.includes('does not exist')) {
+          showToast("❌ حقل metadata غير موجود. يرجى إضافته إلى الجدول أولاً", "error");
+          return false;
+        }
+        
+        showToast(`❌ حدث خطأ أثناء التحديث: ${error.message}`, "error");
         return false;
       } else {
+        // تحديث البيانات المحلية
         setCourses(courses.map(course => 
-          course.id === courseId ? { ...course, ...updates } : course
+          course.id === courseId ? { 
+            ...course, 
+            ...safeUpdates,
+            ...metadata // نضيف الحقول الجديدة للعرض المحلي
+          } : course
         ));
         setEditingCourse(null);
         showToast("✅ تم تحديث جدول الدورة بنجاح!", "success");
@@ -179,7 +238,7 @@ export default function CoursesDashboard() {
       }
     } catch (error) {
       console.error("❌ خطأ غير متوقع:", error);
-      showToast("❌ حدث خطأ غير متوقع", "error");
+      showToast("❌ حدث خطأ غير متوقع أثناء التحديث", "error");
       return false;
     }
   }
@@ -188,12 +247,12 @@ export default function CoursesDashboard() {
     const course = courses.find(c => c.id === courseId);
     if (course) {
       const success = await updateCourseSchedule(courseId, {
-        level: course.level,
-        duration: course.duration,
-        schedule: course.schedule,
-        start_date: course.start_date,
-        end_date: course.end_date,
-        instructor: course.instructor
+        level: course.level || "",
+        duration: course.duration || "",
+        schedule: course.schedule || "",
+        start_date: course.start_date || "",
+        end_date: course.end_date || "",
+        instructor: course.instructor || ""
       });
       
       if (success) {
