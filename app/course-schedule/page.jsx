@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabaseClient";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
+import { supabase } from "../lib/supabaseClient";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 // 🧩 مكون Toast بسيط محسن
 function Toast({ message, type = "info", onClose }) {
