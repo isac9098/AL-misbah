@@ -5,7 +5,7 @@ import { supabase } from "../lib/supabaseClient";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-// 🧩 مكون Toast بسيط محسن
+// 🧩 مكون Toast بسيط وأنيق
 function Toast({ message, type = "info", onClose }) {
   useEffect(() => {
     const timer = setTimeout(onClose, 4000);
@@ -14,29 +14,43 @@ function Toast({ message, type = "info", onClose }) {
 
   const bgColor =
     type === "error"
-      ? "bg-red-600 border-red-700"
+      ? "bg-red-500"
       : type === "success"
-      ? "bg-green-600 border-green-700"
+      ? "bg-green-500"
       : type === "warning"
-      ? "bg-yellow-500 border-yellow-600"
-      : "bg-[#7b0b4c] border-[#8a1a5c]";
+      ? "bg-yellow-500"
+      : "bg-[#7b0b4c]";
 
   return (
     <div
       className={`fixed left-1/2 transform -translate-x-1/2 ${bgColor} text-white 
-      px-6 py-4 rounded-2xl shadow-2xl text-base font-semibold z-[9999] transition-all duration-500
-      backdrop-blur-sm border-2 min-w-[300px] text-center animate-fade-in-down`}
-      style={{ top: "90px" }}
+      px-6 py-3 rounded-lg shadow-lg text-sm font-medium z-[9999] transition-all duration-300
+      backdrop-blur-sm border border-white/20`}
+      style={{ top: "80px" }}
     >
       <div className="flex items-center justify-center space-x-2 space-x-reverse">
-        {type === "success" && <span className="text-lg">✅</span>}
-        {type === "error" && <span className="text-lg">❌</span>}
-        {type === "warning" && <span className="text-lg">⚠️</span>}
-        <span className="text-white drop-shadow-sm">{message}</span>
+        {type === "success" && <span>✓</span>}
+        {type === "error" && <span>✕</span>}
+        {type === "warning" && <span>⚠</span>}
+        <span>{message}</span>
       </div>
     </div>
   );
 }
+
+// أيقونات من مكتبة (بدون تثبيت مكتبات إضافية)
+const Icons = {
+  calendar: "📅",
+  clock: "⏰",
+  level: "🎯",
+  instructor: "👨‍🏫",
+  category: "📚",
+  price: "💰",
+  discount: "🎁",
+  expand: "⌄",
+  collapse: "⌃",
+  search: "🔍"
+};
 
 export default function CoursesSchedule() {
   const router = useRouter();
@@ -48,19 +62,9 @@ export default function CoursesSchedule() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [expandedCourse, setExpandedCourse] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
-
-  // قائمة البريد الإلكتروني للمسؤولين المسموح لهم
-  const adminEmails = [
-    "admin@almisbah.com",
-    "manager@almisbah.com", 
-    "hr@almisbah.com"
-  ];
 
   useEffect(() => {
-    checkAuthStatus();
     fetchCourses();
   }, []);
 
@@ -73,29 +77,6 @@ export default function CoursesSchedule() {
     }
   }, [selectedCategory, courses]);
 
-  // التحقق من حالة المصادقة والصلاحيات
-  async function checkAuthStatus() {
-    try {
-      const { data: { user: currentUser }, error } = await supabase.auth.getUser();
-      
-      if (error) {
-        console.error("❌ خطأ في التحقق من المستخدم:", error);
-        return;
-      }
-
-      if (currentUser) {
-        setUser(currentUser);
-        // التحقق إذا كان البريد الإلكتروني للمستخدم في قائمة المسؤولين
-        if (adminEmails.includes(currentUser.email?.toLowerCase())) {
-          setIsAdmin(true);
-          showToast(`مرحباً ${currentUser.email} - يمكنك التعديل من لوحة التحكم`, "success");
-        }
-      }
-    } catch (error) {
-      console.error("❌ خطأ غير متوقع:", error);
-    }
-  }
-
   async function fetchCourses() {
     setLoading(true);
     try {
@@ -106,7 +87,7 @@ export default function CoursesSchedule() {
 
       if (error) {
         console.error("❌ خطأ في جلب الدورات:", error);
-        showToast("❌ فشل في تحميل الدورات", "error");
+        showToast("فشل في تحميل الدورات", "error");
       } else {
         setCourses(data || []);
         
@@ -115,14 +96,14 @@ export default function CoursesSchedule() {
         setCategories(uniqueCategories);
         
         if (data.length === 0) {
-          showToast("ℹ️ لا توجد دورات متاحة حالياً", "warning");
+          showToast("لا توجد دورات متاحة حالياً", "warning");
         } else {
-          showToast(`✅ تم تحميل ${data.length} دورة بنجاح`, "success");
+          showToast(`تم تحميل ${data.length} دورة بنجاح`, "success");
         }
       }
     } catch (error) {
       console.error("❌ خطأ غير متوقع:", error);
-      showToast("❌ حدث خطأ غير متوقع", "error");
+      showToast("حدث خطأ غير متوقع", "error");
     }
     setLoading(false);
   }
@@ -145,13 +126,8 @@ export default function CoursesSchedule() {
     }
   };
 
-  // دالة للتنقل إلى Dashboard للتعديل
-  const navigateToDashboard = () => {
-    router.push("/dashboard");
-  };
-
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+    <div className="min-h-screen flex flex-col bg-white">
       {toast && (
         <Toast
           message={toast.msg}
@@ -162,68 +138,37 @@ export default function CoursesSchedule() {
       
       <Header />
       
-      {/* قسم الهيرو المحسن بشكل احترافي */}
-      <section className="relative bg-gradient-to-br from-[#7b0b4c] via-[#8a1a5c] to-[#6a0840] py-20 lg:py-28 overflow-hidden">
-        {/* تأثيرات خلفية ديناميكية */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-20 h-20 bg-white rounded-full blur-xl"></div>
-          <div className="absolute bottom-10 right-10 w-32 h-32 bg-white rounded-full blur-2xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-white rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-black/10"></div>
-        
+      {/* قسم الهيرو - متدرج للأسفل */}
+      <section className="relative bg-gradient-to-b from-[#7b0b4c] to-[#5e0839] py-16 lg:py-20">
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-6xl mx-auto text-center text-white">
-            <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 lg:p-12 border border-white/20 shadow-2xl">
-              {/* شارة المسؤول */}
-              {isAdmin && (
-                <div className="inline-flex items-center px-6 py-3 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-full mb-6">
-                  <span className="text-green-300 text-sm font-bold">🛠️ وضع المسؤول - يمكنك التعديل من لوحة التحكم</span>
-                </div>
-              )}
-              
-              <h1 className="text-4xl lg:text-6xl font-black mb-6 text-white drop-shadow-2xl leading-tight">
-                🗓️ جدول الدورات القادمة
-              </h1>
-              <p className="text-xl lg:text-2xl mb-6 leading-relaxed font-medium text-white/95">
-                يمكنك معرفة مواعيد إنعقاد الدورات التي تهمك بسهولة!
-              </p>
-              <div className="w-32 h-1.5 bg-gradient-to-r from-white to-white/50 mx-auto mb-8 rounded-full shadow-lg"></div>
-              <p className="text-lg lg:text-xl opacity-95 leading-relaxed max-w-3xl mx-auto text-white/90">
-                قم باختيار الموضوع من القائمة أدناه لتتمكن من استعراض مواعيد إنعقاد جميع الدورات المتعلقة به
-              </p>
-
-              {/* زر الانتقال للوحة التحكم للمسؤولين */}
-              {isAdmin && (
-                <div className="mt-8">
-                  <button
-                    onClick={navigateToDashboard}
-                    className="inline-flex items-center px-8 py-4 bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white rounded-2xl hover:bg-white/30 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105"
-                  >
-                    <span className="ml-2">⚙️</span>
-                    الذهاب إلى لوحة التحكم للتعديل
-                  </button>
-                </div>
-              )}
-            </div>
+          <div className="max-w-4xl mx-auto text-center text-white">
+            <h1 className="text-3xl lg:text-5xl font-bold mb-6 leading-tight">
+              {Icons.calendar} جدول الدورات القادمة
+            </h1>
+            <p className="text-lg lg:text-xl mb-6 leading-relaxed opacity-95">
+              يمكنك معرفة مواعيد إنعقاد الدورات التي تهمك بسهولة!
+            </p>
+            <div className="w-24 h-1 bg-white/50 mx-auto mb-6 rounded-full"></div>
+            <p className="text-base lg:text-lg opacity-90 leading-relaxed max-w-2xl mx-auto">
+              قم باختيار الموضوع من القائمة أدناه لتتمكن من استعراض مواعيد إنعقاد جميع الدورات المتعلقة به
+            </p>
           </div>
         </div>
       </section>
 
       {/* المحتوى الرئيسي */}
-      <main className="flex-grow py-12 lg:py-16">
+      <main className="flex-grow py-12 lg:py-16 bg-white">
         <div className="container mx-auto px-4">
           {/* قائمة الفئات المنسدلة */}
-          <div className="max-w-2xl mx-auto mb-12 lg:mb-16">
-            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200/60 backdrop-blur-sm">
-              <label className="block text-xl font-black text-gray-800 mb-4 text-center">
-                🎯 اختر مجال الدورات
+          <div className="max-w-2xl mx-auto mb-12">
+            <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+              <label className="block text-lg font-semibold text-gray-800 mb-3 text-center">
+                {Icons.search} اختر مجال الدورات
               </label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-6 py-4 border-2 border-[#7b0b4c] rounded-2xl text-gray-800 focus:ring-4 focus:ring-[#7b0b4c]/20 focus:border-[#7b0b4c] outline-none transition-all duration-300 text-lg font-semibold bg-white shadow-lg hover:shadow-xl"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-200 text-base font-medium bg-white"
               >
                 <option value="">جميع الفئات</option>
                 {categories.map((category, index) => (
@@ -237,172 +182,149 @@ export default function CoursesSchedule() {
 
           {/* حالة التحميل */}
           {loading && (
-            <div className="text-center py-16 lg:py-20">
-              <div className="animate-spin rounded-full h-20 w-20 border-b-2 border-[#7b0b4c] mx-auto mb-6"></div>
-              <p className="text-gray-600 text-xl font-semibold">جاري تحميل الدورات...</p>
-              <p className="text-gray-500 mt-2">يرجى الانتظار قليلاً</p>
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#7b0b4c] mx-auto mb-4"></div>
+              <p className="text-gray-600 text-lg">جاري تحميل الدورات...</p>
             </div>
           )}
 
           {/* قائمة الدورات */}
           {!loading && (
-            <div className="max-w-6xl mx-auto">
-              <div className="bg-white rounded-2xl shadow-xl p-6 lg:p-8 mb-8 border border-gray-200/60 backdrop-blur-sm">
-                <h2 className="text-2xl lg:text-3xl font-black text-[#7b0b4c] text-center mb-2">
-                  📚 الدورات المتاحة
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-[#7b0b4c] mb-2">
+                  {Icons.category} الدورات المتاحة
                 </h2>
                 {selectedCategory && (
-                  <p className="text-gray-700 text-lg text-center font-semibold">
-                    في مجال <span className="font-black text-[#7b0b4c]">{selectedCategory}</span>
+                  <p className="text-gray-600">
+                    في مجال <span className="font-semibold text-[#7b0b4c]">{selectedCategory}</span>
                   </p>
                 )}
-                <div className="text-center mt-4">
-                  <span className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-bold">
-                    📊 إجمالي الدورات: {filteredCourses.length}
+                <div className="mt-2">
+                  <span className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                    إجمالي الدورات: {filteredCourses.length}
                   </span>
                 </div>
               </div>
 
               {filteredCourses.length === 0 ? (
-                <div className="text-center py-16 bg-white rounded-2xl shadow-xl border border-gray-200/60 backdrop-blur-sm">
-                  <div className="text-8xl mb-6 opacity-60">📭</div>
-                  <h3 className="text-2xl font-black text-gray-700 mb-4">لا توجد دورات متاحة</h3>
-                  <p className="text-gray-500 text-lg">لا توجد دورات في هذه الفئة حالياً</p>
+                <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="text-5xl mb-4 opacity-50">{Icons.category}</div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">لا توجد دورات متاحة</h3>
+                  <p className="text-gray-500">لا توجد دورات في هذه الفئة حالياً</p>
                 </div>
               ) : (
-                <div className="grid gap-6 lg:gap-8">
+                <div className="space-y-4">
                   {filteredCourses.map((course) => (
                     <div
                       key={course.id}
-                      className="bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-500 hover:shadow-2xl border border-gray-200/60 hover:border-[#7b0b4c]/40 backdrop-blur-sm group"
+                      className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300"
                     >
                       {/* عنوان الدورة */}
                       <div
-                        className="p-6 lg:p-8 cursor-pointer flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 bg-gradient-to-r from-white to-gray-50/80 hover:from-gray-50 hover:to-white transition-all duration-300 border-b border-gray-200/40"
+                        className="p-4 cursor-pointer flex justify-between items-center"
                         onClick={() => toggleCourse(course.id)}
                       >
-                        <div className="flex items-start space-x-4 space-x-reverse flex-1">
-                          <div className="text-3xl bg-gradient-to-br from-[#7b0b4c] to-[#9a2c6e] text-white p-4 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            📖
+                        <div className="flex items-center space-x-3 space-x-reverse flex-1">
+                          <div className="text-2xl text-[#7b0b4c]">
+                            {Icons.category}
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-xl lg:text-2xl font-black text-gray-800 mb-2 leading-tight">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-1">
                               {course.title}
                             </h3>
-                            <p className="text-gray-600 text-lg leading-relaxed font-medium">{course.description}</p>
-                            <div className="flex flex-wrap gap-3 mt-4">
-                              <span className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-xl text-sm font-bold shadow-sm">
-                                💰 {course.price}
+                            <p className="text-gray-600 text-sm">{course.description}</p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <span className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                                {Icons.price} {course.price}
                               </span>
                               {course.discount && (
-                                <span className="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-xl text-sm font-bold shadow-sm">
-                                  🎁 {course.discount}
+                                <span className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium">
+                                  {Icons.discount} {course.discount}
                                 </span>
                               )}
-                              <span className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-800 rounded-xl text-sm font-bold shadow-sm">
-                                📚 {course.category}
-                              </span>
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-3 space-x-reverse">
-                          <div className={`transform transition-transform duration-500 ${
-                            expandedCourse === course.id ? 'rotate-180 scale-110' : ''
-                          }`}>
-                            <div className="bg-gradient-to-br from-[#7b0b4c] to-[#9a2c6e] text-white p-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-                              <span className="text-xl font-bold">⬇️</span>
-                            </div>
-                          </div>
+                        <div className={`transform transition-transform duration-300 ${
+                          expandedCourse === course.id ? 'rotate-180' : ''
+                        }`}>
+                          <span className="text-xl text-gray-500">
+                            {expandedCourse === course.id ? Icons.collapse : Icons.expand}
+                          </span>
                         </div>
                       </div>
 
                       {/* محتوى قابل للطي */}
-                      <div className={`overflow-hidden transition-all duration-700 ${
-                        expandedCourse === course.id ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
+                      <div className={`overflow-hidden transition-all duration-500 ${
+                        expandedCourse === course.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                       }`}>
-                        <div className="p-6 lg:p-8 bg-gradient-to-br from-gray-50/50 to-white/80 backdrop-blur-sm">
-                          {/* جدول المعلومات */}
-                          <div className="space-y-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-                              {/* المستوى */}
-                              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 text-center border-2 border-blue-200 shadow-lg">
-                                <div className="text-4xl mb-4">🎯</div>
-                                <h4 className="font-black text-gray-800 mb-3 text-lg">المستوى</h4>
-                                <p className="text-gray-700 text-xl font-black bg-white/50 rounded-xl py-2">
-                                  {course.level || "غير محدد"}
-                                </p>
+                        <div className="p-4 border-t border-gray-100 bg-gray-50">
+                          {/* معلومات الدورة بشكل خطي */}
+                          <div className="space-y-3">
+                            {/* المستوى */}
+                            <div className="flex items-center justify-between py-2 border-b border-gray-200">
+                              <div className="flex items-center space-x-2 space-x-reverse">
+                                <span className="text-lg">{Icons.level}</span>
+                                <span className="text-gray-600 font-medium">المستوى:</span>
                               </div>
-
-                              {/* المدة الزمنية */}
-                              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 text-center border-2 border-green-200 shadow-lg">
-                                <div className="text-4xl mb-4">⏰</div>
-                                <h4 className="font-black text-gray-800 mb-3 text-lg">المدة الزمنية</h4>
-                                <p className="text-gray-700 text-xl font-black bg-white/50 rounded-xl py-2">
-                                  {course.duration || "غير محددة"}
-                                </p>
-                              </div>
-
-                              {/* المدرب */}
-                              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 text-center border-2 border-purple-200 shadow-lg">
-                                <div className="text-4xl mb-4">👨‍🏫</div>
-                                <h4 className="font-black text-gray-800 mb-3 text-lg">المدرب</h4>
-                                <p className="text-gray-700 text-xl font-black bg-white/50 rounded-xl py-2">
-                                  {course.instructor || "غير محدد"}
-                                </p>
-                              </div>
-
-                              {/* موعد الإنعقاد */}
-                              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-6 text-center border-2 border-orange-200 shadow-lg">
-                                <div className="text-4xl mb-4">📅</div>
-                                <h4 className="font-black text-gray-800 mb-3 text-lg">موعد الإنعقاد</h4>
-                                <p className="text-gray-700 text-xl font-black bg-white/50 rounded-xl py-2">
-                                  {course.schedule || "غير محدد"}
-                                </p>
-                              </div>
+                              <span className="text-gray-800 font-semibold">{course.level || "غير محدد"}</span>
                             </div>
 
-                            {/* جدول التواريخ */}
-                            {(course.start_date || course.end_date) && (
-                              <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-6 border-2 border-slate-200 shadow-lg">
-                                <h4 className="font-black text-gray-800 mb-6 text-xl text-center">📅 الفترة الزمنية للدورة</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  <div className="text-center bg-white/70 rounded-xl p-4 shadow-inner">
-                                    <p className="text-gray-600 mb-3 font-semibold">📅 تاريخ البدء</p>
-                                    <p className="text-2xl font-black text-[#7b0b4c] bg-gradient-to-r from-[#7b0b4c]/10 to-transparent rounded-lg py-3">
-                                      {formatDate(course.start_date)}
-                                    </p>
-                                  </div>
-                                  <div className="text-center bg-white/70 rounded-xl p-4 shadow-inner">
-                                    <p className="text-gray-600 mb-3 font-semibold">📅 تاريخ الانتهاء</p>
-                                    <p className="text-2xl font-black text-[#7b0b4c] bg-gradient-to-r from-[#7b0b4c]/10 to-transparent rounded-lg py-3">
-                                      {formatDate(course.end_date)}
-                                    </p>
-                                  </div>
-                                </div>
+                            {/* المدة الزمنية */}
+                            <div className="flex items-center justify-between py-2 border-b border-gray-200">
+                              <div className="flex items-center space-x-2 space-x-reverse">
+                                <span className="text-lg">{Icons.clock}</span>
+                                <span className="text-gray-600 font-medium">المدة الزمنية:</span>
                               </div>
+                              <span className="text-gray-800 font-semibold">{course.duration || "غير محددة"}</span>
+                            </div>
+
+                            {/* المدرب */}
+                            <div className="flex items-center justify-between py-2 border-b border-gray-200">
+                              <div className="flex items-center space-x-2 space-x-reverse">
+                                <span className="text-lg">{Icons.instructor}</span>
+                                <span className="text-gray-600 font-medium">المدرب:</span>
+                              </div>
+                              <span className="text-gray-800 font-semibold">{course.instructor || "غير محدد"}</span>
+                            </div>
+
+                            {/* موعد الإنعقاد */}
+                            <div className="flex items-center justify-between py-2 border-b border-gray-200">
+                              <div className="flex items-center space-x-2 space-x-reverse">
+                                <span className="text-lg">{Icons.calendar}</span>
+                                <span className="text-gray-600 font-medium">موعد الإنعقاد:</span>
+                              </div>
+                              <span className="text-gray-800 font-semibold">{course.schedule || "غير محدد"}</span>
+                            </div>
+
+                            {/* الفترة الزمنية */}
+                            {(course.start_date || course.end_date) && (
+                              <>
+                                <div className="flex items-center justify-between py-2 border-b border-gray-200">
+                                  <div className="flex items-center space-x-2 space-x-reverse">
+                                    <span className="text-lg">📅</span>
+                                    <span className="text-gray-600 font-medium">تاريخ البدء:</span>
+                                  </div>
+                                  <span className="text-gray-800 font-semibold">{formatDate(course.start_date)}</span>
+                                </div>
+                                <div className="flex items-center justify-between py-2 border-b border-gray-200">
+                                  <div className="flex items-center space-x-2 space-x-reverse">
+                                    <span className="text-lg">📅</span>
+                                    <span className="text-gray-600 font-medium">تاريخ الانتهاء:</span>
+                                  </div>
+                                  <span className="text-gray-800 font-semibold">{formatDate(course.end_date)}</span>
+                                </div>
+                              </>
                             )}
 
-                            {/* معلومات إضافية */}
-                            <div className="bg-white rounded-2xl p-6 border-2 border-gray-200 shadow-lg">
-                              <h4 className="font-black text-gray-800 mb-6 text-xl text-center">ℹ️ معلومات إضافية</h4>
-                              <div className="flex flex-wrap justify-center gap-6">
-                                <div className="flex items-center space-x-4 space-x-reverse bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 rounded-2xl border-2 border-blue-200 shadow-sm">
-                                  <span className="text-3xl">💰</span>
-                                  <div>
-                                    <p className="text-gray-600 text-sm font-semibold">السعر</p>
-                                    <p className="text-gray-800 font-black text-2xl">{course.price}</p>
-                                  </div>
-                                </div>
-                                {course.discount && (
-                                  <div className="flex items-center space-x-4 space-x-reverse bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 rounded-2xl border-2 border-green-200 shadow-sm">
-                                    <span className="text-3xl">🎁</span>
-                                    <div>
-                                      <p className="text-gray-600 text-sm font-semibold">الخصم</p>
-                                      <p className="text-green-700 font-black text-2xl">{course.discount}</p>
-                                    </div>
-                                  </div>
-                                )}
+                            {/* الفئة */}
+                            <div className="flex items-center justify-between py-2">
+                              <div className="flex items-center space-x-2 space-x-reverse">
+                                <span className="text-lg">{Icons.category}</span>
+                                <span className="text-gray-600 font-medium">الفئة:</span>
                               </div>
+                              <span className="text-gray-800 font-semibold">{course.category}</span>
                             </div>
                           </div>
                         </div>
