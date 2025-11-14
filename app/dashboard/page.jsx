@@ -52,7 +52,8 @@ export default function CoursesDashboard() {
     category: "",
   });
   const [imageFile, setImageFile] = useState(null);
-  const [userName, setUserName] = useState(""); // حالة لتخزين اسم المستخدم
+  const [userName, setUserName] = useState("");
+  const [editingCourse, setEditingCourse] = useState(null);
   const COURSES_BUCKET = "courses-images";
 
   useEffect(() => {
@@ -64,15 +65,14 @@ export default function CoursesDashboard() {
   async function getUserName() {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
-      
+
       if (error) {
         console.error("❌ خطأ في جلب بيانات المستخدم:", error);
-        setUserName("مدير النظام"); // اسم افتراضي في حالة الخطأ
+        setUserName("مدير النظام");
         return;
       }
 
       if (user) {
-        // إذا كان هناك بيانات مستخدم في الجلسة
         const name = user.user_metadata?.name || 
                     user.user_metadata?.full_name || 
                     user.email?.split('@')[0] || 
@@ -158,6 +158,61 @@ export default function CoursesDashboard() {
     }
   }
 
+  async function updateCourseSchedule(courseId, updates) {
+    try {
+      const { error } = await supabase
+        .from("courses")
+        .update(updates)
+        .eq("id", courseId);
+
+      if (error) {
+        console.error("❌ خطأ في تحديث الجدول:", error);
+        showToast("❌ حدث خطأ أثناء التحديث", "error");
+        return false;
+      } else {
+        setCourses(courses.map(course => 
+          course.id === courseId ? { ...course, ...updates } : course
+        ));
+        setEditingCourse(null);
+        showToast("✅ تم تحديث جدول الدورة بنجاح!", "success");
+        return true;
+      }
+    } catch (error) {
+      console.error("❌ خطأ غير متوقع:", error);
+      showToast("❌ حدث خطأ غير متوقع", "error");
+      return false;
+    }
+  }
+
+  const handleSaveSchedule = async (courseId) => {
+    const course = courses.find(c => c.id === courseId);
+    if (course) {
+      const success = await updateCourseSchedule(courseId, {
+        level: course.level,
+        duration: course.duration,
+        schedule: course.schedule,
+        start_date: course.start_date,
+        end_date: course.end_date,
+        instructor: course.instructor
+      });
+      
+      if (success) {
+        setEditingCourse(null);
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCourse(null);
+    fetchCourses();
+  };
+
+  const handleInputChange = (courseId, field, value) => {
+    setCourses(courses.map(course => 
+      course.id === courseId ? { ...course, [field]: value } : course
+    ));
+  };
+
   async function deleteCourse(id) {
     const courseToDelete = courses.find((c) => c.id === id);
     if (!courseToDelete) return;
@@ -203,10 +258,10 @@ export default function CoursesDashboard() {
         />
       )}
 
-      <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-4 sm:p-8 w-full max-w-5xl animate-fade-in">
+      <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-4 sm:p-8 w-full max-w-6xl animate-fade-in">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
           <div className="mb-4 sm:mb-0">
-            <h1 className="text-2xl font-bold text-[#7b0b4c]">🎓 إدارة الدورات</h1>
+            <h1 className="text-2xl font-bold text-[#7b0b4c]">🎓 إدارة الدورات والمواعيد</h1>
             <p className="text-gray-700 mt-1 text-sm font-medium">
               مرحباً 👋 {userName || "مدير النظام"}
             </p>
@@ -223,45 +278,45 @@ export default function CoursesDashboard() {
         {/* نموذج إضافة دورة */}
         <form
           onSubmit={addCourse}
-          className="bg-gray-50 rounded-xl p-4 mb-8 shadow-inner"
+          className="bg-gray-50 rounded-xl p-6 mb-8 shadow-inner border border-gray-200"
         >
-          <h2 className="text-lg font-semibold mb-4 text-[#7b0b4c]">
+          <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">
             ➕ إضافة دورة جديدة
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <input
               type="text"
-              placeholder="عنوان الدورة"
+              placeholder="عنوان الدورة *"
               value={newCourse.title}
               onChange={(e) =>
                 setNewCourse({ ...newCourse, title: e.target.value })
               }
-              className="border rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
             />
             <input
               type="text"
-              placeholder="الوصف"
+              placeholder="الوصف *"
               value={newCourse.description}
               onChange={(e) =>
                 setNewCourse({ ...newCourse, description: e.target.value })
               }
-              className="border rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
             />
             <input
               type="file"
               accept="image/*"
               onChange={(e) => setImageFile(e.target.files[0])}
-              className="border rounded-lg px-3 py-2 text-gray-800 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:bg-[#7b0b4c] file:text-white"
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-[#7b0b4c] file:text-white file:border-none file:cursor-pointer transition-all duration-300"
             />
             <input
               type="text"
-              placeholder="السعر"
+              placeholder="السعر *"
               value={newCourse.price}
               onChange={(e) =>
                 setNewCourse({ ...newCourse, price: e.target.value })
               }
-              className="border rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
             />
             <input
               type="text"
@@ -270,71 +325,168 @@ export default function CoursesDashboard() {
               onChange={(e) =>
                 setNewCourse({ ...newCourse, discount: e.target.value })
               }
-              className="border rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
             />
             <input
               type="text"
-              placeholder="الفئة (مثلاً: القانون / اللغة / التقنية)"
+              placeholder="الفئة * (مثلاً: القانون / اللغة / التقنية)"
               value={newCourse.category}
               onChange={(e) =>
                 setNewCourse({ ...newCourse, category: e.target.value })
               }
-              className="border rounded-lg px-3 py-2 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
             />
           </div>
 
           <button
             type="submit"
-            className="mt-4 bg-[#7b0b4c] text-white px-6 py-2 rounded-lg hover:bg-[#5e0839] transition w-full sm:w-auto"
+            className="mt-6 bg-[#7b0b4c] text-white px-8 py-3 rounded-lg hover:bg-[#5e0839] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl"
           >
             إضافة الدورة
           </button>
         </form>
 
-        {/* قائمة الدورات */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">
-            📚 الدورات الحالية
+        {/* قسم تعديل مواعيد الدورات */}
+        <div className="bg-gray-50 rounded-xl p-6 mb-8 shadow-inner border border-gray-200">
+          <h2 className="text-xl font-semibold mb-6 text-[#7b0b4c]">
+            🗓️ إدارة مواعيد وجداول الدورات
           </h2>
+          
           {courses.length === 0 ? (
-            <p className="text-gray-500">لا توجد دورات حالياً.</p>
+            <p className="text-gray-500 text-center py-8">لا توجد دورات حالياً.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-6">
               {courses.map((course) => (
-                <div
-                  key={course.id}
-                  className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition"
-                >
-                  <img
-                    src={course.image || "https://via.placeholder.com/300x150"}
-                    alt={course.title}
-                    className="w-full h-40 object-cover"
-                  />
-                  <div className="p-4">
-                    <h3 className="text-gray-900 font-bold mb-1">
-                      {course.title}
-                    </h3>
-                    <p className="text-gray-700 text-sm mb-2">
-                      {course.description}
-                    </p>
-                    <p className="text-[#5e0839] font-semibold mb-1">
-                      السعر: {course.price}
-                    </p>
-                    {course.discount && (
-                      <p className="text-green-700 text-sm">
-                        الخصم: {course.discount}
-                      </p>
-                    )}
-                    <p className="text-gray-600 text-sm mb-2">
-                      الفئة: {course.category}
-                    </p>
-                    <button
-                      onClick={() => deleteCourse(course.id)}
-                      className="mt-3 px-3 py-1 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-                    >
-                      حذف
-                    </button>
+                <div key={course.id} className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800 mb-2">{course.title}</h3>
+                      <p className="text-gray-600 text-sm">{course.description}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditingCourse(editingCourse === course.id ? null : course.id)}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm font-medium"
+                      >
+                        {editingCourse === course.id ? 'إلغاء التعديل' : '✏️ تعديل الجدول'}
+                      </button>
+                      <button
+                        onClick={() => deleteCourse(course.id)}
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium"
+                      >
+                        🗑️ حذف
+                      </button>
+                    </div>
                   </div>
+
+                  {editingCourse === course.id ? (
+                    // وضع التعديل
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mt-4">
+                      <h4 className="font-semibold text-yellow-800 mb-4 text-lg">🛠️ تعديل جدول الدورة</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">🎯 المستوى</label>
+                          <input
+                            type="text"
+                            value={course.level || ""}
+                            onChange={(e) => handleInputChange(course.id, 'level', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                            placeholder="مبتدئ - متوسط - متقدم"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">⏰ المدة</label>
+                          <input
+                            type="text"
+                            value={course.duration || ""}
+                            onChange={(e) => handleInputChange(course.id, 'duration', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                            placeholder="4 أسابيع - 30 ساعة"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">👨‍🏫 المدرب</label>
+                          <input
+                            type="text"
+                            value={course.instructor || ""}
+                            onChange={(e) => handleInputChange(course.id, 'instructor', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                            placeholder="اسم المدرب"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">📅 تاريخ البدء</label>
+                          <input
+                            type="date"
+                            value={course.start_date || ""}
+                            onChange={(e) => handleInputChange(course.id, 'start_date', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">📅 تاريخ الانتهاء</label>
+                          <input
+                            type="date"
+                            value={course.end_date || ""}
+                            onChange={(e) => handleInputChange(course.id, 'end_date', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">🕒 جدول المواعيد</label>
+                          <input
+                            type="text"
+                            value={course.schedule || ""}
+                            onChange={(e) => handleInputChange(course.id, 'schedule', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
+                            placeholder="السبت والثلاثاء 6-8 مساءً"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex space-x-3 space-x-reverse justify-end mt-4">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+                        >
+                          إلغاء
+                        </button>
+                        <button
+                          onClick={() => handleSaveSchedule(course.id)}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                        >
+                          حفظ التغييرات
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // وضع العرض
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">🎯 المستوى</p>
+                        <p className="font-semibold text-gray-800">{course.level || "غير محدد"}</p>
+                      </div>
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">⏰ المدة</p>
+                        <p className="font-semibold text-gray-800">{course.duration || "غير محددة"}</p>
+                      </div>
+                      <div className="bg-purple-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">👨‍🏫 المدرب</p>
+                        <p className="font-semibold text-gray-800">{course.instructor || "غير محدد"}</p>
+                      </div>
+                      <div className="bg-orange-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">📅 موعد الإنعقاد</p>
+                        <p className="font-semibold text-gray-800">{course.schedule || "غير محدد"}</p>
+                      </div>
+                      <div className="bg-red-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">📅 تاريخ البدء</p>
+                        <p className="font-semibold text-gray-800">{course.start_date || "غير محدد"}</p>
+                      </div>
+                      <div className="bg-indigo-50 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600">📅 تاريخ الانتهاء</p>
+                        <p className="font-semibold text-gray-800">{course.end_date || "غير محدد"}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -358,7 +510,7 @@ function CampaignsManager({ showToast }) {
   const [campaigns, setCampaigns] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const CAMPAIGN_BUCKET = "campaigns-images"; // اسم الباكت
+  const CAMPAIGN_BUCKET = "campaigns-images";
 
   useEffect(() => {
     fetchCampaigns();
@@ -421,25 +573,20 @@ function CampaignsManager({ showToast }) {
     }
   }
 
-  // 🗑️ دالة حذف الحملة المُعدّلة لحل مشكلة عدم الحذف الدائم
   async function deleteCampaign(id) {
     const campaignToDelete = campaigns.find(c => c.id === id);
     if (!campaignToDelete) return;
 
-    // 1. استخراج اسم الملف
     const fileName = getFileNameFromUrl(campaignToDelete.image, CAMPAIGN_BUCKET);
 
-    // 2. حذف السجل من قاعدة البيانات (الأولوية للحذف من DB)
     const { error: dbError } = await supabase.from("campaigns").delete().eq("id", id);
 
     if (dbError) {
-      // ❌ إذا فشل الحذف في قاعدة البيانات، نتوقف ونعرض رسالة واضحة
-      showToast(`❌ فشل حذف السجل من قاعدة البيانات. قد تكون المشكلة في الصلاحيات. الخطأ: ${dbError.message}`, "error");
+      showToast(`❌ فشل حذف السجل من قاعدة البيانات. الخطأ: ${dbError.message}`, "error");
       console.error("Database Delete Failed:", dbError);
       return;
     }
 
-    // 3. حذف الملف من Supabase Storage (فقط إذا نجح حذف السجل من DB)
     if (fileName) {
       const { error: storageError } = await supabase.storage
         .from(CAMPAIGN_BUCKET)
@@ -450,39 +597,37 @@ function CampaignsManager({ showToast }) {
       }
     }
 
-    // 4. تحديث حالة الواجهة
     setCampaigns(campaigns.filter((c) => c.id !== id));
     showToast("✅ تم حذف الحملة والصورة المرتبطة بها بنجاح!", "success");
   }
 
   return (
-    <div className="bg-gray-50 rounded-xl p-4 shadow-inner">
+    <div className="bg-gray-50 rounded-xl p-6 shadow-inner border border-gray-200">
       <form onSubmit={addCampaignImage} className="flex flex-col sm:flex-row gap-4 items-center">
         <input
           type="file"
           accept="image/*"
           onChange={(e) => setImageFile(e.target.files[0])}
-          className="border rounded-lg px-3 py-2 text-gray-800 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-none file:bg-[#7b0b4c] file:text-white file:cursor-pointer w-full sm:w-auto"
+          className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-[#7b0b4c] file:text-white file:border-none file:cursor-pointer w-full sm:w-auto transition-all duration-300"
         />
         <button
           type="submit"
           disabled={uploading}
-          className="bg-[#7b0b4c] text-white px-6 py-2 rounded-lg hover:bg-[#5e0839] transition w-full sm:w-auto"
+          className="bg-[#7b0b4c] text-white px-6 py-3 rounded-lg hover:bg-[#5e0839] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl disabled:opacity-50"
         >
           {uploading ? "جاري الرفع..." : "رفع الصورة"}
         </button>
       </form>
 
-      {/* ✅ تحسين التوافق: Grid يبدأ من عمود واحد، ثم عمودين، ثم 3 أعمدة */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         {campaigns.map((c) => (
-          <div key={c.id} className="bg-white rounded-xl shadow overflow-hidden hover:shadow-lg transition">
+          <div key={c.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200">
             <img src={c.image} alt="campaign" className="w-full h-48 object-cover" />
-            <div className="p-3 flex justify-between items-center">
+            <div className="p-4 flex justify-between items-center">
               <span className="text-gray-600 text-sm">حملة #{c.id}</span>
               <button
                 onClick={() => deleteCampaign(c.id)}
-                className="text-red-600 hover:text-red-800 text-sm font-semibold"
+                className="text-red-600 hover:text-red-800 text-sm font-semibold transition-colors"
               >
                 حذف
               </button>
