@@ -22,48 +22,10 @@ import {
 
 import Footer from "@/components/Footer";
 
-/* =========================  
-      Small reusable Toast  
-========================= */
-function Toast({ message, type = "info", onClose }) {
-  useEffect(() => {
-    const t = setTimeout(onClose, 4000);
-    return () => clearTimeout(t);
-  }, [onClose]);
-
-  const bg =
-    type === "error"
-      ? "bg-red-600"
-      : type === "success"
-      ? "bg-green-600"
-      : type === "warning"
-      ? "bg-yellow-600"
-      : "bg-[#7b0b4c]";
-
-  return (
-    <div
-      className={`${bg} text-white fixed left-1/2 -translate-x-1/2 top-20 z-50 px-5 py-3 rounded-lg shadow-lg backdrop-blur-sm border border-white/10 flex items-center gap-3`}
-      role="status"
-      aria-live="polite"
-    >
-      <span className="text-sm font-medium">{message}</span>
-    </div>
-  );
-}
 
 /* =========================  
       Icons Mapping  
 ========================= */
-
-const ICONS = {
-  category: <FaBook className="inline ml-2" />,
-  calendar: <FaCalendarAlt className="inline ml-2" />,
-  clock: <FaClock className="inline ml-2" />,
-  days: <FaCalendarDay className="inline ml-2" />,
-  search: <FaSearch className="inline ml-2" />,
-  expand: <FaChevronDown className="inline" />,
-  collapse: <FaChevronUp className="inline" />,
-};
 
 const categoryMeta = {
   "قانون": { 
@@ -89,9 +51,6 @@ const categoryMeta = {
 ========================= */
 
 export default function CoursesSchedule() {
-  const [toast, setToast] = useState(null);
-
-  const showToast = (msg, type = "info") => setToast({ msg, type });
 
   const [courses, setCourses] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -137,7 +96,7 @@ export default function CoursesSchedule() {
 
       if (error) {
         console.error(error);
-        showToast("فشل في تحميل الدورات", "error");
+        
       } else {
         setCourses(data || []);
         const uniqueCategories = [
@@ -146,11 +105,11 @@ export default function CoursesSchedule() {
         setCategories(uniqueCategories);
 
         if (!data || data.length === 0)
-          showToast("لا توجد دورات متاحة حالياً", "warning");
-        else showToast(`تم تحميل ${data.length} دورة`, "success");
+          
+        else 
       }
     } catch {
-      showToast("حدث خطأ غير متوقع", "error");
+      
     } finally {
       setLoading(false);
     }
@@ -173,93 +132,87 @@ export default function CoursesSchedule() {
     setExpandedCourse(expandedCourse === id ? null : id);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-gray-50" dir="rtl">
 
-      {/* Global animations */}
       <style jsx>{`
         .accordion-content {
           transition: max-height 320ms cubic-bezier(.2,.9,.3,1), opacity 260ms ease;
         }
-        .gradient-divider {
-          background: linear-gradient(
-            90deg,
-            rgba(123,11,76,0.0),
-            rgba(123,11,76,0.12),
-            rgba(94,8,57,0.0)
-          );
-          height: 2px;
-        }
       `}</style>
 
-      {toast && (
-        <Toast
-          message={toast.msg}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-
       {/* ================= HERO SECTION ================= */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#7b0b4c] to-[#5e0839]">
-        <div className="container mx-auto px-4 py-20 relative z-10">
+      <section className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-purple-700 min-h-[50vh] flex items-center">
+        {/* تأثيرات الخلفية */}
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute top-0 left-0 w-72 h-72 bg-white/5 rounded-full -translate-x-36 -translate-y-36"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-48 translate-y-48"></div>
+        
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center text-white">
-            <h1
-              className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4"
-              style={{ textShadow: "0 6px 18px rgba(0,0,0,0.25)" }}
-            >
-              <span className="inline-flex items-center justify-center">
-                <FaCalendarAlt className="ml-3" />
-                جدول الدورات القادمة
-              </span>
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                <FaCalendarAlt className="text-3xl text-white" />
+              </div>
+            </div>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+              جدول الدورات القادمة
             </h1>
 
-            <p className="text-lg sm:text-xl opacity-95 max-w-2xl mx-auto leading-relaxed">
-              يمكنك معرفة مواعيد إنعقاد الدورات التي تهمك بسهولة — اختر فئة وشاهد التفاصيل داخل كل دورة.
+            <p className="text-xl sm:text-2xl opacity-95 max-w-3xl mx-auto leading-relaxed font-light">
+              اكتشف مواعيد انعقاد الدورات التي تهمك بكل سهولة ويسر
             </p>
           </div>
         </div>
 
-        <div className="absolute left-4 top-4 opacity-20 text-6xl select-none pointer-events-none">
+        <div className="absolute left-8 top-8 opacity-10 text-8xl">
           <FaGraduationCap />
         </div>
       </section>
 
       {/* ================= MAIN ================= */}
-      <main className="flex-grow py-12 lg:py-16 bg-white">
+      <main className="flex-grow py-12 lg:py-16 bg-gray-50">
         <div className="container mx-auto px-4">
 
           {/* ================= CATEGORY SELECTOR ================= */}
-          <div className="max-w-3xl mx-auto mb-10">
-            <div className="bg-white rounded-xl shadow-lg p-5 border border-gray-200">
-              <label className="block text-lg font-semibold text-gray-800 mb-3 text-center flex items-center justify-center">
-                <FaSearch className="ml-2" />
-                اختر مجال الدورات
-              </label>
+          <div className="max-w-4xl mx-auto mb-12">
+            <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+              <div className="text-center mb-6">
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <FaSearch className="text-purple-600 text-lg" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    اختر مجال الدورات
+                  </h2>
+                </div>
+                <p className="text-gray-600">اختر التخصص الذي تريد استعراض دوراته</p>
+              </div>
 
-              <div className="flex gap-3 items-start">
+              <div className="flex flex-col lg:flex-row gap-6 items-start">
                 {/* LEFT SIDE: Dropdown Select */}
-                <div className="flex-1" ref={dropdownRef}>
+                <div className="flex-1 w-full" ref={dropdownRef}>
                   <div className="relative">
                     <button
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] focus:border-transparent outline-none text-gray-800 text-right flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+                      className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-800 text-right flex items-center justify-between bg-white hover:bg-gray-50 transition-all duration-200 shadow-sm"
                     >
                       <span className="text-gray-400">
                         {isDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
                       </span>
-                      <span>
+                      <span className="text-lg">
                         {selectedCategory || "اختر فئة الدورات"}
                       </span>
                     </button>
 
                     {isDropdownOpen && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-auto">
+                      <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg max-h-64 overflow-auto">
                         <button
                           onClick={() => {
                             setSelectedCategory("");
                             setIsDropdownOpen(false);
                           }}
-                          className="w-full text-right px-4 py-3 hover:bg-gray-50 border-b border-gray-100 text-gray-700 transition-colors flex items-center justify-between"
+                          className="w-full text-right px-6 py-4 hover:bg-gray-50 border-b border-gray-100 text-gray-700 transition-colors flex items-center justify-between text-lg"
                         >
                           جميع الدورات
                           <FaTimes className="text-gray-400" />
@@ -273,15 +226,15 @@ export default function CoursesSchedule() {
                                 setSelectedCategory(cat);
                                 setIsDropdownOpen(false);
                               }}
-                              className="w-full text-right px-4 py-3 hover:bg-gray-50 flex items-center justify-between gap-3 border-b border-gray-100 last:border-b-0 transition-colors"
+                              className="w-full text-right px-6 py-4 hover:bg-gray-50 flex items-center justify-between gap-4 border-b border-gray-100 last:border-b-0 transition-colors"
                             >
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-4">
                                 <div
-                                  className={`w-8 h-8 rounded-md flex items-center justify-center ${meta.color}`}
+                                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${meta.color}`}
                                 >
                                   {meta.icon}
                                 </div>
-                                <span className="text-gray-900">{cat}</span>
+                                <span className="text-gray-900 text-lg">{cat}</span>
                               </div>
                             </button>
                           );
@@ -292,42 +245,39 @@ export default function CoursesSchedule() {
                 </div>
 
                 {/* RIGHT SIDE: Category info card */}
-                <div className="w-80 hidden sm:block">
-                  <div className="p-4 border rounded-lg h-full bg-gradient-to-br from-white to-gray-50">
-                    <h4 className="text-sm text-gray-600">تفاصيل الفئة</h4>
+                <div className="w-full lg:w-80">
+                  <div className="p-6 border-2 border-gray-100 rounded-xl h-full bg-white shadow-sm">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-4">تفاصيل الفئة</h4>
 
                     {selectedCategory ? (
-                      <div className="mt-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-md flex items-center justify-center bg-[#f8edf0] text-[#7b0b4c] text-lg">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-purple-100 text-purple-600 text-xl">
                             {(categoryMeta[selectedCategory] || categoryMeta.default).icon}
                           </div>
 
-                          <div className="text-right">
-                            <div className="font-semibold text-gray-900 text-lg">
+                          <div className="text-right flex-1">
+                            <div className="font-bold text-gray-900 text-xl">
                               {selectedCategory}
                             </div>
-
-                            <div className="text-gray-500 text-sm">
-                              عدد الدورات:{" "}
-                              {courses.filter((c) => c.category === selectedCategory).length}
+                            <div className="text-gray-600">
+                              {courses.filter((c) => c.category === selectedCategory).length} دورة
                             </div>
                           </div>
                         </div>
 
-                        <div className="mt-4">
-                          <button
-                            onClick={() => setSelectedCategory("")}
-                            className="w-full text-gray-700 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
-                          >
-                            <FaTimes />
-                            مسح الفئة
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setSelectedCategory("")}
+                          className="w-full text-gray-700 border-2 border-gray-200 px-4 py-3 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 font-medium"
+                        >
+                          <FaTimes />
+                          مسح الفئة
+                        </button>
                       </div>
                     ) : (
-                      <div className="mt-4 text-gray-500 text-right">
-                        اختر فئة لعرض التفاصيل هنا.
+                      <div className="text-center py-8 text-gray-500">
+                        <IoBook className="text-4xl mx-auto mb-3 opacity-50" />
+                        <p>اختر فئة لعرض التفاصيل</p>
                       </div>
                     )}
                   </div>
@@ -338,144 +288,150 @@ export default function CoursesSchedule() {
 
           {/* ================= LOADING ================= */}
           {loading && (
-            <div className="text-center py-12">
-              <div className="mx-auto w-16 h-16 rounded-full border-4 border-[#7b0b4c] border-t-transparent animate-spin mb-4"></div>
-              <p className="text-gray-600">جاري تحميل الدورات...</p>
+            <div className="text-center py-16">
+              <div className="mx-auto w-20 h-20 rounded-full border-4 border-purple-600 border-t-transparent animate-spin mb-6"></div>
+              <p className="text-gray-600 text-lg">جاري تحميل الدورات...</p>
             </div>
           )}
 
           {/* ================= COURSES ================= */}
           {!loading && (
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-[#7b0b4c] mb-2 flex items-center justify-center">
-                  <FaBook className="ml-2" />
-                  الدورات المتاحة
-                </h2>
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-12">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
+                    <FaBook className="text-purple-600 text-xl" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-800">
+                    الدورات المتاحة
+                  </h2>
+                </div>
 
                 {selectedCategory && (
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 text-lg mb-4">
                     في مجال{" "}
-                    <span className="font-semibold text-[#7b0b4c]">
+                    <span className="font-semibold text-purple-600">
                       {selectedCategory}
                     </span>
                   </p>
                 )}
 
-                <div className="mt-2">
-                  <span className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                    إجمالي الدورات: {filteredCourses.length}
-                  </span>
+                <div className="inline-flex items-center px-6 py-3 bg-white rounded-full text-gray-700 shadow-sm border border-gray-200 text-lg">
+                  إجمالي الدورات: <span className="font-bold text-purple-600 mr-2">{filteredCourses.length}</span>
                 </div>
               </div>
 
               {/* If no courses */}
               {filteredCourses.length === 0 ? (
-                <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="text-5xl mb-4 opacity-50">
-                    <FaBook />
+                <div className="text-center py-16 bg-white rounded-2xl border-2 border-gray-100 shadow-sm">
+                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <FaBook className="text-4xl text-gray-400" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                  <h3 className="text-2xl font-semibold text-gray-700 mb-4">
                     لا توجد دورات متاحة
                   </h3>
-                  <p className="text-gray-500">لا توجد دورات في هذه الفئة حالياً</p>
+                  <p className="text-gray-500 text-lg">لا توجد دورات في هذه الفئة حالياً</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {filteredCourses.map((course) => {
                     const meta = categoryMeta[course.category] || categoryMeta.default;
 
                     return (
                       <article
                         key={course.id}
-                        className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+                        className="bg-white rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
                       >
                         {/* HEADER */}
                         <header
-                          className="p-4 cursor-pointer flex items-start justify-between gap-4"
+                          className="p-6 cursor-pointer flex items-start justify-between gap-6"
                           onClick={() => toggleCourse(course.id)}
                           aria-expanded={expandedCourse === course.id}
                         >
-                          <div className="flex items-center gap-4 flex-1">
+                          <div className="flex items-start gap-4 flex-1">
                             <div
-                              className={`w-12 h-12 rounded-md flex items-center justify-center ${meta.color}`}
+                              className={`w-14 h-14 rounded-xl flex items-center justify-center ${meta.color} flex-shrink-0`}
                             >
                               {meta.icon}
                             </div>
 
                             <div className="flex-1 text-right">
-                              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                              <h3 className="text-xl font-bold text-gray-900 mb-3">
                                 {course.title}
                               </h3>
-                              <p className="text-sm text-gray-600 leading-relaxed">
+                              <p className="text-gray-600 leading-relaxed text-lg">
                                 {course.description}
                               </p>
                             </div>
                           </div>
 
                           <div
-                            className={`transform transition-transform duration-300 ${
+                            className={`transform transition-transform duration-300 flex-shrink-0 ${
                               expandedCourse === course.id ? "rotate-180" : ""
                             }`}
                           >
-                            <span className="text-xl text-gray-400">
+                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                               {expandedCourse === course.id
-                                ? <FaChevronUp />
-                                : <FaChevronDown />
+                                ? <FaChevronUp className="text-gray-600 text-lg" />
+                                : <FaChevronDown className="text-gray-600 text-lg" />
                               }
-                            </span>
+                            </div>
                           </div>
                         </header>
 
-                        <div className="gradient-divider" />
-
                         {/* CONTENT */}
                         <div
-                          className="accordion-content bg-gray-50 px-4"
+                          className="accordion-content bg-gray-50 border-t border-gray-200"
                           style={{
-                            maxHeight: expandedCourse === course.id ? 280 : 0,
+                            maxHeight: expandedCourse === course.id ? 400 : 0,
                             opacity: expandedCourse === course.id ? 1 : 0,
                           }}
                           aria-hidden={expandedCourse !== course.id}
                         >
-                          <div className="p-4">
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-right table-auto">
-                                <thead>
-                                  <tr className="text-sm text-gray-600">
-                                    <th className="p-2 flex items-center justify-end gap-2">
-                                      <FaCalendarAlt />
-                                      التاريخ
-                                    </th>
-                                    <th className="p-2 flex items-center justify-end gap-2">
-                                      <FaClock />
-                                      الموعد
-                                    </th>
-                                    <th className="p-2 flex items-center justify-end gap-2">
-                                      <FaCalendarDay />
-                                      أيام الإنعقاد
-                                    </th>
-                                  </tr>
-                                </thead>
+                          <div className="p-8">
+                            <div className="bg-white rounded-xl border border-gray-200 p-6">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* التاريخ */}
+                                <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-100">
+                                  <div className="flex justify-center mb-3">
+                                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                      <FaCalendarAlt className="text-purple-600 text-xl" />
+                                    </div>
+                                  </div>
+                                  <div className="text-sm text-gray-600 mb-2">التاريخ</div>
+                                  <div className="font-bold text-gray-800 text-lg">
+                                    {course.start_date
+                                      ? formatDate(course.start_date)
+                                      : course.date || "سيعلن لاحقاً"}
+                                  </div>
+                                </div>
 
-                                <tbody>
-                                  <tr className="bg-white">
-                                    <td className="p-3 border">
-                                      {course.start_date
-                                        ? formatDate(course.start_date)
-                                        : course.date || "سيعلن لاحقاً"}
-                                    </td>
+                                {/* الموعد */}
+                                <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                  <div className="flex justify-center mb-3">
+                                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                      <FaClock className="text-blue-600 text-xl" />
+                                    </div>
+                                  </div>
+                                  <div className="text-sm text-gray-600 mb-2">الموعد</div>
+                                  <div className="font-bold text-gray-800 text-lg">
+                                    {course.schedule || "غير محدد"}
+                                  </div>
+                                </div>
 
-                                    <td className="p-3 border">
-                                      {course.schedule || "غير محدد"}
-                                    </td>
-
-                                    <td className="p-3 border">
-                                      {course.days || "سيعلن لاحقاً"}
-                                    </td>
-                                  </tr>
-                                </tbody>
-                              </table>
+                                {/* أيام الإنعقاد */}
+                                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
+                                  <div className="flex justify-center mb-3">
+                                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                      <FaCalendarDay className="text-green-600 text-xl" />
+                                    </div>
+                                  </div>
+                                  <div className="text-sm text-gray-600 mb-2">أيام الإنعقاد</div>
+                                  <div className="font-bold text-gray-800 text-lg">
+                                    {course.days || "سيعلن لاحقاً"}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
