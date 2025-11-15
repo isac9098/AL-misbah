@@ -65,9 +65,9 @@ export default function CoursesDashboard() {
     price: "",
     discount: "",
     category: "",
-    schedule: "",
+    schedule_time: "", // تم التعديل
     start_date: "",
-    days: ""
+    meeting_days: "" // تم التعديل
   });
   const [imageFile, setImageFile] = useState(null);
   const [userName, setUserName] = useState("");
@@ -161,7 +161,7 @@ export default function CoursesDashboard() {
       if (!imageUrl) return;
     }
 
-    // إرسال البيانات مباشرة في الحقول الأساسية
+    // إرسال البيانات مباشرة في الحقول الأساسية - تم التعديل
     const courseData = {
       title: newCourse.title,
       description: newCourse.description,
@@ -169,9 +169,9 @@ export default function CoursesDashboard() {
       price: newCourse.price,
       discount: newCourse.discount,
       category: newCourse.category,
-      schedule: newCourse.schedule || "",
+      schedule_time: newCourse.schedule_time || "", // تم التعديل
       start_date: newCourse.start_date || "",
-      days: newCourse.days || ""
+      meeting_days: newCourse.meeting_days || "" // تم التعديل
     };
 
     const { data, error } = await supabase
@@ -192,9 +192,9 @@ export default function CoursesDashboard() {
         price: "",
         discount: "",
         category: "",
-        schedule: "",
+        schedule_time: "", // تم التعديل
         start_date: "",
-        days: ""
+        meeting_days: "" // تم التعديل
       });
       setImageFile(null);
     }
@@ -202,16 +202,16 @@ export default function CoursesDashboard() {
 
   async function updateCourse(courseId, updates) {
     try {
-      // إرسال البيانات مباشرة في الحقول الأساسية
+      // إرسال البيانات مباشرة في الحقول الأساسية - تم التعديل
       const courseData = {
         title: updates.title,
         description: updates.description,
         price: updates.price,
         discount: updates.discount,
         category: updates.category,
-        schedule: updates.schedule || "",
+        schedule_time: updates.schedule_time || "", // تم التعديل
         start_date: updates.start_date || "",
-        days: updates.days || ""
+        meeting_days: updates.meeting_days || "" // تم التعديل
       };
 
       console.log('🔄 محاولة تحديث الدورة:', courseId, courseData);
@@ -253,9 +253,9 @@ export default function CoursesDashboard() {
         price: course.price,
         discount: course.discount,
         category: course.category,
-        schedule: course.schedule || "",
+        schedule_time: course.schedule_time || "", // تم التعديل
         start_date: course.start_date || "",
-        days: course.days || ""
+        meeting_days: course.meeting_days || "" // تم التعديل
       });
     }
   };
@@ -277,7 +277,7 @@ export default function CoursesDashboard() {
 
   async function deleteCourse(id) {
     if (!confirm("هل أنت متأكد من حذف هذه الدورة؟")) return;
-    
+
     const courseToDelete = courses.find((c) => c.id === id);
     if (!courseToDelete) return;
 
@@ -389,7 +389,7 @@ export default function CoursesDashboard() {
                   {/* المعلومات الأساسية */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">المعلومات الأساسية</h3>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">عنوان الدورة *</label>
                       <input
@@ -473,7 +473,7 @@ export default function CoursesDashboard() {
                   {/* الجدول الزمني */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">الجدول الزمني</h3>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                         <FaCalendarAlt />
@@ -494,8 +494,8 @@ export default function CoursesDashboard() {
                       </label>
                       <input
                         type="text"
-                        value={newCourse.schedule}
-                        onChange={(e) => handleNewCourseInputChange('schedule', e.target.value)}
+                        value={newCourse.schedule_time} // تم التعديل
+                        onChange={(e) => handleNewCourseInputChange('schedule_time', e.target.value)} // تم التعديل
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="6:00 مساءً - 8:00 مساءً"
                       />
@@ -508,8 +508,8 @@ export default function CoursesDashboard() {
                       </label>
                       <input
                         type="text"
-                        value={newCourse.days}
-                        onChange={(e) => handleNewCourseInputChange('days', e.target.value)}
+                        value={newCourse.meeting_days} // تم التعديل
+                        onChange={(e) => handleNewCourseInputChange('meeting_days', e.target.value)} // تم التعديل
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="السبت، الإثنين، الأربعاء"
                       />
@@ -590,7 +590,7 @@ export default function CoursesDashboard() {
                         </div>
                       </div>
 
-                      {/* عرض بيانات الجدول الزمني */}
+                      {/* عرض بيانات الجدول الزمني - تم التعديل */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div className="bg-white p-4 rounded-lg border border-gray-200">
                           <div className="flex items-center gap-2 mb-2">
@@ -606,19 +606,19 @@ export default function CoursesDashboard() {
                             <FaClock className="text-[#7a1353]" />
                             <p className="text-sm text-gray-600">الموعد</p>
                           </div>
-                          <p className="font-semibold text-gray-800">{course.schedule || "غير محدد"}</p>
+                          <p className="font-semibold text-gray-800">{course.schedule_time || "غير محدد"}</p> {/* تم التعديل */}
                         </div>
                         <div className="bg-white p-4 rounded-lg border border-gray-200">
                           <div className="flex items-center gap-2 mb-2">
                             <FaCalendarDay className="text-[#7a1353]" />
                             <p className="text-sm text-gray-600">أيام الإنعقاد</p>
                           </div>
-                          <p className="font-semibold text-gray-800">{course.days || "غير محدد"}</p>
+                          <p className="font-semibold text-gray-800">{course.meeting_days || "غير محدد"}</p> {/* تم التعديل */}
                         </div>
                       </div>
 
                       {editingCourse === course.id && (
-                        // وضع التعديل - الجدول الزمني فقط
+                        // وضع التعديل - الجدول الزمني فقط - تم التعديل
                         <div className="bg-white border border-[#7a1353]/20 rounded-xl p-6 mt-4">
                           <h4 className="font-semibold text-[#7a1353] mb-4 text-lg flex items-center gap-2">
                             <FaEdit />
@@ -638,8 +638,8 @@ export default function CoursesDashboard() {
                               <label className="block text-sm text-gray-600 mb-2">الموعد</label>
                               <input
                                 type="text"
-                                value={course.schedule || ""}
-                                onChange={(e) => handleInputChange(course.id, 'schedule', e.target.value)}
+                                value={course.schedule_time || ""} // تم التعديل
+                                onChange={(e) => handleInputChange(course.id, 'schedule_time', e.target.value)} // تم التعديل
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
                                 placeholder="6:00 مساءً - 8:00 مساءً"
                               />
@@ -648,8 +648,8 @@ export default function CoursesDashboard() {
                               <label className="block text-sm text-gray-600 mb-2">أيام الإنعقاد</label>
                               <input
                                 type="text"
-                                value={course.days || ""}
-                                onChange={(e) => handleInputChange(course.id, 'days', e.target.value)}
+                                value={course.meeting_days || ""} // تم التعديل
+                                onChange={(e) => handleInputChange(course.id, 'meeting_days', e.target.value)} // تم التعديل
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
                                 placeholder="السبت، الإثنين، الأربعاء"
                               />
