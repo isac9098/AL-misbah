@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 /* =========================  
@@ -44,10 +42,7 @@ const ICONS = {
   category: "📚",
   calendar: "📅",
   clock: "⏰",
-  level: "🎯",
   instructor: "👨‍🏫",
-  price: "💰",
-  discount: "🎁",
   search: "🔍",
   expand: "⌄",
   collapse: "⌃",
@@ -58,7 +53,6 @@ const ICONS = {
 ========================= */
 
 export default function CoursesSchedule() {
-  const router = useRouter();
   const [toast, setToast] = useState(null);
 
   const showToast = (msg, type = "info") => setToast({ msg, type });
@@ -70,7 +64,7 @@ export default function CoursesSchedule() {
   const [expandedCourse, setExpandedCourse] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [catQuery, setCatQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   const categoryMeta = {
@@ -93,6 +87,16 @@ export default function CoursesSchedule() {
       setFilteredCourses(courses);
     }
   }, [selectedCategory, courses]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   async function fetchCourses() {
     setLoading(true);
@@ -136,13 +140,6 @@ export default function CoursesSchedule() {
     }
   };
 
-  const visibleCategories = useMemo(() => {
-    if (!catQuery) return categories;
-    return categories.filter((c) =>
-      c.toLowerCase().includes(catQuery.trim().toLowerCase())
-    );
-  }, [catQuery, categories]);
-
   const toggleCourse = (id) =>
     setExpandedCourse(expandedCourse === id ? null : id);
 
@@ -151,15 +148,6 @@ export default function CoursesSchedule() {
 
       {/* Global animations */}
       <style jsx>{`
-        .slide-fade-enter {
-          opacity: 0;
-          transform: translateY(-6px);
-        }
-        .slide-fade-enter-active {
-          opacity: 1;
-          transform: translateY(0);
-          transition: all 240ms ease;
-        }
         .accordion-content {
           transition: max-height 320ms cubic-bezier(.2,.9,.3,1), opacity 260ms ease;
         }
@@ -182,13 +170,8 @@ export default function CoursesSchedule() {
         />
       )}
 
-      {/* HEADER */}
-      <Header />
-
       {/* ================= HERO SECTION ================= */}
       <section className="relative overflow-hidden">
-
-        {/* HERE IS THE FIX  👉 (-z-10) */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-10 -z-10"
@@ -215,7 +198,6 @@ export default function CoursesSchedule() {
           </div>
         </div>
 
-        {/* decorative icon */}
         <div className="absolute right-4 top-4 opacity-10 text-9xl select-none pointer-events-none">🎓</div>
       </section>
 
@@ -223,70 +205,63 @@ export default function CoursesSchedule() {
       <main className="flex-grow py-12 lg:py-16 bg-white">
         <div className="container mx-auto px-4">
 
-          {/* ================= DROPDOWN ================= */}
+          {/* ================= CATEGORY SELECTOR ================= */}
           <div className="max-w-3xl mx-auto mb-10">
             <div className="bg-white rounded-xl shadow p-5 border border-gray-200">
-
               <label className="block text-lg font-semibold text-gray-800 mb-3 text-center">
                 {ICONS.search} اختر مجال الدورات
               </label>
 
               <div className="flex gap-3 items-start">
+                {/* LEFT SIDE: Dropdown Select */}
+                <div className="flex-1" ref={dropdownRef}>
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] focus:border-transparent outline-none text-gray-800 text-right flex items-center justify-between bg-white"
+                    >
+                      <span className="text-gray-400">
+                        {isDropdownOpen ? "⌃" : "⌄"}
+                      </span>
+                      <span>
+                        {selectedCategory || "اختر فئة الدورات"}
+                      </span>
+                    </button>
 
-                {/* LEFT SIDE: Search + Categories */}
-                <div className="flex-1">
-                  <div className="mb-3">
-                    <input
-                      type="text"
-                      placeholder="ابحث عن فئة..."
-                      value={catQuery}
-                      onChange={(e) => setCatQuery(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] focus:border-transparent outline-none text-gray-800"
-                    />
-                  </div>
-
-                  <div className="max-h-48 overflow-auto border border-gray-100 rounded-lg">
-                    {visibleCategories.length === 0 ? (
-                      <div className="p-3 text-gray-500 text-center">
-                        لا توجد فئات مطابقة.
-                      </div>
-                    ) : (
-                      <ul className="divide-y">
-                        {visibleCategories.map((cat, idx) => {
+                    {isDropdownOpen && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-auto">
+                        <button
+                          onClick={() => {
+                            setSelectedCategory("");
+                            setIsDropdownOpen(false);
+                          }}
+                          className="w-full text-right px-4 py-3 hover:bg-gray-50 border-b border-gray-100 text-gray-700"
+                        >
+                          جميع الدورات
+                        </button>
+                        {categories.map((cat, idx) => {
                           const meta = categoryMeta[cat] || categoryMeta.default;
-
                           return (
-                            <li key={idx}>
-                              <button
-                                onClick={() => {
-                                  setSelectedCategory(cat);
-                                  setCatQuery("");
-                                }}
-                                className="w-full text-right px-4 py-3 hover:bg-gray-50 flex items-center justify-between gap-3"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div
-                                    className={`w-9 h-9 rounded-md flex items-center justify-center ${meta.color}`}
-                                  >
-                                    <span className="text-sm">{meta.icon}</span>
-                                  </div>
-
-                                  <div className="text-right">
-                                    <div className="text-gray-900 font-medium">
-                                      {cat}
-                                    </div>
-                                    <div className="text-gray-500 text-sm">
-                                      عرض الدورات المتعلقة بـ {cat}
-                                    </div>
-                                  </div>
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setSelectedCategory(cat);
+                                setIsDropdownOpen(false);
+                              }}
+                              className="w-full text-right px-4 py-3 hover:bg-gray-50 flex items-center justify-between gap-3 border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-8 h-8 rounded-md flex items-center justify-center ${meta.color}`}
+                                >
+                                  <span className="text-sm">{meta.icon}</span>
                                 </div>
-
-                                <div className="text-sm text-gray-400">عرض</div>
-                              </button>
-                            </li>
+                                <span className="text-gray-900">{cat}</span>
+                              </div>
+                            </button>
                           );
                         })}
-                      </ul>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -313,10 +288,6 @@ export default function CoursesSchedule() {
                               {courses.filter((c) => c.category === selectedCategory).length}
                             </div>
                           </div>
-                        </div>
-
-                        <div className="mt-4 text-sm text-gray-600">
-                          وصف موجز للفئة — يمكنك إضافة وصف ديناميكي من لوحة التحكم.
                         </div>
 
                         <div className="mt-4">
@@ -410,24 +381,6 @@ export default function CoursesSchedule() {
                               <p className="text-sm text-gray-600">
                                 {course.description}
                               </p>
-
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                <span className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
-                                  {ICONS.price} {course.price || "مجاني"}
-                                </span>
-
-                                {course.discount && (
-                                  <span className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium">
-                                    {ICONS.discount} {course.discount}
-                                  </span>
-                                )}
-
-                                {course.level && (
-                                  <span className="inline-flex items-center px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium">
-                                    {ICONS.level} {course.level}
-                                  </span>
-                                )}
-                              </div>
                             </div>
                           </div>
 
@@ -450,7 +403,7 @@ export default function CoursesSchedule() {
                         <div
                           className="accordion-content bg-gray-50 px-4"
                           style={{
-                            maxHeight: expandedCourse === course.id ? 420 : 0,
+                            maxHeight: expandedCourse === course.id ? 280 : 0,
                             opacity: expandedCourse === course.id ? 1 : 0,
                           }}
                           aria-hidden={expandedCourse !== course.id}
@@ -460,27 +413,22 @@ export default function CoursesSchedule() {
                               <table className="w-full text-right table-auto">
                                 <thead>
                                   <tr className="text-sm text-gray-600">
-                                    <th className="p-2">المستوى</th>
-                                    <th className="p-2">المدة</th>
-                                    <th className="p-2">التاريخ</th>
-                                    <th className="p-2">المدرب</th>
+                                    <th className="p-2">{ICONS.calendar} التاريخ</th>
+                                    <th className="p-2">{ICONS.clock} الموعد</th>
+                                    <th className="p-2">{ICONS.instructor} المدرب</th>
                                   </tr>
                                 </thead>
 
                                 <tbody>
                                   <tr className="bg-white">
                                     <td className="p-3 border">
-                                      {course.level || "غير محدد"}
-                                    </td>
-
-                                    <td className="p-3 border">
-                                      {course.duration || "غير محددة"}
-                                    </td>
-
-                                    <td className="p-3 border">
                                       {course.start_date
                                         ? formatDate(course.start_date)
                                         : course.date || "سيعلن لاحقاً"}
+                                    </td>
+
+                                    <td className="p-3 border">
+                                      {course.schedule || "غير محدد"}
                                     </td>
 
                                     <td className="p-3 border">
@@ -489,40 +437,6 @@ export default function CoursesSchedule() {
                                   </tr>
                                 </tbody>
                               </table>
-                            </div>
-
-                            {/* extra info */}
-                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <div className="p-3 rounded-lg bg-white border">
-                                <div className="text-sm text-gray-600">
-                                  موعد الإنعقاد
-                                </div>
-                                <div className="font-semibold text-gray-800 mt-1">
-                                  {course.schedule || "غير محدد"}
-                                </div>
-                              </div>
-
-                              <div className="p-3 rounded-lg bg-white border">
-                                <div className="text-sm text-gray-600">
-                                  الفئة
-                                </div>
-                                <div className="font-semibold text-gray-800 mt-1">
-                                  {course.category || "-"}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* actions */}
-                            <div className="mt-4 flex justify-end gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  router.push(`/Course_dates?courseId=${course.id}`);
-                                }}
-                                className="px-4 py-2 bg-[#7b0b4c] text-white rounded-lg hover:bg-[#5e0839]"
-                              >
-                                تفاصيل أكثر
-                              </button>
                             </div>
                           </div>
                         </div>
