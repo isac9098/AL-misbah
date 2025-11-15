@@ -6,9 +6,6 @@ import {
   FaCalendarAlt, 
   FaClock, 
   FaCalendarDay, 
-  FaUserTie,
-  FaGraduationCap,
-  FaHourglassHalf,
   FaEdit,
   FaTrash,
   FaPlus,
@@ -121,18 +118,8 @@ export default function CoursesDashboard() {
       return;
     }
 
-    // معالجة البيانات لاستخراج الحقول من metadata إذا كانت موجودة
-    const processedData = data.map(course => {
-      if (course.metadata && typeof course.metadata === 'object') {
-        return {
-          ...course,
-          ...course.metadata
-        };
-      }
-      return course;
-    });
-
-    setCourses(processedData);
+    // استخدام البيانات مباشرة من الحقول الجديدة
+    setCourses(data || []);
   }
 
   async function uploadImage(file) {
@@ -155,107 +142,107 @@ export default function CoursesDashboard() {
   }
 
   async function addCourse(e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (
-    !newCourse.title ||
-    !newCourse.description ||
-    !newCourse.price ||
-    !newCourse.category
-  ) {
-    showToast("⚠️ الرجاء إدخال جميع البيانات المطلوبة", "error");
-    return;
-  }
+    if (
+      !newCourse.title ||
+      !newCourse.description ||
+      !newCourse.price ||
+      !newCourse.category
+    ) {
+      showToast("⚠️ الرجاء إدخال جميع البيانات المطلوبة", "error");
+      return;
+    }
 
-  let imageUrl = newCourse.image;
+    let imageUrl = newCourse.image;
 
-  if (imageFile) {
-    imageUrl = await uploadImage(imageFile);
-    if (!imageUrl) return;
-  }
+    if (imageFile) {
+      imageUrl = await uploadImage(imageFile);
+      if (!imageUrl) return;
+    }
 
-  // إرسال البيانات مباشرة في الحقول الأساسية (بدون metadata)
-  const courseData = {
-    title: newCourse.title,
-    description: newCourse.description,
-    image: imageUrl,
-    price: newCourse.price,
-    discount: newCourse.discount,
-    category: newCourse.category,
-    schedule: newCourse.schedule || "",
-    start_date: newCourse.start_date || "",
-    days: newCourse.days || ""
-  };
-
-  const { data, error } = await supabase
-    .from("courses")
-    .insert([courseData])
-    .select();
-
-  if (error) {
-    console.error("❌ خطأ أثناء الإضافة:", error);
-    showToast(`حدث خطأ أثناء الإضافة: ${error.message}`, "error");
-  } else {
-    showToast("✅ تمت إضافة الدورة بنجاح!", "success");
-    setCourses([data[0], ...courses]);
-    setNewCourse({
-      title: "",
-      description: "",
-      image: "",
-      price: "",
-      discount: "",
-      category: "",
-      schedule: "",
-      start_date: "",
-      days: ""
-    });
-    setImageFile(null);
-  }
-}
-
-async function updateCourse(courseId, updates) {
-  try {
     // إرسال البيانات مباشرة في الحقول الأساسية
     const courseData = {
-      title: updates.title,
-      description: updates.description,
-      price: updates.price,
-      discount: updates.discount,
-      category: updates.category,
-      schedule: updates.schedule || "",
-      start_date: updates.start_date || "",
-      days: updates.days || ""
+      title: newCourse.title,
+      description: newCourse.description,
+      image: imageUrl,
+      price: newCourse.price,
+      discount: newCourse.discount,
+      category: newCourse.category,
+      schedule: newCourse.schedule || "",
+      start_date: newCourse.start_date || "",
+      days: newCourse.days || ""
     };
 
-    console.log('🔄 محاولة تحديث الدورة:', courseId, courseData);
-
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("courses")
-      .update(courseData)
-      .eq("id", courseId);
+      .insert([courseData])
+      .select();
 
     if (error) {
-      console.error("❌ خطأ في تحديث الدورة:", error);
-      showToast(`❌ حدث خطأ أثناء التحديث: ${error.message}`, "error");
-      return false;
+      console.error("❌ خطأ أثناء الإضافة:", error);
+      showToast(`حدث خطأ أثناء الإضافة: ${error.message}`, "error");
     } else {
-      // تحديث البيانات المحلية
-      setCourses(courses.map(course => 
-        course.id === courseId ? { 
-          ...course, 
-          ...courseData
-        } : course
-      ));
-      setEditingCourse(null);
-      showToast("✅ تم تحديث الدورة بنجاح!", "success");
-      return true;
+      showToast("✅ تمت إضافة الدورة بنجاح!", "success");
+      setCourses([data[0], ...courses]);
+      setNewCourse({
+        title: "",
+        description: "",
+        image: "",
+        price: "",
+        discount: "",
+        category: "",
+        schedule: "",
+        start_date: "",
+        days: ""
+      });
+      setImageFile(null);
     }
-  } catch (error) {
-    console.error("❌ خطأ غير متوقع:", error);
-    showToast("❌ حدث خطأ غير متوقع أثناء التحديث", "error");
-    return false;
   }
-}
+
+  async function updateCourse(courseId, updates) {
+    try {
+      // إرسال البيانات مباشرة في الحقول الأساسية
+      const courseData = {
+        title: updates.title,
+        description: updates.description,
+        price: updates.price,
+        discount: updates.discount,
+        category: updates.category,
+        schedule: updates.schedule || "",
+        start_date: updates.start_date || "",
+        days: updates.days || ""
+      };
+
+      console.log('🔄 محاولة تحديث الدورة:', courseId, courseData);
+
+      const { error } = await supabase
+        .from("courses")
+        .update(courseData)
+        .eq("id", courseId);
+
+      if (error) {
+        console.error("❌ خطأ في تحديث الدورة:", error);
+        showToast(`❌ حدث خطأ أثناء التحديث: ${error.message}`, "error");
+        return false;
+      } else {
+        // تحديث البيانات المحلية
+        setCourses(courses.map(course => 
+          course.id === courseId ? { 
+            ...course, 
+            ...courseData
+          } : course
+        ));
+        setEditingCourse(null);
+        showToast("✅ تم تحديث الدورة بنجاح!", "success");
+        return true;
+      }
+    } catch (error) {
+      console.error("❌ خطأ غير متوقع:", error);
+      showToast("❌ حدث خطأ غير متوقع أثناء التحديث", "error");
+      return false;
+    }
+  }
 
   const handleSaveCourse = async (courseId) => {
     const course = courses.find(c => c.id === courseId);
@@ -289,6 +276,8 @@ async function updateCourse(courseId, updates) {
   };
 
   async function deleteCourse(id) {
+    if (!confirm("هل أنت متأكد من حذف هذه الدورة؟")) return;
+    
     const courseToDelete = courses.find((c) => c.id === id);
     if (!courseToDelete) return;
 
@@ -409,6 +398,7 @@ async function updateCourse(courseId, updates) {
                         onChange={(e) => handleNewCourseInputChange('title', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="أدخل عنوان الدورة"
+                        required
                       />
                     </div>
 
@@ -420,6 +410,7 @@ async function updateCourse(courseId, updates) {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none"
                         rows="3"
                         placeholder="وصف مختصر للدورة"
+                        required
                       />
                     </div>
 
@@ -435,6 +426,7 @@ async function updateCourse(courseId, updates) {
                           onChange={(e) => handleNewCourseInputChange('price', e.target.value)}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                           placeholder="السعر"
+                          required
                         />
                       </div>
                       <div>
@@ -460,6 +452,7 @@ async function updateCourse(courseId, updates) {
                         onChange={(e) => handleNewCourseInputChange('category', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="مثلاً: القانون / اللغة / التقنية"
+                        required
                       />
                     </div>
 
@@ -504,7 +497,7 @@ async function updateCourse(courseId, updates) {
                         value={newCourse.schedule}
                         onChange={(e) => handleNewCourseInputChange('schedule', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                        placeholder="السبت والثلاثاء 6-8 مساءً"
+                        placeholder="6:00 مساءً - 8:00 مساءً"
                       />
                     </div>
 
@@ -648,7 +641,7 @@ async function updateCourse(courseId, updates) {
                                 value={course.schedule || ""}
                                 onChange={(e) => handleInputChange(course.id, 'schedule', e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                placeholder="السبت والثلاثاء 6-8 مساءً"
+                                placeholder="6:00 مساءً - 8:00 مساءً"
                               />
                             </div>
                             <div>
@@ -767,6 +760,8 @@ function CampaignsManager({ showToast }) {
   }
 
   async function deleteCampaign(id) {
+    if (!confirm("هل أنت متأكد من حذف هذه الحملة؟")) return;
+    
     const campaignToDelete = campaigns.find(c => c.id === id);
     if (!campaignToDelete) return;
 
