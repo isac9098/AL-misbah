@@ -2,6 +2,23 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { 
+  FaCalendarAlt, 
+  FaClock, 
+  FaCalendarDay, 
+  FaSearch, 
+  FaChevronDown, 
+  FaChevronUp,
+  FaBook,
+  FaGraduationCap,
+  FaTimes
+} from "react-icons/fa";
+import { 
+  IoBook, 
+  IoLanguage, 
+  IoCodeSlash, 
+  IoScale 
+} from "react-icons/io5";
 
 import Footer from "@/components/Footer";
 
@@ -35,17 +52,36 @@ function Toast({ message, type = "info", onClose }) {
 }
 
 /* =========================  
-      Icons  
+      Icons Mapping  
 ========================= */
 
 const ICONS = {
-  category: "📚",
-  calendar: "📅",
-  clock: "⏰",
-  days: "📆",
-  search: "🔍",
-  expand: "⌄",
-  collapse: "⌃",
+  category: <FaBook className="inline ml-2" />,
+  calendar: <FaCalendarAlt className="inline ml-2" />,
+  clock: <FaClock className="inline ml-2" />,
+  days: <FaCalendarDay className="inline ml-2" />,
+  search: <FaSearch className="inline ml-2" />,
+  expand: <FaChevronDown className="inline" />,
+  collapse: <FaChevronUp className="inline" />,
+};
+
+const categoryMeta = {
+  "قانون": { 
+    icon: <IoScale className="text-lg" />, 
+    color: "bg-red-50 text-red-700" 
+  },
+  "لغة": { 
+    icon: <IoLanguage className="text-lg" />, 
+    color: "bg-blue-50 text-blue-700" 
+  },
+  "تقنية": { 
+    icon: <IoCodeSlash className="text-lg" />, 
+    color: "bg-green-50 text-green-700" 
+  },
+  default: { 
+    icon: <IoBook className="text-lg" />, 
+    color: "bg-gray-50 text-gray-700" 
+  },
 };
 
 /* =========================  
@@ -66,13 +102,6 @@ export default function CoursesSchedule() {
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-
-  const categoryMeta = {
-    "قانون": { icon: "⚖️", color: "bg-red-50 text-red-700" },
-    "لغة": { icon: "🗣️", color: "bg-blue-50 text-blue-700" },
-    "تقنية": { icon: "💻", color: "bg-green-50 text-green-700" },
-    default: { icon: "📚", color: "bg-gray-50 text-gray-700" },
-  };
 
   useEffect(() => {
     fetchCourses();
@@ -171,29 +200,29 @@ export default function CoursesSchedule() {
       )}
 
       {/* ================= HERO SECTION ================= */}
-<section className="relative overflow-hidden bg-[#7b0b4c]">
-  {/* خلفية ملونة مباشرة بدون تأثيرات شفافية */}
-  <div className="absolute inset-0 bg-gradient-to-br from-[#7b0b4c] via-[#6a0a42] to-[#5e0839]"></div>
-  
-  <div className="container mx-auto px-4 py-20 relative z-10">
-    <div className="max-w-4xl mx-auto text-center text-white">
-      <h1
-        className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4"
-        style={{ textShadow: "0 6px 18px rgba(0,0,0,0.25)" }}
-      >
-        <span className="inline-block">
-          {ICONS.calendar} جدول الدورات القادمة
-        </span>
-      </h1>
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#7b0b4c] to-[#5e0839]">
+        <div className="container mx-auto px-4 py-20 relative z-10">
+          <div className="max-w-4xl mx-auto text-center text-white">
+            <h1
+              className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4"
+              style={{ textShadow: "0 6px 18px rgba(0,0,0,0.25)" }}
+            >
+              <span className="inline-flex items-center justify-center">
+                <FaCalendarAlt className="ml-3" />
+                جدول الدورات القادمة
+              </span>
+            </h1>
 
-      <p className="text-lg sm:text-xl opacity-95 max-w-2xl mx-auto leading-relaxed">
-        يمكنك معرفة مواعيد إنعقاد الدورات التي تهمك بسهولة — اختر فئة وشاهد التفاصيل داخل كل دورة.
-      </p>
-    </div>
-  </div>
+            <p className="text-lg sm:text-xl opacity-95 max-w-2xl mx-auto leading-relaxed">
+              يمكنك معرفة مواعيد إنعقاد الدورات التي تهمك بسهولة — اختر فئة وشاهد التفاصيل داخل كل دورة.
+            </p>
+          </div>
+        </div>
 
-  <div className="absolute left-4 top-4 opacity-20 text-9xl select-none pointer-events-none">🎓</div>
-</section>
+        <div className="absolute left-4 top-4 opacity-20 text-6xl select-none pointer-events-none">
+          <FaGraduationCap />
+        </div>
+      </section>
 
       {/* ================= MAIN ================= */}
       <main className="flex-grow py-12 lg:py-16 bg-white">
@@ -202,8 +231,9 @@ export default function CoursesSchedule() {
           {/* ================= CATEGORY SELECTOR ================= */}
           <div className="max-w-3xl mx-auto mb-10">
             <div className="bg-white rounded-xl shadow-lg p-5 border border-gray-200">
-              <label className="block text-lg font-semibold text-gray-800 mb-3 text-center">
-                {ICONS.search} اختر مجال الدورات
+              <label className="block text-lg font-semibold text-gray-800 mb-3 text-center flex items-center justify-center">
+                <FaSearch className="ml-2" />
+                اختر مجال الدورات
               </label>
 
               <div className="flex gap-3 items-start">
@@ -215,7 +245,7 @@ export default function CoursesSchedule() {
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] focus:border-transparent outline-none text-gray-800 text-right flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
                     >
                       <span className="text-gray-400">
-                        {isDropdownOpen ? "⌃" : "⌄"}
+                        {isDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
                       </span>
                       <span>
                         {selectedCategory || "اختر فئة الدورات"}
@@ -229,9 +259,10 @@ export default function CoursesSchedule() {
                             setSelectedCategory("");
                             setIsDropdownOpen(false);
                           }}
-                          className="w-full text-right px-4 py-3 hover:bg-gray-50 border-b border-gray-100 text-gray-700 transition-colors"
+                          className="w-full text-right px-4 py-3 hover:bg-gray-50 border-b border-gray-100 text-gray-700 transition-colors flex items-center justify-between"
                         >
                           جميع الدورات
+                          <FaTimes className="text-gray-400" />
                         </button>
                         {categories.map((cat, idx) => {
                           const meta = categoryMeta[cat] || categoryMeta.default;
@@ -248,7 +279,7 @@ export default function CoursesSchedule() {
                                 <div
                                   className={`w-8 h-8 rounded-md flex items-center justify-center ${meta.color}`}
                                 >
-                                  <span className="text-sm">{meta.icon}</span>
+                                  {meta.icon}
                                 </div>
                                 <span className="text-gray-900">{cat}</span>
                               </div>
@@ -287,8 +318,9 @@ export default function CoursesSchedule() {
                         <div className="mt-4">
                           <button
                             onClick={() => setSelectedCategory("")}
-                            className="w-full text-gray-700 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            className="w-full text-gray-700 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
                           >
+                            <FaTimes />
                             مسح الفئة
                           </button>
                         </div>
@@ -316,8 +348,9 @@ export default function CoursesSchedule() {
           {!loading && (
             <div className="max-w-5xl mx-auto">
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-[#7b0b4c] mb-2">
-                  {ICONS.category} الدورات المتاحة
+                <h2 className="text-2xl font-bold text-[#7b0b4c] mb-2 flex items-center justify-center">
+                  <FaBook className="ml-2" />
+                  الدورات المتاحة
                 </h2>
 
                 {selectedCategory && (
@@ -339,7 +372,9 @@ export default function CoursesSchedule() {
               {/* If no courses */}
               {filteredCourses.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="text-5xl mb-4 opacity-50">{ICONS.category}</div>
+                  <div className="text-5xl mb-4 opacity-50">
+                    <FaBook />
+                  </div>
                   <h3 className="text-xl font-semibold text-gray-700 mb-2">
                     لا توجد دورات متاحة
                   </h3>
@@ -365,7 +400,7 @@ export default function CoursesSchedule() {
                             <div
                               className={`w-12 h-12 rounded-md flex items-center justify-center ${meta.color}`}
                             >
-                              <span className="text-lg">{meta.icon}</span>
+                              {meta.icon}
                             </div>
 
                             <div className="flex-1 text-right">
@@ -385,8 +420,9 @@ export default function CoursesSchedule() {
                           >
                             <span className="text-xl text-gray-400">
                               {expandedCourse === course.id
-                                ? ICONS.collapse
-                                : ICONS.expand}
+                                ? <FaChevronUp />
+                                : <FaChevronDown />
+                              }
                             </span>
                           </div>
                         </header>
@@ -407,9 +443,18 @@ export default function CoursesSchedule() {
                               <table className="w-full text-right table-auto">
                                 <thead>
                                   <tr className="text-sm text-gray-600">
-                                    <th className="p-2">التاريخ {ICONS.calendar}</th>
-                                    <th className="p-2">الموعد {ICONS.clock}</th>
-                                    <th className="p-2">أيام الإنعقاد {ICONS.days}</th>
+                                    <th className="p-2 flex items-center justify-end gap-2">
+                                      <FaCalendarAlt />
+                                      التاريخ
+                                    </th>
+                                    <th className="p-2 flex items-center justify-end gap-2">
+                                      <FaClock />
+                                      الموعد
+                                    </th>
+                                    <th className="p-2 flex items-center justify-end gap-2">
+                                      <FaCalendarDay />
+                                      أيام الإنعقاد
+                                    </th>
                                   </tr>
                                 </thead>
 
