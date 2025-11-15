@@ -27,11 +27,12 @@ export default function OnlineTrainingPage() {
         </p>
       </div>
       </div>
-{/* الفاصل السفلي */}
-      <div className="absolute bottom-4 left-0 right-0 text-center text-gray-50 text-sm">
-        © {new Date().getFullYear()} مركز المصباح للتدريب المهني — جميع الحقوق محفوظة.
-      </div>
+      {/* الفوتر في أسفل الشاشة */}
+      <footer className="py-4 text-center">
+        <p className="text-sm text-gray-500">
+          © {new Date().getFullYear()} مركز المصباح للتدريب المهني — جميع الحقوق محفوظة.
+        </p>
+      </footer>
     </div>
-      
   );
 }
