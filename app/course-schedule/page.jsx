@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
-import WhatsappBubble from "../components/WhatsappBubble";
+import WhatsappBubble from "@/components/WhatsappBubble";
 import { 
   FaCalendarAlt, 
   FaClock, 
