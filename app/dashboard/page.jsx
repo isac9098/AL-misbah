@@ -2,6 +2,24 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
+import { 
+  FaCalendarAlt, 
+  FaClock, 
+  FaCalendarDay, 
+  FaUserTie,
+  FaGraduationCap,
+  FaHourglassHalf,
+  FaEdit,
+  FaTrash,
+  FaPlus,
+  FaArrowLeft,
+  FaSave,
+  FaTimes,
+  FaImage,
+  FaTag,
+  FaPercent,
+  FaBook
+} from "react-icons/fa";
 
 // 🧩 مكون Toast بسيط
 function Toast({ message, type = "info", onClose }) {
@@ -17,7 +35,7 @@ function Toast({ message, type = "info", onClose }) {
       ? "bg-green-600"
       : type === "warning"
       ? "bg-yellow-600"
-      : "bg-[#7b0b4c]";
+      : "bg-[#7a1353]";
 
   return (
     <div
@@ -50,10 +68,18 @@ export default function CoursesDashboard() {
     price: "",
     discount: "",
     category: "",
+    level: "",
+    duration: "",
+    schedule: "",
+    start_date: "",
+    end_date: "",
+    instructor: "",
+    days: ""
   });
   const [imageFile, setImageFile] = useState(null);
   const [userName, setUserName] = useState("");
   const [editingCourse, setEditingCourse] = useState(null);
+  const [activeTab, setActiveTab] = useState("courses");
   const COURSES_BUCKET = "courses-images";
 
   useEffect(() => {
@@ -91,14 +117,14 @@ export default function CoursesDashboard() {
     const { data, error } = await supabase
       .from("courses")
       .select("*")
-      .order("id", { ascending: false });
-    
+      .order("created_at", { ascending: false });
+
     if (error) {
       console.error("❌ خطأ في جلب الدورات:", error);
       showToast("❌ فشل في تحميل الدورات", "error");
       return;
     }
-    
+
     // معالجة البيانات لاستخراج الحقول من metadata إذا كانت موجودة
     const processedData = data.map(course => {
       if (course.metadata && typeof course.metadata === 'object') {
@@ -109,7 +135,7 @@ export default function CoursesDashboard() {
       }
       return course;
     });
-    
+
     setCourses(processedData);
   }
 
@@ -152,9 +178,26 @@ export default function CoursesDashboard() {
       if (!imageUrl) return;
     }
 
+    // فصل الحقول الأساسية عن حقول الجدول الزمني
+    const { level, duration, schedule, start_date, end_date, instructor, days, ...basicFields } = newCourse;
+    
+    const courseData = {
+      ...basicFields,
+      image: imageUrl,
+      metadata: {
+        level,
+        duration,
+        schedule,
+        start_date,
+        end_date,
+        instructor,
+        days
+      }
+    };
+
     const { data, error } = await supabase
       .from("courses")
-      .insert([{ ...newCourse, image: imageUrl }])
+      .insert([courseData])
       .select();
 
     if (error) {
@@ -170,57 +213,45 @@ export default function CoursesDashboard() {
         price: "",
         discount: "",
         category: "",
+        level: "",
+        duration: "",
+        schedule: "",
+        start_date: "",
+        end_date: "",
+        instructor: "",
+        days: ""
       });
       setImageFile(null);
     }
   }
 
-  async function updateCourseSchedule(courseId, updates) {
+  async function updateCourse(courseId, updates) {
     try {
-      // الحقول الأساسية الموجودة في الجدول
-      const existingFields = ['title', 'description', 'image', 'price', 'discount', 'category'];
+      // فصل الحقول الأساسية عن حقول الجدول الزمني
+      const { level, duration, schedule, start_date, end_date, instructor, days, ...basicFields } = updates;
       
-      // تصفية التحديثات لتحتوي فقط على الحقول الموجودة
-      const safeUpdates = {};
-      
-      // إضافة الحقول الأساسية إذا كانت موجودة في التحديثات
-      existingFields.forEach(field => {
-        if (updates[field] !== undefined) {
-          safeUpdates[field] = updates[field];
+      const courseData = {
+        ...basicFields,
+        metadata: {
+          level,
+          duration,
+          schedule,
+          start_date,
+          end_date,
+          instructor,
+          days
         }
-      });
-      
-      // إضافة الحقول الجديدة في حقل metadata
-      const newFields = ['level', 'duration', 'schedule', 'start_date', 'end_date', 'instructor'];
-      const metadata = {};
-      
-      newFields.forEach(field => {
-        if (updates[field] !== undefined && updates[field] !== '') {
-          metadata[field] = updates[field];
-        }
-      });
-      
-      // إذا كان هناك بيانات للحقول الجديدة، نضيفها كـ JSON في metadata
-      if (Object.keys(metadata).length > 0) {
-        safeUpdates.metadata = metadata;
-      }
+      };
 
-      console.log('🔄 محاولة تحديث الدورة:', courseId, safeUpdates);
+      console.log('🔄 محاولة تحديث الدورة:', courseId, courseData);
 
       const { error } = await supabase
         .from("courses")
-        .update(safeUpdates)
+        .update(courseData)
         .eq("id", courseId);
 
       if (error) {
-        console.error("❌ خطأ في تحديث الجدول:", error);
-        console.error("تفاصيل الخطأ:", error);
-        
-        if (error.message.includes('column') && error.message.includes('does not exist')) {
-          showToast("❌ حقل metadata غير موجود. يرجى إضافته إلى الجدول أولاً", "error");
-          return false;
-        }
-        
+        console.error("❌ خطأ في تحديث الدورة:", error);
         showToast(`❌ حدث خطأ أثناء التحديث: ${error.message}`, "error");
         return false;
       } else {
@@ -228,12 +259,12 @@ export default function CoursesDashboard() {
         setCourses(courses.map(course => 
           course.id === courseId ? { 
             ...course, 
-            ...safeUpdates,
-            ...metadata // نضيف الحقول الجديدة للعرض المحلي
+            ...courseData,
+            ...courseData.metadata
           } : course
         ));
         setEditingCourse(null);
-        showToast("✅ تم تحديث جدول الدورة بنجاح!", "success");
+        showToast("✅ تم تحديث الدورة بنجاح!", "success");
         return true;
       }
     } catch (error) {
@@ -243,21 +274,23 @@ export default function CoursesDashboard() {
     }
   }
 
-  const handleSaveSchedule = async (courseId) => {
+  const handleSaveCourse = async (courseId) => {
     const course = courses.find(c => c.id === courseId);
     if (course) {
-      const success = await updateCourseSchedule(courseId, {
+      await updateCourse(courseId, {
+        title: course.title,
+        description: course.description,
+        price: course.price,
+        discount: course.discount,
+        category: course.category,
         level: course.level || "",
         duration: course.duration || "",
         schedule: course.schedule || "",
         start_date: course.start_date || "",
         end_date: course.end_date || "",
-        instructor: course.instructor || ""
+        instructor: course.instructor || "",
+        days: course.days || ""
       });
-      
-      if (success) {
-        setEditingCourse(null);
-      }
     }
   };
 
@@ -270,6 +303,10 @@ export default function CoursesDashboard() {
     setCourses(courses.map(course => 
       course.id === courseId ? { ...course, [field]: value } : course
     ));
+  };
+
+  const handleNewCourseInputChange = (field, value) => {
+    setNewCourse(prev => ({ ...prev, [field]: value }));
   };
 
   async function deleteCourse(id) {
@@ -302,13 +339,7 @@ export default function CoursesDashboard() {
   }
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center bg-fixed flex flex-col items-center p-4 sm:p-8 text-right"
-      style={{
-        backgroundImage:
-          "url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1400&q=80')",
-      }}
-    >
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 sm:p-8 text-right">
       {toast && (
         <Toast
           message={toast.msg}
@@ -317,248 +348,522 @@ export default function CoursesDashboard() {
         />
       )}
 
-      <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-4 sm:p-8 w-full max-w-6xl animate-fade-in">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
+      <div className="bg-white shadow-xl rounded-2xl p-4 sm:p-8 w-full max-w-7xl">
+        {/* الهيدر */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
           <div className="mb-4 sm:mb-0">
-            <h1 className="text-2xl font-bold text-[#7b0b4c]">🎓 إدارة الدورات والمواعيد</h1>
-            <p className="text-gray-700 mt-1 text-sm font-medium">
-              مرحباً 👋 {userName || "مدير النظام"}
-            </p>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 bg-[#f8e8f1] rounded-full flex items-center justify-center">
+                <FaBook className="text-[#7a1353] text-xl" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">لوحة تحكم الدورات</h1>
+                <p className="text-gray-600 mt-1 text-sm">
+                  مرحباً 👋 {userName || "مدير النظام"}
+                </p>
+              </div>
+            </div>
           </div>
 
+          <div className="flex gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => router.push("/course-schedule")}
+              className="px-4 py-2 bg-[#7a1353] text-white rounded-lg hover:bg-[#6a124a] transition flex items-center gap-2 w-full sm:w-auto justify-center"
+            >
+              <FaCalendarAlt />
+              عرض جدول الدورات
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition flex items-center gap-2 w-full sm:w-auto justify-center"
+            >
+              <FaArrowLeft />
+              الرئيسية
+            </button>
+          </div>
+        </div>
+
+        {/* التبويبات */}
+        <div className="flex border-b border-gray-200 mb-8">
           <button
-            onClick={() => router.push("/")}
-            className="px-4 py-2 bg-[#7b0b4c] text-white rounded-lg hover:bg-[#5e0839] transition w-full sm:w-auto"
+            onClick={() => setActiveTab("courses")}
+            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all ${
+              activeTab === "courses" 
+                ? "border-[#7a1353] text-[#7a1353]" 
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
           >
-            ← الرجوع للصفحة الرئيسية
+            🎓 إدارة الدورات
+          </button>
+          <button
+            onClick={() => setActiveTab("campaigns")}
+            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all ${
+              activeTab === "campaigns" 
+                ? "border-[#7a1353] text-[#7a1353]" 
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            🖼️ الحملات الإعلانية
           </button>
         </div>
 
-        {/* نموذج إضافة دورة */}
-        <form
-          onSubmit={addCourse}
-          className="bg-gray-50 rounded-xl p-6 mb-8 shadow-inner border border-gray-200"
-        >
-          <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">
-            ➕ إضافة دورة جديدة
-          </h2>
+        {activeTab === "courses" && (
+          <>
+            {/* نموذج إضافة دورة */}
+            <div className="bg-white rounded-2xl p-6 mb-8 shadow-md border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <FaPlus className="text-[#7a1353]" />
+                إضافة دورة جديدة
+              </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <input
-              type="text"
-              placeholder="عنوان الدورة *"
-              value={newCourse.title}
-              onChange={(e) =>
-                setNewCourse({ ...newCourse, title: e.target.value })
-              }
-              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
-            />
-            <input
-              type="text"
-              placeholder="الوصف *"
-              value={newCourse.description}
-              onChange={(e) =>
-                setNewCourse({ ...newCourse, description: e.target.value })
-              }
-              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setImageFile(e.target.files[0])}
-              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-[#7b0b4c] file:text-white file:border-none file:cursor-pointer transition-all duration-300"
-            />
-            <input
-              type="text"
-              placeholder="السعر *"
-              value={newCourse.price}
-              onChange={(e) =>
-                setNewCourse({ ...newCourse, price: e.target.value })
-              }
-              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
-            />
-            <input
-              type="text"
-              placeholder="الخصم (اختياري)"
-              value={newCourse.discount}
-              onChange={(e) =>
-                setNewCourse({ ...newCourse, discount: e.target.value })
-              }
-              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
-            />
-            <input
-              type="text"
-              placeholder="الفئة * (مثلاً: القانون / اللغة / التقنية)"
-              value={newCourse.category}
-              onChange={(e) =>
-                setNewCourse({ ...newCourse, category: e.target.value })
-              }
-              className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-300"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="mt-6 bg-[#7b0b4c] text-white px-8 py-3 rounded-lg hover:bg-[#5e0839] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl"
-          >
-            إضافة الدورة
-          </button>
-        </form>
-
-        {/* قسم تعديل مواعيد الدورات */}
-        <div className="bg-gray-50 rounded-xl p-6 mb-8 shadow-inner border border-gray-200">
-          <h2 className="text-xl font-semibold mb-6 text-[#7b0b4c]">
-            🗓️ إدارة مواعيد وجداول الدورات
-          </h2>
-          
-          {courses.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">لا توجد دورات حالياً.</p>
-          ) : (
-            <div className="space-y-6">
-              {courses.map((course) => (
-                <div key={course.id} className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+              <form onSubmit={addCourse}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  {/* المعلومات الأساسية */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">المعلومات الأساسية</h3>
+                    
                     <div>
-                      <h3 className="text-lg font-bold text-gray-800 mb-2">{course.title}</h3>
-                      <p className="text-gray-600 text-sm">{course.description}</p>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">عنوان الدورة *</label>
+                      <input
+                        type="text"
+                        value={newCourse.title}
+                        onChange={(e) => handleNewCourseInputChange('title', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        placeholder="أدخل عنوان الدورة"
+                      />
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setEditingCourse(editingCourse === course.id ? null : course.id)}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm font-medium"
-                      >
-                        {editingCourse === course.id ? 'إلغاء التعديل' : '✏️ تعديل الجدول'}
-                      </button>
-                      <button
-                        onClick={() => deleteCourse(course.id)}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium"
-                      >
-                        🗑️ حذف
-                      </button>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">الوصف *</label>
+                      <textarea
+                        value={newCourse.description}
+                        onChange={(e) => handleNewCourseInputChange('description', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none"
+                        rows="3"
+                        placeholder="وصف مختصر للدورة"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                          <FaTag />
+                          السعر *
+                        </label>
+                        <input
+                          type="text"
+                          value={newCourse.price}
+                          onChange={(e) => handleNewCourseInputChange('price', e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                          placeholder="السعر"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                          <FaPercent />
+                          الخصم
+                        </label>
+                        <input
+                          type="text"
+                          value={newCourse.discount}
+                          onChange={(e) => handleNewCourseInputChange('discount', e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                          placeholder="الخصم (اختياري)"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">الفئة *</label>
+                      <input
+                        type="text"
+                        value={newCourse.category}
+                        onChange={(e) => handleNewCourseInputChange('category', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        placeholder="مثلاً: القانون / اللغة / التقنية"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <FaImage />
+                        صورة الدورة
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setImageFile(e.target.files[0])}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#7a1353] file:text-white file:cursor-pointer transition-all"
+                      />
                     </div>
                   </div>
 
-                  {editingCourse === course.id ? (
-                    // وضع التعديل
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mt-4">
-                      <h4 className="font-semibold text-yellow-800 mb-4 text-lg">🛠️ تعديل جدول الدورة</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">🎯 المستوى</label>
-                          <input
-                            type="text"
-                            value={course.level || ""}
-                            onChange={(e) => handleInputChange(course.id, 'level', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
-                            placeholder="مبتدئ - متوسط - متقدم"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">⏰ المدة</label>
-                          <input
-                            type="text"
-                            value={course.duration || ""}
-                            onChange={(e) => handleInputChange(course.id, 'duration', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
-                            placeholder="4 أسابيع - 30 ساعة"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">👨‍🏫 المدرب</label>
-                          <input
-                            type="text"
-                            value={course.instructor || ""}
-                            onChange={(e) => handleInputChange(course.id, 'instructor', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
-                            placeholder="اسم المدرب"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">📅 تاريخ البدء</label>
-                          <input
-                            type="date"
-                            value={course.start_date || ""}
-                            onChange={(e) => handleInputChange(course.id, 'start_date', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">📅 تاريخ الانتهاء</label>
-                          <input
-                            type="date"
-                            value={course.end_date || ""}
-                            onChange={(e) => handleInputChange(course.id, 'end_date', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">🕒 جدول المواعيد</label>
-                          <input
-                            type="text"
-                            value={course.schedule || ""}
-                            onChange={(e) => handleInputChange(course.id, 'schedule', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] outline-none"
-                            placeholder="السبت والثلاثاء 6-8 مساءً"
-                          />
-                        </div>
+                  {/* الجدول الزمني */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">الجدول الزمني</h3>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                          <FaGraduationCap />
+                          المستوى
+                        </label>
+                        <input
+                          type="text"
+                          value={newCourse.level}
+                          onChange={(e) => handleNewCourseInputChange('level', e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                          placeholder="مبتدئ - متوسط - متقدم"
+                        />
                       </div>
-                      <div className="flex space-x-3 space-x-reverse justify-end mt-4">
-                        <button
-                          onClick={handleCancelEdit}
-                          className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
-                        >
-                          إلغاء
-                        </button>
-                        <button
-                          onClick={() => handleSaveSchedule(course.id)}
-                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-                        >
-                          حفظ التغييرات
-                        </button>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                          <FaHourglassHalf />
+                          المدة
+                        </label>
+                        <input
+                          type="text"
+                          value={newCourse.duration}
+                          onChange={(e) => handleNewCourseInputChange('duration', e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                          placeholder="4 أسابيع - 30 ساعة"
+                        />
                       </div>
                     </div>
-                  ) : (
-                    // وضع العرض
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-600">🎯 المستوى</p>
-                        <p className="font-semibold text-gray-800">{course.level || "غير محدد"}</p>
-                      </div>
-                      <div className="bg-green-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-600">⏰ المدة</p>
-                        <p className="font-semibold text-gray-800">{course.duration || "غير محددة"}</p>
-                      </div>
-                      <div className="bg-purple-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-600">👨‍🏫 المدرب</p>
-                        <p className="font-semibold text-gray-800">{course.instructor || "غير محدد"}</p>
-                      </div>
-                      <div className="bg-orange-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-600">📅 موعد الإنعقاد</p>
-                        <p className="font-semibold text-gray-800">{course.schedule || "غير محدد"}</p>
-                      </div>
-                      <div className="bg-red-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-600">📅 تاريخ البدء</p>
-                        <p className="font-semibold text-gray-800">{course.start_date || "غير محدد"}</p>
-                      </div>
-                      <div className="bg-indigo-50 p-4 rounded-lg">
-                        <p className="text-sm text-gray-600">📅 تاريخ الانتهاء</p>
-                        <p className="font-semibold text-gray-800">{course.end_date || "غير محدد"}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* 🖼️ إدارة الحملات الإعلانية */}
-        <div className="mt-12 border-t pt-8">
-          <h2 className="text-xl font-semibold mb-4 text-[#7b0b4c]">
-            🖼️ إدارة الحملات الإعلانية
-          </h2>
-          <CampaignsManager showToast={showToast} />
-        </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <FaUserTie />
+                        المدرب
+                      </label>
+                      <input
+                        type="text"
+                        value={newCourse.instructor}
+                        onChange={(e) => handleNewCourseInputChange('instructor', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        placeholder="اسم المدرب"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ البدء</label>
+                        <input
+                          type="date"
+                          value={newCourse.start_date}
+                          onChange={(e) => handleNewCourseInputChange('start_date', e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ الانتهاء</label>
+                        <input
+                          type="date"
+                          value={newCourse.end_date}
+                          onChange={(e) => handleNewCourseInputChange('end_date', e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <FaClock />
+                        الموعد
+                      </label>
+                      <input
+                        type="text"
+                        value={newCourse.schedule}
+                        onChange={(e) => handleNewCourseInputChange('schedule', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        placeholder="السبت والثلاثاء 6-8 مساءً"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <FaCalendarDay />
+                        أيام الإنعقاد
+                      </label>
+                      <input
+                        type="text"
+                        value={newCourse.days}
+                        onChange={(e) => handleNewCourseInputChange('days', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        placeholder="السبت، الإثنين، الأربعاء"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-[#7a1353] text-white px-8 py-4 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                >
+                  <FaPlus />
+                  إضافة الدورة
+                </button>
+              </form>
+            </div>
+
+            {/* قائمة الدورات */}
+            <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <FaBook className="text-[#7a1353]" />
+                الدورات الحالية ({courses.length})
+              </h2>
+
+              {courses.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <FaBook className="text-4xl mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">لا توجد دورات حالياً</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {courses.map((course) => (
+                    <div key={course.id} className="bg-gray-50 rounded-xl p-6 border border-gray-200 hover:border-[#7a1353]/30 transition-all duration-300">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-start gap-4 mb-3">
+                            {course.image && (
+                              <img 
+                                src={course.image} 
+                                alt={course.title}
+                                className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <h3 className="text-lg font-bold text-gray-800 mb-1">{course.title}</h3>
+                              <p className="text-gray-600 text-sm mb-2">{course.description}</p>
+                              <div className="flex flex-wrap gap-2">
+                                <span className="px-3 py-1 bg-[#f8e8f1] text-[#7a1353] rounded-full text-xs font-medium">
+                                  {course.category}
+                                </span>
+                                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                  {course.price}
+                                </span>
+                                {course.discount && (
+                                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                    خصم: {course.discount}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => setEditingCourse(editingCourse === course.id ? null : course.id)}
+                            className="px-4 py-2 bg-[#7a1353] text-white rounded-lg hover:bg-[#6a124a] transition flex items-center gap-2 text-sm font-medium"
+                          >
+                            <FaEdit />
+                            {editingCourse === course.id ? 'إلغاء' : 'تعديل'}
+                          </button>
+                          <button
+                            onClick={() => deleteCourse(course.id)}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2 text-sm font-medium"
+                          >
+                            <FaTrash />
+                            حذف
+                          </button>
+                        </div>
+                      </div>
+
+                      {editingCourse === course.id ? (
+                        // وضع التعديل
+                        <div className="bg-white border border-[#7a1353]/20 rounded-xl p-6 mt-4">
+                          <h4 className="font-semibold text-[#7a1353] mb-4 text-lg flex items-center gap-2">
+                            <FaEdit />
+                            تعديل الدورة
+                          </h4>
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* المعلومات الأساسية */}
+                            <div className="space-y-4">
+                              <h5 className="font-medium text-gray-700">المعلومات الأساسية</h5>
+                              <div>
+                                <label className="block text-sm text-gray-600 mb-2">العنوان</label>
+                                <input
+                                  type="text"
+                                  value={course.title}
+                                  onChange={(e) => handleInputChange(course.id, 'title', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm text-gray-600 mb-2">الوصف</label>
+                                <textarea
+                                  value={course.description}
+                                  onChange={(e) => handleInputChange(course.id, 'description', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none resize-none"
+                                  rows="2"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-sm text-gray-600 mb-2">السعر</label>
+                                  <input
+                                    type="text"
+                                    value={course.price}
+                                    onChange={(e) => handleInputChange(course.id, 'price', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm text-gray-600 mb-2">الخصم</label>
+                                  <input
+                                    type="text"
+                                    value={course.discount || ""}
+                                    onChange={(e) => handleInputChange(course.id, 'discount', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-sm text-gray-600 mb-2">الفئة</label>
+                                <input
+                                  type="text"
+                                  value={course.category}
+                                  onChange={(e) => handleInputChange(course.id, 'category', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                />
+                              </div>
+                            </div>
+
+                            {/* الجدول الزمني */}
+                            <div className="space-y-4">
+                              <h5 className="font-medium text-gray-700">الجدول الزمني</h5>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-sm text-gray-600 mb-2">المستوى</label>
+                                  <input
+                                    type="text"
+                                    value={course.level || ""}
+                                    onChange={(e) => handleInputChange(course.id, 'level', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm text-gray-600 mb-2">المدة</label>
+                                  <input
+                                    type="text"
+                                    value={course.duration || ""}
+                                    onChange={(e) => handleInputChange(course.id, 'duration', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-sm text-gray-600 mb-2">المدرب</label>
+                                <input
+                                  type="text"
+                                  value={course.instructor || ""}
+                                  onChange={(e) => handleInputChange(course.id, 'instructor', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-sm text-gray-600 mb-2">تاريخ البدء</label>
+                                  <input
+                                    type="date"
+                                    value={course.start_date || ""}
+                                    onChange={(e) => handleInputChange(course.id, 'start_date', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm text-gray-600 mb-2">تاريخ الانتهاء</label>
+                                  <input
+                                    type="date"
+                                    value={course.end_date || ""}
+                                    onChange={(e) => handleInputChange(course.id, 'end_date', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-sm text-gray-600 mb-2">الموعد</label>
+                                <input
+                                  type="text"
+                                  value={course.schedule || ""}
+                                  onChange={(e) => handleInputChange(course.id, 'schedule', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm text-gray-600 mb-2">أيام الإنعقاد</label>
+                                <input
+                                  type="text"
+                                  value={course.days || ""}
+                                  onChange={(e) => handleInputChange(course.id, 'days', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex space-x-3 space-x-reverse justify-end mt-6">
+                            <button
+                              onClick={handleCancelEdit}
+                              className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition flex items-center gap-2"
+                            >
+                              <FaTimes />
+                              إلغاء
+                            </button>
+                            <button
+                              onClick={() => handleSaveCourse(course.id)}
+                              className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center gap-2"
+                            >
+                              <FaSave />
+                              حفظ
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        // وضع العرض
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                          <div className="bg-white p-4 rounded-lg border border-gray-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FaGraduationCap className="text-[#7a1353]" />
+                              <p className="text-sm text-gray-600">المستوى</p>
+                            </div>
+                            <p className="font-semibold text-gray-800">{course.level || "غير محدد"}</p>
+                          </div>
+                          <div className="bg-white p-4 rounded-lg border border-gray-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FaHourglassHalf className="text-[#7a1353]" />
+                              <p className="text-sm text-gray-600">المدة</p>
+                            </div>
+                            <p className="font-semibold text-gray-800">{course.duration || "غير محددة"}</p>
+                          </div>
+                          <div className="bg-white p-4 rounded-lg border border-gray-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FaUserTie className="text-[#7a1353]" />
+                              <p className="text-sm text-gray-600">المدرب</p>
+                            </div>
+                            <p className="font-semibold text-gray-800">{course.instructor || "غير محدد"}</p>
+                          </div>
+                          <div className="bg-white p-4 rounded-lg border border-gray-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FaClock className="text-[#7a1353]" />
+                              <p className="text-sm text-gray-600">الموعد</p>
+                            </div>
+                            <p className="font-semibold text-gray-800">{course.schedule || "غير محدد"}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {activeTab === "campaigns" && (
+          <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-200">
+            <CampaignsManager showToast={showToast} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -661,24 +966,32 @@ function CampaignsManager({ showToast }) {
   }
 
   return (
-    <div className="bg-gray-50 rounded-xl p-6 shadow-inner border border-gray-200">
-      <form onSubmit={addCampaignImage} className="flex flex-col sm:flex-row gap-4 items-center">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImageFile(e.target.files[0])}
-          className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-[#7b0b4c] file:text-white file:border-none file:cursor-pointer w-full sm:w-auto transition-all duration-300"
-        />
-        <button
-          type="submit"
-          disabled={uploading}
-          className="bg-[#7b0b4c] text-white px-6 py-3 rounded-lg hover:bg-[#5e0839] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl disabled:opacity-50"
-        >
-          {uploading ? "جاري الرفع..." : "رفع الصورة"}
-        </button>
-      </form>
+    <div>
+      <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <FaImage className="text-[#7a1353]" />
+        إدارة الحملات الإعلانية
+      </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+      <div className="bg-gray-50 rounded-xl p-6 shadow-inner border border-gray-200 mb-6">
+        <form onSubmit={addCampaignImage} className="flex flex-col sm:flex-row gap-4 items-center">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setImageFile(e.target.files[0])}
+            className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-[#7a1353] file:text-white file:border-none file:cursor-pointer w-full sm:w-auto transition-all duration-300"
+          />
+          <button
+            type="submit"
+            disabled={uploading}
+            className="bg-[#7a1353] text-white px-6 py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
+          >
+            <FaPlus />
+            {uploading ? "جاري الرفع..." : "رفع الصورة"}
+          </button>
+        </form>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {campaigns.map((c) => (
           <div key={c.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200">
             <img src={c.image} alt="campaign" className="w-full h-48 object-cover" />
@@ -686,8 +999,9 @@ function CampaignsManager({ showToast }) {
               <span className="text-gray-600 text-sm">حملة #{c.id}</span>
               <button
                 onClick={() => deleteCampaign(c.id)}
-                className="text-red-600 hover:text-red-800 text-sm font-semibold transition-colors"
+                className="text-red-600 hover:text-red-800 text-sm font-semibold transition-colors flex items-center gap-1"
               >
+                <FaTrash />
                 حذف
               </button>
             </div>
