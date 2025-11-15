@@ -171,28 +171,29 @@ export default function CoursesSchedule() {
       )}
 
       {/* ================= HERO SECTION ================= */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#7b0b4c] to-[#5e0839]">
-        <div className="absolute inset-0 bg-black/10"></div>
-        
-        <div className="container mx-auto px-4 py-20 relative z-10">
-          <div className="max-w-4xl mx-auto text-center text-white">
-            <h1
-              className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4"
-              style={{ textShadow: "0 6px 18px rgba(0,0,0,0.25)" }}
-            >
-              <span className="inline-block">
-                {ICONS.calendar} جدول الدورات القادمة
-              </span>
-            </h1>
+<section className="relative overflow-hidden bg-[#7b0b4c]">
+  {/* خلفية ملونة مباشرة بدون تأثيرات شفافية */}
+  <div className="absolute inset-0 bg-gradient-to-br from-[#7b0b4c] via-[#6a0a42] to-[#5e0839]"></div>
+  
+  <div className="container mx-auto px-4 py-20 relative z-10">
+    <div className="max-w-4xl mx-auto text-center text-white">
+      <h1
+        className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4"
+        style={{ textShadow: "0 6px 18px rgba(0,0,0,0.25)" }}
+      >
+        <span className="inline-block">
+          {ICONS.calendar} جدول الدورات القادمة
+        </span>
+      </h1>
 
-            <p className="text-lg sm:text-xl opacity-95 max-w-2xl mx-auto leading-relaxed">
-              يمكنك معرفة مواعيد إنعقاد الدورات التي تهمك بسهولة — اختر فئة وشاهد التفاصيل داخل كل دورة.
-            </p>
-          </div>
-        </div>
+      <p className="text-lg sm:text-xl opacity-95 max-w-2xl mx-auto leading-relaxed">
+        يمكنك معرفة مواعيد إنعقاد الدورات التي تهمك بسهولة — اختر فئة وشاهد التفاصيل داخل كل دورة.
+      </p>
+    </div>
+  </div>
 
-        <div className="absolute left-4 top-4 opacity-10 text-9xl select-none pointer-events-none">🎓</div>
-      </section>
+  <div className="absolute left-4 top-4 opacity-20 text-9xl select-none pointer-events-none">🎓</div>
+</section>
 
       {/* ================= MAIN ================= */}
       <main className="flex-grow py-12 lg:py-16 bg-white">
@@ -406,9 +407,9 @@ export default function CoursesSchedule() {
                               <table className="w-full text-right table-auto">
                                 <thead>
                                   <tr className="text-sm text-gray-600">
-                                    <th className="p-2">{ICONS.calendar} التاريخ</th>
-                                    <th className="p-2">{ICONS.clock} الموعد</th>
-                                    <th className="p-2">{ICONS.days} أيام الإنعقاد</th>
+                                    <th className="p-2">التاريخ {ICONS.calendar}</th>
+                                    <th className="p-2">الموعد {ICONS.clock}</th>
+                                    <th className="p-2">أيام الإنعقاد {ICONS.days}</th>
                                   </tr>
                                 </thead>
 
