@@ -405,9 +405,9 @@ export default function CoursesSchedule() {
                                       <FaClock className="text-[#7a1353] text-lg md:text-xl" />
                                     </div>
                                   </div>
-                                  <div className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">الموعد</div>
+                                  <div className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">التوقيت</div>
                                   <div className="font-bold text-gray-800 text-sm md:text-lg leading-tight">
-                                    {course.schedule || "غير محدد"}
+                                    {course.schedule_time || "غير محدد"}
                                   </div>
                                 </div>
 
@@ -420,7 +420,7 @@ export default function CoursesSchedule() {
                                   </div>
                                   <div className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">أيام الإنعقاد</div>
                                   <div className="font-bold text-gray-800 text-sm md:text-lg leading-tight">
-                                    {course.days || "سيعلن لاحقاً"}
+                                    {course.meeting_days || "سيعلن لاحقاً"}
                                   </div>
                                 </div>
                               </div>
@@ -462,16 +462,16 @@ export default function CoursesSchedule() {
                                     </div>
                                     <div className="flex-shrink-0 w-48 text-center p-3 bg-[#f8e8f1] rounded-lg border border-[#7a1353]/20">
                                       <FaClock className="text-[#7a1353] text-lg mx-auto mb-2" />
-                                      <div className="text-xs text-gray-600 mb-1">الموعد</div>
+                                      <div className="text-xs text-gray-600 mb-1">التوقيت</div>
                                       <div className="font-bold text-gray-800 text-sm">
-                                        {course.schedule || "غير محدد"}
+                                        {course.schedule_time || "غير محدد"}
                                       </div>
                                     </div>
                                     <div className="flex-shrink-0 w-48 text-center p-3 bg-[#f8e8f1] rounded-lg border border-[#7a1353]/20">
                                       <FaCalendarDay className="text-[#7a1353] text-lg mx-auto mb-2" />
                                       <div className="text-xs text-gray-600 mb-1">أيام الإنعقاد</div>
                                       <div className="font-bold text-gray-800 text-sm">
-                                        {course.days || "سيعلن لاحقاً"}
+                                        {course.meeting_days || "سيعلن لاحقاً"}
                                       </div>
                                     </div>
                                   </div>
