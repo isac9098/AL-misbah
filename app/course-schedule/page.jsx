@@ -80,54 +80,30 @@ export default function CoursesSchedule() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // دالة لمعالجة البيانات واستخراج الحقول من metadata
-  const processCourseData = (course) => {
-    if (course.metadata && typeof course.metadata === 'object') {
-      return {
-        ...course,
-        level: course.metadata.level || course.level,
-        duration: course.metadata.duration || course.duration,
-        schedule: course.metadata.schedule || course.schedule,
-        start_date: course.metadata.start_date || course.start_date,
-        end_date: course.metadata.end_date || course.end_date,
-        instructor: course.metadata.instructor || course.instructor,
-        days: course.metadata.days || course.days
-      };
-    }
-    return course;
-  };
-
   async function fetchCourses() {
-  setLoading(true);
-  try {
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .order("created_at", { ascending: false });
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("فشل في تحميل الدورات:", error);
-    } else {
-      // نستخدم البيانات مباشرة من الحقول بدون metadata
-      const processedData = data.map(course => ({
-        ...course,
-        schedule: course.schedule || "",
-        start_date: course.start_date || "",
-        days: course.days || ""
-      }));
-      
-      setCourses(processedData);
-      const uniqueCategories = [
-        ...new Set(processedData.map((c) => c.category).filter(Boolean)),
-      ];
-      setCategories(uniqueCategories);
+      if (error) {
+        console.error("فشل في تحميل الدورات:", error);
+      } else {
+        // استخدام البيانات مباشرة من الحقول الجديدة
+        setCourses(data || []);
+        const uniqueCategories = [
+          ...new Set(data.map((c) => c.category).filter(Boolean)),
+        ];
+        setCategories(uniqueCategories);
+      }
+    } catch (error) {
+      console.error("حدث خطأ غير متوقع:", error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("حدث خطأ غير متوقع:", error);
-  } finally {
-    setLoading(false);
   }
-}
 
   const formatDate = (dateString) => {
     if (!dateString) return "غير محدد";
@@ -160,7 +136,7 @@ export default function CoursesSchedule() {
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="absolute top-0 left-0 w-72 h-72 bg-white/5 rounded-full -translate-x-36 -translate-y-36"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-48 translate-y-48"></div>
-        
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center text-white">
             <div className="flex justify-center mb-6">
@@ -168,7 +144,7 @@ export default function CoursesSchedule() {
                 <FaCalendarAlt className="text-3xl text-white" />
               </div>
             </div>
-            
+
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               جدول الدورات القادمة
             </h1>
@@ -418,7 +394,7 @@ export default function CoursesSchedule() {
                                   <div className="font-bold text-gray-800 text-sm md:text-lg leading-tight">
                                     {course.start_date
                                       ? formatDate(course.start_date)
-                                      : course.date || "سيعلن لاحقاً"}
+                                      : "سيعلن لاحقاً"}
                                   </div>
                                 </div>
 
@@ -449,21 +425,27 @@ export default function CoursesSchedule() {
                                 </div>
                               </div>
 
-                              {/* معلومات إضافية */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                                <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                  <div className="text-xs md:text-sm text-gray-600 mb-1">المدرب</div>
-                                  <div className="font-bold text-gray-800 text-sm md:text-base">
-                                    {course.instructor || "غير محدد"}
-                                  </div>
+                              {/* معلومات إضافية - اختيارية */}
+                              {(course.instructor || course.duration) && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                                  {course.instructor && (
+                                    <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                      <div className="text-xs md:text-sm text-gray-600 mb-1">المدرب</div>
+                                      <div className="font-bold text-gray-800 text-sm md:text-base">
+                                        {course.instructor}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {course.duration && (
+                                    <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                                      <div className="text-xs md:text-sm text-gray-600 mb-1">المدة</div>
+                                      <div className="font-bold text-gray-800 text-sm md:text-base">
+                                        {course.duration}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                                  <div className="text-xs md:text-sm text-gray-600 mb-1">المدة</div>
-                                  <div className="font-bold text-gray-800 text-sm md:text-base">
-                                    {course.duration || "غير محددة"}
-                                  </div>
-                                </div>
-                              </div>
+                              )}
 
                               {/* تصميم أفقي للهواتف */}
                               <div className="md:hidden mt-4">
@@ -475,7 +457,7 @@ export default function CoursesSchedule() {
                                       <div className="font-bold text-gray-800 text-sm">
                                         {course.start_date
                                           ? formatDate(course.start_date)
-                                          : course.date || "سيعلن لاحقاً"}
+                                          : "سيعلن لاحقاً"}
                                       </div>
                                     </div>
                                     <div className="flex-shrink-0 w-48 text-center p-3 bg-[#f8e8f1] rounded-lg border border-[#7a1353]/20">
