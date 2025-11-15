@@ -29,10 +29,10 @@ export default function WebinarsPage() {
         </div>
       </div>
 
-      {/* الفوتر في أسفل الشاشة */}
-      <footer className="bg-[#7a1353] text-white py-4 text-center">
+            {/* الفوتر في أسفل الشاشة */}
+      <footer className="py-4 text-center">
         <div className="container mx-auto">
-          <p className="text-sm">
+          <p className="text-sm text-gray-500">
             © {new Date().getFullYear()} مركز المصباح للتدريب المهني — جميع الحقوق محفوظة.
           </p>
         </div>
