@@ -68,12 +68,8 @@ export default function CoursesDashboard() {
     price: "",
     discount: "",
     category: "",
-    level: "",
-    duration: "",
     schedule: "",
     start_date: "",
-    end_date: "",
-    instructor: "",
     days: ""
   });
   const [imageFile, setImageFile] = useState(null);
@@ -179,18 +175,14 @@ export default function CoursesDashboard() {
     }
 
     // فصل الحقول الأساسية عن حقول الجدول الزمني
-    const { level, duration, schedule, start_date, end_date, instructor, days, ...basicFields } = newCourse;
+    const { schedule, start_date, days, ...basicFields } = newCourse;
     
     const courseData = {
       ...basicFields,
       image: imageUrl,
       metadata: {
-        level,
-        duration,
         schedule,
         start_date,
-        end_date,
-        instructor,
         days
       }
     };
@@ -213,12 +205,8 @@ export default function CoursesDashboard() {
         price: "",
         discount: "",
         category: "",
-        level: "",
-        duration: "",
         schedule: "",
         start_date: "",
-        end_date: "",
-        instructor: "",
         days: ""
       });
       setImageFile(null);
@@ -228,17 +216,13 @@ export default function CoursesDashboard() {
   async function updateCourse(courseId, updates) {
     try {
       // فصل الحقول الأساسية عن حقول الجدول الزمني
-      const { level, duration, schedule, start_date, end_date, instructor, days, ...basicFields } = updates;
+      const { schedule, start_date, days, ...basicFields } = updates;
       
       const courseData = {
         ...basicFields,
         metadata: {
-          level,
-          duration,
           schedule,
           start_date,
-          end_date,
-          instructor,
           days
         }
       };
@@ -283,12 +267,8 @@ export default function CoursesDashboard() {
         price: course.price,
         discount: course.discount,
         category: course.category,
-        level: course.level || "",
-        duration: course.duration || "",
         schedule: course.schedule || "",
         start_date: course.start_date || "",
-        end_date: course.end_date || "",
-        instructor: course.instructor || "",
         days: course.days || ""
       });
     }
@@ -502,68 +482,17 @@ export default function CoursesDashboard() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">الجدول الزمني</h3>
                     
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                          <FaGraduationCap />
-                          المستوى
-                        </label>
-                        <input
-                          type="text"
-                          value={newCourse.level}
-                          onChange={(e) => handleNewCourseInputChange('level', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                          placeholder="مبتدئ - متوسط - متقدم"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                          <FaHourglassHalf />
-                          المدة
-                        </label>
-                        <input
-                          type="text"
-                          value={newCourse.duration}
-                          onChange={(e) => handleNewCourseInputChange('duration', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                          placeholder="4 أسابيع - 30 ساعة"
-                        />
-                      </div>
-                    </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                        <FaUserTie />
-                        المدرب
+                        <FaCalendarAlt />
+                        تاريخ البدء
                       </label>
                       <input
-                        type="text"
-                        value={newCourse.instructor}
-                        onChange={(e) => handleNewCourseInputChange('instructor', e.target.value)}
+                        type="date"
+                        value={newCourse.start_date}
+                        onChange={(e) => handleNewCourseInputChange('start_date', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                        placeholder="اسم المدرب"
                       />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ البدء</label>
-                        <input
-                          type="date"
-                          value={newCourse.start_date}
-                          onChange={(e) => handleNewCourseInputChange('start_date', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">تاريخ الانتهاء</label>
-                        <input
-                          type="date"
-                          value={newCourse.end_date}
-                          onChange={(e) => handleNewCourseInputChange('end_date', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                        />
-                      </div>
                     </div>
 
                     <div>
@@ -657,7 +586,7 @@ export default function CoursesDashboard() {
                             className="px-4 py-2 bg-[#7a1353] text-white rounded-lg hover:bg-[#6a124a] transition flex items-center gap-2 text-sm font-medium"
                           >
                             <FaEdit />
-                            {editingCourse === course.id ? 'إلغاء' : 'تعديل'}
+                            {editingCourse === course.id ? 'إلغاء' : 'تعديل الجدول'}
                           </button>
                           <button
                             onClick={() => deleteCourse(course.id)}
@@ -669,136 +598,69 @@ export default function CoursesDashboard() {
                         </div>
                       </div>
 
-                      {editingCourse === course.id ? (
-                        // وضع التعديل
+                      {/* عرض بيانات الجدول الزمني */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FaCalendarAlt className="text-[#7a1353]" />
+                            <p className="text-sm text-gray-600">تاريخ البدء</p>
+                          </div>
+                          <p className="font-semibold text-gray-800">
+                            {course.start_date ? new Date(course.start_date).toLocaleDateString('ar-EG') : "غير محدد"}
+                          </p>
+                        </div>
+                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FaClock className="text-[#7a1353]" />
+                            <p className="text-sm text-gray-600">الموعد</p>
+                          </div>
+                          <p className="font-semibold text-gray-800">{course.schedule || "غير محدد"}</p>
+                        </div>
+                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FaCalendarDay className="text-[#7a1353]" />
+                            <p className="text-sm text-gray-600">أيام الإنعقاد</p>
+                          </div>
+                          <p className="font-semibold text-gray-800">{course.days || "غير محدد"}</p>
+                        </div>
+                      </div>
+
+                      {editingCourse === course.id && (
+                        // وضع التعديل - الجدول الزمني فقط
                         <div className="bg-white border border-[#7a1353]/20 rounded-xl p-6 mt-4">
                           <h4 className="font-semibold text-[#7a1353] mb-4 text-lg flex items-center gap-2">
                             <FaEdit />
-                            تعديل الدورة
+                            تعديل الجدول الزمني
                           </h4>
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* المعلومات الأساسية */}
-                            <div className="space-y-4">
-                              <h5 className="font-medium text-gray-700">المعلومات الأساسية</h5>
-                              <div>
-                                <label className="block text-sm text-gray-600 mb-2">العنوان</label>
-                                <input
-                                  type="text"
-                                  value={course.title}
-                                  onChange={(e) => handleInputChange(course.id, 'title', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm text-gray-600 mb-2">الوصف</label>
-                                <textarea
-                                  value={course.description}
-                                  onChange={(e) => handleInputChange(course.id, 'description', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none resize-none"
-                                  rows="2"
-                                />
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                  <label className="block text-sm text-gray-600 mb-2">السعر</label>
-                                  <input
-                                    type="text"
-                                    value={course.price}
-                                    onChange={(e) => handleInputChange(course.id, 'price', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm text-gray-600 mb-2">الخصم</label>
-                                  <input
-                                    type="text"
-                                    value={course.discount || ""}
-                                    onChange={(e) => handleInputChange(course.id, 'discount', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                  />
-                                </div>
-                              </div>
-                              <div>
-                                <label className="block text-sm text-gray-600 mb-2">الفئة</label>
-                                <input
-                                  type="text"
-                                  value={course.category}
-                                  onChange={(e) => handleInputChange(course.id, 'category', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                />
-                              </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                              <label className="block text-sm text-gray-600 mb-2">تاريخ البدء</label>
+                              <input
+                                type="date"
+                                value={course.start_date || ""}
+                                onChange={(e) => handleInputChange(course.id, 'start_date', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                              />
                             </div>
-
-                            {/* الجدول الزمني */}
-                            <div className="space-y-4">
-                              <h5 className="font-medium text-gray-700">الجدول الزمني</h5>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                  <label className="block text-sm text-gray-600 mb-2">المستوى</label>
-                                  <input
-                                    type="text"
-                                    value={course.level || ""}
-                                    onChange={(e) => handleInputChange(course.id, 'level', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm text-gray-600 mb-2">المدة</label>
-                                  <input
-                                    type="text"
-                                    value={course.duration || ""}
-                                    onChange={(e) => handleInputChange(course.id, 'duration', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                  />
-                                </div>
-                              </div>
-                              <div>
-                                <label className="block text-sm text-gray-600 mb-2">المدرب</label>
-                                <input
-                                  type="text"
-                                  value={course.instructor || ""}
-                                  onChange={(e) => handleInputChange(course.id, 'instructor', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                />
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                  <label className="block text-sm text-gray-600 mb-2">تاريخ البدء</label>
-                                  <input
-                                    type="date"
-                                    value={course.start_date || ""}
-                                    onChange={(e) => handleInputChange(course.id, 'start_date', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm text-gray-600 mb-2">تاريخ الانتهاء</label>
-                                  <input
-                                    type="date"
-                                    value={course.end_date || ""}
-                                    onChange={(e) => handleInputChange(course.id, 'end_date', e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                  />
-                                </div>
-                              </div>
-                              <div>
-                                <label className="block text-sm text-gray-600 mb-2">الموعد</label>
-                                <input
-                                  type="text"
-                                  value={course.schedule || ""}
-                                  onChange={(e) => handleInputChange(course.id, 'schedule', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm text-gray-600 mb-2">أيام الإنعقاد</label>
-                                <input
-                                  type="text"
-                                  value={course.days || ""}
-                                  onChange={(e) => handleInputChange(course.id, 'days', e.target.value)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                />
-                              </div>
+                            <div>
+                              <label className="block text-sm text-gray-600 mb-2">الموعد</label>
+                              <input
+                                type="text"
+                                value={course.schedule || ""}
+                                onChange={(e) => handleInputChange(course.id, 'schedule', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                placeholder="السبت والثلاثاء 6-8 مساءً"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm text-gray-600 mb-2">أيام الإنعقاد</label>
+                              <input
+                                type="text"
+                                value={course.days || ""}
+                                onChange={(e) => handleInputChange(course.id, 'days', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                placeholder="السبت، الإثنين، الأربعاء"
+                              />
                             </div>
                           </div>
                           <div className="flex space-x-3 space-x-reverse justify-end mt-6">
@@ -814,40 +676,8 @@ export default function CoursesDashboard() {
                               className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center gap-2"
                             >
                               <FaSave />
-                              حفظ
+                              حفظ التغييرات
                             </button>
-                          </div>
-                        </div>
-                      ) : (
-                        // وضع العرض
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-                          <div className="bg-white p-4 rounded-lg border border-gray-200">
-                            <div className="flex items-center gap-2 mb-2">
-                              <FaGraduationCap className="text-[#7a1353]" />
-                              <p className="text-sm text-gray-600">المستوى</p>
-                            </div>
-                            <p className="font-semibold text-gray-800">{course.level || "غير محدد"}</p>
-                          </div>
-                          <div className="bg-white p-4 rounded-lg border border-gray-200">
-                            <div className="flex items-center gap-2 mb-2">
-                              <FaHourglassHalf className="text-[#7a1353]" />
-                              <p className="text-sm text-gray-600">المدة</p>
-                            </div>
-                            <p className="font-semibold text-gray-800">{course.duration || "غير محددة"}</p>
-                          </div>
-                          <div className="bg-white p-4 rounded-lg border border-gray-200">
-                            <div className="flex items-center gap-2 mb-2">
-                              <FaUserTie className="text-[#7a1353]" />
-                              <p className="text-sm text-gray-600">المدرب</p>
-                            </div>
-                            <p className="font-semibold text-gray-800">{course.instructor || "غير محدد"}</p>
-                          </div>
-                          <div className="bg-white p-4 rounded-lg border border-gray-200">
-                            <div className="flex items-center gap-2 mb-2">
-                              <FaClock className="text-[#7a1353]" />
-                              <p className="text-sm text-gray-600">الموعد</p>
-                            </div>
-                            <p className="font-semibold text-gray-800">{course.schedule || "غير محدد"}</p>
                           </div>
                         </div>
                       )}
