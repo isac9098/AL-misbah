@@ -35,21 +35,7 @@ export default function WebinarsPage() {
           ودراسة الحالات الواقعية لزيادة التفاعل والفهم العميق.
         </p>
 
-        {/* شبكة الصور */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8">
-          {images.map((src, idx) => (
-            <div
-              key={idx}
-              className="overflow-hidden rounded-2xl shadow-lg hover:scale-105 transition-transform duration-300"
-            >
-              <img
-                src={src}
-                alt={`ندوة ${idx + 1}`}
-                className="w-full h-56 object-cover"
-              />
-            </div>
-          ))}
-        </div>
+        
       </div>
 {/* الفاصل السفلي */}
       <div className="absolute bottom-4 left-0 right-0 text-center text-gray-50 text-sm">
