@@ -25,7 +25,7 @@ export default function OnlineTrainingPage() {
           اكتساب مهارات عملية ومهنية باستخدام أحدث أساليب التعليم الرقمي، 
           مع الحفاظ على جودة التدريب والتفاعل المستمر بين المدرب والمتدرب.
         </p>
-
+      </div>
       </div>
 {/* الفاصل السفلي */}
       <div className="absolute bottom-4 left-0 right-0 text-center text-gray-50 text-sm">
