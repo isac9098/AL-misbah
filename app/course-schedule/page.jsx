@@ -22,36 +22,11 @@ import {
 
 import Footer from "@/components/Footer";
 
-
-/* =========================  
-      Icons Mapping  
-========================= */
-
-const categoryMeta = {
-  "قانون": { 
-    icon: <IoScale className="text-lg" />, 
-    color: "bg-red-50 text-red-700" 
-  },
-  "لغة": { 
-    icon: <IoLanguage className="text-lg" />, 
-    color: "bg-blue-50 text-blue-700" 
-  },
-  "تقنية": { 
-    icon: <IoCodeSlash className="text-lg" />, 
-    color: "bg-green-50 text-green-700" 
-  },
-  default: { 
-    icon: <IoBook className="text-lg" />, 
-    color: "bg-gray-50 text-gray-700" 
-  },
-};
-
 /* =========================  
       PAGE  
 ========================= */
 
 export default function CoursesSchedule() {
-
   const [courses, setCourses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -61,6 +36,25 @@ export default function CoursesSchedule() {
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const categoryMeta = {
+    "قانون": { 
+      icon: <IoScale className="text-lg" />, 
+      color: "bg-red-50 text-red-700" 
+    },
+    "لغة": { 
+      icon: <IoLanguage className="text-lg" />, 
+      color: "bg-blue-50 text-blue-700" 
+    },
+    "تقنية": { 
+      icon: <IoCodeSlash className="text-lg" />, 
+      color: "bg-green-50 text-green-700" 
+    },
+    default: { 
+      icon: <IoBook className="text-lg" />, 
+      color: "bg-gray-50 text-gray-700" 
+    },
+  };
 
   useEffect(() => {
     fetchCourses();
@@ -95,21 +89,16 @@ export default function CoursesSchedule() {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error(error);
-        
+        console.error("فشل في تحميل الدورات:", error);
       } else {
         setCourses(data || []);
         const uniqueCategories = [
           ...new Set((data || []).map((c) => c.category).filter(Boolean)),
         ];
         setCategories(uniqueCategories);
-
-        if (!data || data.length === 0)
-          
-        else 
       }
-    } catch {
-      
+    } catch (error) {
+      console.error("حدث خطأ غير متوقع:", error);
     } finally {
       setLoading(false);
     }
