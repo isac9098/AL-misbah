@@ -98,31 +98,36 @@ export default function CoursesSchedule() {
   };
 
   async function fetchCourses() {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("courses")
-        .select("*")
-        .order("created_at", { ascending: false });
+  setLoading(true);
+  try {
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("فشل في تحميل الدورات:", error);
-      } else {
-        // معالجة جميع البيانات لاستخراج الحقول من metadata
-        const processedData = data.map(processCourseData);
-        
-        setCourses(processedData);
-        const uniqueCategories = [
-          ...new Set(processedData.map((c) => c.category).filter(Boolean)),
-        ];
-        setCategories(uniqueCategories);
-      }
-    } catch (error) {
-      console.error("حدث خطأ غير متوقع:", error);
-    } finally {
-      setLoading(false);
+    if (error) {
+      console.error("فشل في تحميل الدورات:", error);
+    } else {
+      // نستخدم البيانات مباشرة من الحقول بدون metadata
+      const processedData = data.map(course => ({
+        ...course,
+        schedule: course.schedule || "",
+        start_date: course.start_date || "",
+        days: course.days || ""
+      }));
+      
+      setCourses(processedData);
+      const uniqueCategories = [
+        ...new Set(processedData.map((c) => c.category).filter(Boolean)),
+      ];
+      setCategories(uniqueCategories);
     }
+  } catch (error) {
+    console.error("حدث خطأ غير متوقع:", error);
+  } finally {
+    setLoading(false);
   }
+}
 
   const formatDate = (dateString) => {
     if (!dateString) return "غير محدد";
