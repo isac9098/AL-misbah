@@ -80,6 +80,23 @@ export default function CoursesSchedule() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // دالة لمعالجة البيانات واستخراج الحقول من metadata
+  const processCourseData = (course) => {
+    if (course.metadata && typeof course.metadata === 'object') {
+      return {
+        ...course,
+        level: course.metadata.level || course.level,
+        duration: course.metadata.duration || course.duration,
+        schedule: course.metadata.schedule || course.schedule,
+        start_date: course.metadata.start_date || course.start_date,
+        end_date: course.metadata.end_date || course.end_date,
+        instructor: course.metadata.instructor || course.instructor,
+        days: course.metadata.days || course.days
+      };
+    }
+    return course;
+  };
+
   async function fetchCourses() {
     setLoading(true);
     try {
@@ -91,9 +108,12 @@ export default function CoursesSchedule() {
       if (error) {
         console.error("فشل في تحميل الدورات:", error);
       } else {
-        setCourses(data || []);
+        // معالجة جميع البيانات لاستخراج الحقول من metadata
+        const processedData = data.map(processCourseData);
+        
+        setCourses(processedData);
         const uniqueCategories = [
-          ...new Set((data || []).map((c) => c.category).filter(Boolean)),
+          ...new Set(processedData.map((c) => c.category).filter(Boolean)),
         ];
         setCategories(uniqueCategories);
       }
@@ -249,6 +269,7 @@ export default function CoursesSchedule() {
                             <div className="font-bold text-gray-900 text-xl">
                               {selectedCategory}
                             </div>
+
                             <div className="text-gray-600">
                               {courses.filter((c) => c.category === selectedCategory).length} دورة
                             </div>
@@ -419,6 +440,22 @@ export default function CoursesSchedule() {
                                   <div className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">أيام الإنعقاد</div>
                                   <div className="font-bold text-gray-800 text-sm md:text-lg leading-tight">
                                     {course.days || "سيعلن لاحقاً"}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* معلومات إضافية */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                                <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                  <div className="text-xs md:text-sm text-gray-600 mb-1">المدرب</div>
+                                  <div className="font-bold text-gray-800 text-sm md:text-base">
+                                    {course.instructor || "غير محدد"}
+                                  </div>
+                                </div>
+                                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                                  <div className="text-xs md:text-sm text-gray-600 mb-1">المدة</div>
+                                  <div className="font-bold text-gray-800 text-sm md:text-base">
+                                    {course.duration || "غير محددة"}
                                   </div>
                                 </div>
                               </div>
