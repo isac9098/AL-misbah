@@ -155,108 +155,107 @@ export default function CoursesDashboard() {
   }
 
   async function addCourse(e) {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (
-      !newCourse.title ||
-      !newCourse.description ||
-      !newCourse.price ||
-      !newCourse.category
-    ) {
-      showToast("⚠️ الرجاء إدخال جميع البيانات المطلوبة", "error");
-      return;
-    }
+  if (
+    !newCourse.title ||
+    !newCourse.description ||
+    !newCourse.price ||
+    !newCourse.category
+  ) {
+    showToast("⚠️ الرجاء إدخال جميع البيانات المطلوبة", "error");
+    return;
+  }
 
-    let imageUrl = newCourse.image;
+  let imageUrl = newCourse.image;
 
-    if (imageFile) {
-      imageUrl = await uploadImage(imageFile);
-      if (!imageUrl) return;
-    }
+  if (imageFile) {
+    imageUrl = await uploadImage(imageFile);
+    if (!imageUrl) return;
+  }
 
-    // فصل الحقول الأساسية عن حقول الجدول الزمني
-    const { schedule, start_date, days, ...basicFields } = newCourse;
-    
+  // إرسال البيانات مباشرة في الحقول الأساسية (بدون metadata)
+  const courseData = {
+    title: newCourse.title,
+    description: newCourse.description,
+    image: imageUrl,
+    price: newCourse.price,
+    discount: newCourse.discount,
+    category: newCourse.category,
+    schedule: newCourse.schedule || "",
+    start_date: newCourse.start_date || "",
+    days: newCourse.days || ""
+  };
+
+  const { data, error } = await supabase
+    .from("courses")
+    .insert([courseData])
+    .select();
+
+  if (error) {
+    console.error("❌ خطأ أثناء الإضافة:", error);
+    showToast(`حدث خطأ أثناء الإضافة: ${error.message}`, "error");
+  } else {
+    showToast("✅ تمت إضافة الدورة بنجاح!", "success");
+    setCourses([data[0], ...courses]);
+    setNewCourse({
+      title: "",
+      description: "",
+      image: "",
+      price: "",
+      discount: "",
+      category: "",
+      schedule: "",
+      start_date: "",
+      days: ""
+    });
+    setImageFile(null);
+  }
+}
+
+async function updateCourse(courseId, updates) {
+  try {
+    // إرسال البيانات مباشرة في الحقول الأساسية
     const courseData = {
-      ...basicFields,
-      image: imageUrl,
-      metadata: {
-        schedule,
-        start_date,
-        days
-      }
+      title: updates.title,
+      description: updates.description,
+      price: updates.price,
+      discount: updates.discount,
+      category: updates.category,
+      schedule: updates.schedule || "",
+      start_date: updates.start_date || "",
+      days: updates.days || ""
     };
 
-    const { data, error } = await supabase
+    console.log('🔄 محاولة تحديث الدورة:', courseId, courseData);
+
+    const { error } = await supabase
       .from("courses")
-      .insert([courseData])
-      .select();
+      .update(courseData)
+      .eq("id", courseId);
 
     if (error) {
-      console.error("❌ خطأ أثناء الإضافة:", error);
-      showToast(`حدث خطأ أثناء الإضافة: ${error.message}`, "error");
-    } else {
-      showToast("✅ تمت إضافة الدورة بنجاح!", "success");
-      setCourses([data[0], ...courses]);
-      setNewCourse({
-        title: "",
-        description: "",
-        image: "",
-        price: "",
-        discount: "",
-        category: "",
-        schedule: "",
-        start_date: "",
-        days: ""
-      });
-      setImageFile(null);
-    }
-  }
-
-  async function updateCourse(courseId, updates) {
-    try {
-      // فصل الحقول الأساسية عن حقول الجدول الزمني
-      const { schedule, start_date, days, ...basicFields } = updates;
-      
-      const courseData = {
-        ...basicFields,
-        metadata: {
-          schedule,
-          start_date,
-          days
-        }
-      };
-
-      console.log('🔄 محاولة تحديث الدورة:', courseId, courseData);
-
-      const { error } = await supabase
-        .from("courses")
-        .update(courseData)
-        .eq("id", courseId);
-
-      if (error) {
-        console.error("❌ خطأ في تحديث الدورة:", error);
-        showToast(`❌ حدث خطأ أثناء التحديث: ${error.message}`, "error");
-        return false;
-      } else {
-        // تحديث البيانات المحلية
-        setCourses(courses.map(course => 
-          course.id === courseId ? { 
-            ...course, 
-            ...courseData,
-            ...courseData.metadata
-          } : course
-        ));
-        setEditingCourse(null);
-        showToast("✅ تم تحديث الدورة بنجاح!", "success");
-        return true;
-      }
-    } catch (error) {
-      console.error("❌ خطأ غير متوقع:", error);
-      showToast("❌ حدث خطأ غير متوقع أثناء التحديث", "error");
+      console.error("❌ خطأ في تحديث الدورة:", error);
+      showToast(`❌ حدث خطأ أثناء التحديث: ${error.message}`, "error");
       return false;
+    } else {
+      // تحديث البيانات المحلية
+      setCourses(courses.map(course => 
+        course.id === courseId ? { 
+          ...course, 
+          ...courseData
+        } : course
+      ));
+      setEditingCourse(null);
+      showToast("✅ تم تحديث الدورة بنجاح!", "success");
+      return true;
     }
+  } catch (error) {
+    console.error("❌ خطأ غير متوقع:", error);
+    showToast("❌ حدث خطأ غير متوقع أثناء التحديث", "error");
+    return false;
   }
+}
 
   const handleSaveCourse = async (courseId) => {
     const course = courses.find(c => c.id === courseId);
