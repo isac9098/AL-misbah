@@ -15,7 +15,10 @@ import {
   FaImage,
   FaTag,
   FaPercent,
-  FaBook
+  FaBook,
+  FaUser,
+  FaLock,
+  FaEnvelope
 } from "react-icons/fa";
 
 // 🧩 مكون Toast بسيط
@@ -352,10 +355,10 @@ export default function CoursesDashboard() {
         </div>
 
         {/* التبويبات */}
-        <div className="flex border-b border-gray-200 mb-8">
+        <div className="flex border-b border-gray-200 mb-8 overflow-x-auto">
           <button
             onClick={() => setActiveTab("courses")}
-            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all ${
+            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap ${
               activeTab === "courses" 
                 ? "border-[#7a1353] text-[#7a1353]" 
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -365,13 +368,23 @@ export default function CoursesDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("campaigns")}
-            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all ${
+            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap ${
               activeTab === "campaigns" 
                 ? "border-[#7a1353] text-[#7a1353]" 
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
             🖼️ الحملات الإعلانية
+          </button>
+          <button
+            onClick={() => setActiveTab("account")}
+            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap ${
+              activeTab === "account" 
+                ? "border-[#7a1353] text-[#7a1353]" 
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            👤 إدارة الحساب
           </button>
         </div>
 
@@ -396,7 +409,7 @@ export default function CoursesDashboard() {
                         type="text"
                         value={newCourse.title}
                         onChange={(e) => handleNewCourseInputChange('title', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="أدخل عنوان الدورة"
                         required
                       />
@@ -407,7 +420,7 @@ export default function CoursesDashboard() {
                       <textarea
                         value={newCourse.description}
                         onChange={(e) => handleNewCourseInputChange('description', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none"
+                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none"
                         rows="3"
                         placeholder="وصف مختصر للدورة"
                         required
@@ -424,7 +437,7 @@ export default function CoursesDashboard() {
                           type="text"
                           value={newCourse.price}
                           onChange={(e) => handleNewCourseInputChange('price', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                          className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                           placeholder="السعر"
                           required
                         />
@@ -438,7 +451,7 @@ export default function CoursesDashboard() {
                           type="text"
                           value={newCourse.discount}
                           onChange={(e) => handleNewCourseInputChange('discount', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                          className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                           placeholder="الخصم (اختياري)"
                         />
                       </div>
@@ -450,7 +463,7 @@ export default function CoursesDashboard() {
                         type="text"
                         value={newCourse.category}
                         onChange={(e) => handleNewCourseInputChange('category', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="مثلاً: القانون / اللغة / التقنية"
                         required
                       />
@@ -465,7 +478,7 @@ export default function CoursesDashboard() {
                         type="file"
                         accept="image/*"
                         onChange={(e) => setImageFile(e.target.files[0])}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#7a1353] file:text-white file:cursor-pointer transition-all"
+                        className="w-full px-4 py-3 border border-gray-500 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#7a1353] file:text-white file:cursor-pointer transition-all"
                       />
                     </div>
                   </div>
@@ -483,7 +496,7 @@ export default function CoursesDashboard() {
                         type="date"
                         value={newCourse.start_date}
                         onChange={(e) => handleNewCourseInputChange('start_date', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                       />
                     </div>
 
@@ -496,7 +509,7 @@ export default function CoursesDashboard() {
                         type="text"
                         value={newCourse.schedule_time} // تم التعديل
                         onChange={(e) => handleNewCourseInputChange('schedule_time', e.target.value)} // تم التعديل
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="6:00 مساءً - 8:00 مساءً"
                       />
                     </div>
@@ -510,7 +523,7 @@ export default function CoursesDashboard() {
                         type="text"
                         value={newCourse.meeting_days} // تم التعديل
                         onChange={(e) => handleNewCourseInputChange('meeting_days', e.target.value)} // تم التعديل
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="السبت، الإثنين، الأربعاء"
                       />
                     </div>
@@ -686,6 +699,12 @@ export default function CoursesDashboard() {
             <CampaignsManager showToast={showToast} />
           </div>
         )}
+
+        {activeTab === "account" && (
+          <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-200">
+            <AccountManager showToast={showToast} userName={userName} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -761,7 +780,7 @@ function CampaignsManager({ showToast }) {
 
   async function deleteCampaign(id) {
     if (!confirm("هل أنت متأكد من حذف هذه الحملة؟")) return;
-    
+
     const campaignToDelete = campaigns.find(c => c.id === id);
     if (!campaignToDelete) return;
 
@@ -831,6 +850,180 @@ function CampaignsManager({ showToast }) {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* 👇 الكومبوننت الخاص بإدارة الحساب */
+function AccountManager({ showToast, userName }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    getUserEmail();
+  }, []);
+
+  async function getUserEmail() {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error("❌ خطأ في جلب بيانات المستخدم:", error);
+        return;
+      }
+      if (user) {
+        setUserEmail(user.email || "");
+      }
+    } catch (error) {
+      console.error("❌ خطأ غير متوقع:", error);
+    }
+  }
+
+  async function handleChangePassword(e) {
+    e.preventDefault();
+    setLoading(true);
+
+    // التحقق من المدخلات
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showToast("⚠️ الرجاء إدخال جميع الحقول", "error");
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showToast("⚠️ كلمة المرور الجديدة غير متطابقة", "error");
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showToast("⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل", "error");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // تحديث كلمة المرور باستخدام Supabase
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        console.error("❌ خطأ في تغيير كلمة المرور:", error);
+        showToast(`❌ فشل في تغيير كلمة المرور: ${error.message}`, "error");
+      } else {
+        showToast("✅ تم تغيير كلمة المرور بنجاح", "success");
+        // إعادة تعيين الحقول
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+    } catch (error) {
+      console.error("❌ خطأ غير متوقع:", error);
+      showToast("❌ حدث خطأ غير متوقع", "error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <FaUser className="text-[#7a1353]" />
+        إدارة الحساب
+      </h2>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* معلومات الحساب */}
+        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <FaUser className="text-[#7a1353]" />
+            المعلومات الشخصية
+          </h3>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p className="text-sm text-gray-600">الاسم</p>
+                <p className="font-semibold text-gray-800">{userName}</p>
+              </div>
+              <FaUser className="text-[#7a1353]" />
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p className="text-sm text-gray-600">البريد الإلكتروني</p>
+                <p className="font-semibold text-gray-800">{userEmail}</p>
+              </div>
+              <FaEnvelope className="text-[#7a1353]" />
+            </div>
+          </div>
+        </div>
+
+        {/* تغيير كلمة المرور */}
+        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <FaLock className="text-[#7a1353]" />
+            تغيير كلمة المرور
+          </h3>
+
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                كلمة المرور الحالية
+              </label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                placeholder="أدخل كلمة المرور الحالية"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                كلمة المرور الجديدة
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                placeholder="كلمة المرور الجديدة (6 أحرف على الأقل)"
+                required
+                minLength="6"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                تأكيد كلمة المرور الجديدة
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                placeholder="أعد إدخال كلمة المرور الجديدة"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#7a1353] text-white px-6 py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <FaLock />
+              {loading ? "جاري التغيير..." : "تغيير كلمة المرور"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
