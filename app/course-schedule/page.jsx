@@ -130,16 +130,16 @@ export default function CoursesSchedule() {
       `}</style>
 
       {/* ================= HERO SECTION ================= */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-purple-700 min-h-[50vh] flex items-center">
+      <section className="relative overflow-hidden bg-[#7a1353] min-h-[50vh] flex items-center">
         {/* تأثيرات الخلفية */}
-        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0 bg-black/10"></div>
         <div className="absolute top-0 left-0 w-72 h-72 bg-white/5 rounded-full -translate-x-36 -translate-y-36"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-48 translate-y-48"></div>
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center text-white">
             <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm hover:bg-white/30 transition-all duration-300">
                 <FaCalendarAlt className="text-3xl text-white" />
               </div>
             </div>
@@ -168,8 +168,8 @@ export default function CoursesSchedule() {
             <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
               <div className="text-center mb-6">
                 <div className="flex items-center justify-center gap-3 mb-2">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <FaSearch className="text-purple-600 text-lg" />
+                  <div className="w-12 h-12 bg-[#f8e8f1] rounded-full flex items-center justify-center hover:bg-[#f0d4e4] transition-all duration-300">
+                    <FaSearch className="text-[#7a1353] text-lg" />
                   </div>
                   <h2 className="text-2xl font-bold text-gray-800">
                     اختر مجال الدورات
@@ -184,7 +184,7 @@ export default function CoursesSchedule() {
                   <div className="relative">
                     <button
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-800 text-right flex items-center justify-between bg-white hover:bg-gray-50 transition-all duration-200 shadow-sm"
+                      className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none text-gray-800 text-right flex items-center justify-between bg-white hover:bg-gray-50 transition-all duration-200 shadow-sm"
                     >
                       <span className="text-gray-400">
                         {isDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
@@ -201,7 +201,7 @@ export default function CoursesSchedule() {
                             setSelectedCategory("");
                             setIsDropdownOpen(false);
                           }}
-                          className="w-full text-right px-6 py-4 hover:bg-gray-50 border-b border-gray-100 text-gray-700 transition-colors flex items-center justify-between text-lg"
+                          className="w-full text-right px-6 py-4 hover:bg-gray-50 border-b border-gray-100 text-gray-700 transition-colors flex items-center justify-between text-lg hover:text-[#7a1353]"
                         >
                           جميع الدورات
                           <FaTimes className="text-gray-400" />
@@ -215,11 +215,11 @@ export default function CoursesSchedule() {
                                 setSelectedCategory(cat);
                                 setIsDropdownOpen(false);
                               }}
-                              className="w-full text-right px-6 py-4 hover:bg-gray-50 flex items-center justify-between gap-4 border-b border-gray-100 last:border-b-0 transition-colors"
+                              className="w-full text-right px-6 py-4 hover:bg-gray-50 flex items-center justify-between gap-4 border-b border-gray-100 last:border-b-0 transition-colors hover:text-[#7a1353]"
                             >
                               <div className="flex items-center gap-4">
                                 <div
-                                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${meta.color}`}
+                                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${meta.color} hover:scale-110 transition-transform duration-200`}
                                 >
                                   {meta.icon}
                                 </div>
@@ -241,7 +241,7 @@ export default function CoursesSchedule() {
                     {selectedCategory ? (
                       <div className="space-y-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-purple-100 text-purple-600 text-xl">
+                          <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-[#f8e8f1] text-[#7a1353] text-xl hover:bg-[#f0d4e4] transition-all duration-300">
                             {(categoryMeta[selectedCategory] || categoryMeta.default).icon}
                           </div>
 
@@ -257,7 +257,7 @@ export default function CoursesSchedule() {
 
                         <button
                           onClick={() => setSelectedCategory("")}
-                          className="w-full text-gray-700 border-2 border-gray-200 px-4 py-3 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 font-medium"
+                          className="w-full text-gray-700 border-2 border-gray-200 px-4 py-3 rounded-xl hover:bg-gray-50 hover:border-[#7a1353] hover:text-[#7a1353] transition-colors flex items-center justify-center gap-2 font-medium"
                         >
                           <FaTimes />
                           مسح الفئة
@@ -278,7 +278,7 @@ export default function CoursesSchedule() {
           {/* ================= LOADING ================= */}
           {loading && (
             <div className="text-center py-16">
-              <div className="mx-auto w-20 h-20 rounded-full border-4 border-purple-600 border-t-transparent animate-spin mb-6"></div>
+              <div className="mx-auto w-20 h-20 rounded-full border-4 border-[#7a1353] border-t-transparent animate-spin mb-6"></div>
               <p className="text-gray-600 text-lg">جاري تحميل الدورات...</p>
             </div>
           )}
@@ -288,8 +288,8 @@ export default function CoursesSchedule() {
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-12">
                 <div className="flex items-center justify-center gap-3 mb-4">
-                  <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
-                    <FaBook className="text-purple-600 text-xl" />
+                  <div className="w-14 h-14 bg-[#f8e8f1] rounded-full flex items-center justify-center hover:bg-[#f0d4e4] transition-all duration-300">
+                    <FaBook className="text-[#7a1353] text-xl" />
                   </div>
                   <h2 className="text-3xl font-bold text-gray-800">
                     الدورات المتاحة
@@ -299,22 +299,22 @@ export default function CoursesSchedule() {
                 {selectedCategory && (
                   <p className="text-gray-600 text-lg mb-4">
                     في مجال{" "}
-                    <span className="font-semibold text-purple-600">
+                    <span className="font-semibold text-[#7a1353]">
                       {selectedCategory}
                     </span>
                   </p>
                 )}
 
-                <div className="inline-flex items-center px-6 py-3 bg-white rounded-full text-gray-700 shadow-sm border border-gray-200 text-lg">
-                  إجمالي الدورات: <span className="font-bold text-purple-600 mr-2">{filteredCourses.length}</span>
+                <div className="inline-flex items-center px-6 py-3 bg-white rounded-full text-gray-700 shadow-sm border border-gray-200 text-lg hover:border-[#7a1353] transition-colors">
+                  إجمالي الدورات: <span className="font-bold text-[#7a1353] mr-2">{filteredCourses.length}</span>
                 </div>
               </div>
 
               {/* If no courses */}
               {filteredCourses.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-2xl border-2 border-gray-100 shadow-sm">
-                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <FaBook className="text-4xl text-gray-400" />
+                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 hover:bg-[#f8e8f1] transition-all duration-300">
+                    <FaBook className="text-4xl text-gray-400 hover:text-[#7a1353] transition-colors" />
                   </div>
                   <h3 className="text-2xl font-semibold text-gray-700 mb-4">
                     لا توجد دورات متاحة
@@ -329,7 +329,7 @@ export default function CoursesSchedule() {
                     return (
                       <article
                         key={course.id}
-                        className="bg-white rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+                        className="bg-white rounded-2xl border-2 border-gray-100 shadow-sm hover:shadow-md hover:border-[#7a1353]/20 transition-all duration-300 overflow-hidden"
                       >
                         {/* HEADER */}
                         <header
@@ -339,13 +339,13 @@ export default function CoursesSchedule() {
                         >
                           <div className="flex items-start gap-4 flex-1">
                             <div
-                              className={`w-14 h-14 rounded-xl flex items-center justify-center ${meta.color} flex-shrink-0`}
+                              className={`w-14 h-14 rounded-xl flex items-center justify-center ${meta.color} flex-shrink-0 hover:scale-105 transition-transform duration-200`}
                             >
                               {meta.icon}
                             </div>
 
                             <div className="flex-1 text-right">
-                              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                              <h3 className="text-xl font-bold text-gray-900 mb-3 hover:text-[#7a1353] transition-colors">
                                 {course.title}
                               </h3>
                               <p className="text-gray-600 leading-relaxed text-lg">
@@ -359,10 +359,10 @@ export default function CoursesSchedule() {
                               expandedCourse === course.id ? "rotate-180" : ""
                             }`}
                           >
-                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center hover:bg-[#f8e8f1] transition-all duration-300">
                               {expandedCourse === course.id
-                                ? <FaChevronUp className="text-gray-600 text-lg" />
-                                : <FaChevronDown className="text-gray-600 text-lg" />
+                                ? <FaChevronUp className="text-gray-600 text-lg hover:text-[#7a1353]" />
+                                : <FaChevronDown className="text-gray-600 text-lg hover:text-[#7a1353]" />
                               }
                             </div>
                           </div>
@@ -377,18 +377,19 @@ export default function CoursesSchedule() {
                           }}
                           aria-hidden={expandedCourse !== course.id}
                         >
-                          <div className="p-8">
-                            <div className="bg-white rounded-xl border border-gray-200 p-6">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="p-4 md:p-8">
+                            <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
+                              {/* تصميم متجاوب للهواتف */}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                                 {/* التاريخ */}
-                                <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-100">
-                                  <div className="flex justify-center mb-3">
-                                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                                      <FaCalendarAlt className="text-purple-600 text-xl" />
+                                <div className="text-center p-3 md:p-4 bg-[#f8e8f1] rounded-lg border border-[#7a1353]/20 hover:bg-[#f0d4e4] transition-all duration-300">
+                                  <div className="flex justify-center mb-2 md:mb-3">
+                                    <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-200">
+                                      <FaCalendarAlt className="text-[#7a1353] text-lg md:text-xl" />
                                     </div>
                                   </div>
-                                  <div className="text-sm text-gray-600 mb-2">التاريخ</div>
-                                  <div className="font-bold text-gray-800 text-lg">
+                                  <div className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">التاريخ</div>
+                                  <div className="font-bold text-gray-800 text-sm md:text-lg leading-tight">
                                     {course.start_date
                                       ? formatDate(course.start_date)
                                       : course.date || "سيعلن لاحقاً"}
@@ -396,28 +397,59 @@ export default function CoursesSchedule() {
                                 </div>
 
                                 {/* الموعد */}
-                                <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
-                                  <div className="flex justify-center mb-3">
-                                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                      <FaClock className="text-blue-600 text-xl" />
+                                <div className="text-center p-3 md:p-4 bg-[#f8e8f1] rounded-lg border border-[#7a1353]/20 hover:bg-[#f0d4e4] transition-all duration-300">
+                                  <div className="flex justify-center mb-2 md:mb-3">
+                                    <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-200">
+                                      <FaClock className="text-[#7a1353] text-lg md:text-xl" />
                                     </div>
                                   </div>
-                                  <div className="text-sm text-gray-600 mb-2">الموعد</div>
-                                  <div className="font-bold text-gray-800 text-lg">
+                                  <div className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">الموعد</div>
+                                  <div className="font-bold text-gray-800 text-sm md:text-lg leading-tight">
                                     {course.schedule || "غير محدد"}
                                   </div>
                                 </div>
 
                                 {/* أيام الإنعقاد */}
-                                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
-                                  <div className="flex justify-center mb-3">
-                                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                      <FaCalendarDay className="text-green-600 text-xl" />
+                                <div className="text-center p-3 md:p-4 bg-[#f8e8f1] rounded-lg border border-[#7a1353]/20 hover:bg-[#f0d4e4] transition-all duration-300">
+                                  <div className="flex justify-center mb-2 md:mb-3">
+                                    <div className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-200">
+                                      <FaCalendarDay className="text-[#7a1353] text-lg md:text-xl" />
                                     </div>
                                   </div>
-                                  <div className="text-sm text-gray-600 mb-2">أيام الإنعقاد</div>
-                                  <div className="font-bold text-gray-800 text-lg">
+                                  <div className="text-xs md:text-sm text-gray-600 mb-1 md:mb-2">أيام الإنعقاد</div>
+                                  <div className="font-bold text-gray-800 text-sm md:text-lg leading-tight">
                                     {course.days || "سيعلن لاحقاً"}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* تصميم أفقي للهواتف */}
+                              <div className="md:hidden mt-4">
+                                <div className="overflow-x-auto">
+                                  <div className="flex space-x-4 space-x-reverse min-w-max">
+                                    <div className="flex-shrink-0 w-48 text-center p-3 bg-[#f8e8f1] rounded-lg border border-[#7a1353]/20">
+                                      <FaCalendarAlt className="text-[#7a1353] text-lg mx-auto mb-2" />
+                                      <div className="text-xs text-gray-600 mb-1">التاريخ</div>
+                                      <div className="font-bold text-gray-800 text-sm">
+                                        {course.start_date
+                                          ? formatDate(course.start_date)
+                                          : course.date || "سيعلن لاحقاً"}
+                                      </div>
+                                    </div>
+                                    <div className="flex-shrink-0 w-48 text-center p-3 bg-[#f8e8f1] rounded-lg border border-[#7a1353]/20">
+                                      <FaClock className="text-[#7a1353] text-lg mx-auto mb-2" />
+                                      <div className="text-xs text-gray-600 mb-1">الموعد</div>
+                                      <div className="font-bold text-gray-800 text-sm">
+                                        {course.schedule || "غير محدد"}
+                                      </div>
+                                    </div>
+                                    <div className="flex-shrink-0 w-48 text-center p-3 bg-[#f8e8f1] rounded-lg border border-[#7a1353]/20">
+                                      <FaCalendarDay className="text-[#7a1353] text-lg mx-auto mb-2" />
+                                      <div className="text-xs text-gray-600 mb-1">أيام الإنعقاد</div>
+                                      <div className="font-bold text-gray-800 text-sm">
+                                        {course.days || "سيعلن لاحقاً"}
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
