@@ -42,7 +42,7 @@ const ICONS = {
   category: "📚",
   calendar: "📅",
   clock: "⏰",
-  instructor: "👨‍🏫",
+  days: "📆",
   search: "🔍",
   expand: "⌄",
   collapse: "⌃",
@@ -144,7 +144,7 @@ export default function CoursesSchedule() {
     setExpandedCourse(expandedCourse === id ? null : id);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-white" dir="rtl">
 
       {/* Global animations */}
       <style jsx>{`
@@ -171,34 +171,27 @@ export default function CoursesSchedule() {
       )}
 
       {/* ================= HERO SECTION ================= */}
-      <section className="relative overflow-hidden">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-10 -z-10"
-          style={{
-            background:
-              "radial-gradient(circle at 10% 10%, rgba(255,255,255,0.03), transparent 20%), linear-gradient(180deg, rgba(123,11,76,0.85), rgba(94,8,57,0.88))",
-          }}
-        />
-
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#7b0b4c] to-[#5e0839]">
+        <div className="absolute inset-0 bg-black/10"></div>
+        
         <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="max-w-4xl mx-auto text-center text-white">
             <h1
               className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4"
               style={{ textShadow: "0 6px 18px rgba(0,0,0,0.25)" }}
             >
-              <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-pink-200 to-white">
+              <span className="inline-block">
                 {ICONS.calendar} جدول الدورات القادمة
               </span>
             </h1>
 
-            <p className="text-lg sm:text-xl opacity-95 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl opacity-95 max-w-2xl mx-auto leading-relaxed">
               يمكنك معرفة مواعيد إنعقاد الدورات التي تهمك بسهولة — اختر فئة وشاهد التفاصيل داخل كل دورة.
             </p>
           </div>
         </div>
 
-        <div className="absolute right-4 top-4 opacity-10 text-9xl select-none pointer-events-none">🎓</div>
+        <div className="absolute left-4 top-4 opacity-10 text-9xl select-none pointer-events-none">🎓</div>
       </section>
 
       {/* ================= MAIN ================= */}
@@ -207,7 +200,7 @@ export default function CoursesSchedule() {
 
           {/* ================= CATEGORY SELECTOR ================= */}
           <div className="max-w-3xl mx-auto mb-10">
-            <div className="bg-white rounded-xl shadow p-5 border border-gray-200">
+            <div className="bg-white rounded-xl shadow-lg p-5 border border-gray-200">
               <label className="block text-lg font-semibold text-gray-800 mb-3 text-center">
                 {ICONS.search} اختر مجال الدورات
               </label>
@@ -218,7 +211,7 @@ export default function CoursesSchedule() {
                   <div className="relative">
                     <button
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] focus:border-transparent outline-none text-gray-800 text-right flex items-center justify-between bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] focus:border-transparent outline-none text-gray-800 text-right flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
                     >
                       <span className="text-gray-400">
                         {isDropdownOpen ? "⌃" : "⌄"}
@@ -235,7 +228,7 @@ export default function CoursesSchedule() {
                             setSelectedCategory("");
                             setIsDropdownOpen(false);
                           }}
-                          className="w-full text-right px-4 py-3 hover:bg-gray-50 border-b border-gray-100 text-gray-700"
+                          className="w-full text-right px-4 py-3 hover:bg-gray-50 border-b border-gray-100 text-gray-700 transition-colors"
                         >
                           جميع الدورات
                         </button>
@@ -248,7 +241,7 @@ export default function CoursesSchedule() {
                                 setSelectedCategory(cat);
                                 setIsDropdownOpen(false);
                               }}
-                              className="w-full text-right px-4 py-3 hover:bg-gray-50 flex items-center justify-between gap-3 border-b border-gray-100 last:border-b-0"
+                              className="w-full text-right px-4 py-3 hover:bg-gray-50 flex items-center justify-between gap-3 border-b border-gray-100 last:border-b-0 transition-colors"
                             >
                               <div className="flex items-center gap-3">
                                 <div
@@ -293,14 +286,14 @@ export default function CoursesSchedule() {
                         <div className="mt-4">
                           <button
                             onClick={() => setSelectedCategory("")}
-                            className="w-full text-gray-700 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100"
+                            className="w-full text-gray-700 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                           >
                             مسح الفئة
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="mt-4 text-gray-500">
+                      <div className="mt-4 text-gray-500 text-right">
                         اختر فئة لعرض التفاصيل هنا.
                       </div>
                     )}
@@ -378,7 +371,7 @@ export default function CoursesSchedule() {
                               <h3 className="text-lg font-semibold text-gray-900 mb-1">
                                 {course.title}
                               </h3>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 leading-relaxed">
                                 {course.description}
                               </p>
                             </div>
@@ -415,7 +408,7 @@ export default function CoursesSchedule() {
                                   <tr className="text-sm text-gray-600">
                                     <th className="p-2">{ICONS.calendar} التاريخ</th>
                                     <th className="p-2">{ICONS.clock} الموعد</th>
-                                    <th className="p-2">{ICONS.instructor} المدرب</th>
+                                    <th className="p-2">{ICONS.days} أيام الإنعقاد</th>
                                   </tr>
                                 </thead>
 
@@ -432,7 +425,7 @@ export default function CoursesSchedule() {
                                     </td>
 
                                     <td className="p-3 border">
-                                      {course.instructor || "غير محدد"}
+                                      {course.days || "سيعلن لاحقاً"}
                                     </td>
                                   </tr>
                                 </tbody>
