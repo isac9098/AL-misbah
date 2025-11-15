@@ -490,6 +490,9 @@ export default function CoursesSchedule() {
         </div>
       </main>
 
+      {/* فقاعة واتساب */}
+      <WhatsappBubble />
+
       {/* FOOTER */}
       <Footer />
     </div>
