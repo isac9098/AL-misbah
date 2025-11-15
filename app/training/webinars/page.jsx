@@ -15,7 +15,7 @@ export default function WebinarsPage() {
         className="flex-1 bg-cover bg-center flex flex-col items-center justify-center py-16"
         style={{
           backgroundImage:
-            "url('https://unsplash.com/photos/man-standing-in-stage-beside-blue-curtain-lVTtqIY6pL0')",
+            "url('https://unsplash.com/photos/brown-wooden-chair-lot-inside-room-C4G18Paw0d4')",
         }}
       >
         <div className="bg-white/80 backdrop-blur-md p-10 rounded-2xl max-w-5xl text-center shadow-2xl mx-4">
