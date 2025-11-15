@@ -1,38 +1,28 @@
 export default function WebinarsPage() {
-  const images = [
-    "https://images.unsplash.com/photo-1581093588401-22f636d1d1b3?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1596495577886-d920f1fb7238?auto=format&fit=crop&w=800&q=80",
-  ];
-
   return (
     <div className="min-h-screen flex flex-col">
       {/* المحتوى الرئيسي */}
       <div 
-        className="flex-1 bg-cover bg-center flex flex-col items-center justify-center py-16"
+        className="flex-1 bg-cover bg-center bg-fixed flex flex-col items-center justify-center py-16"
         style={{
-          backgroundImage:
-            "url('https://unsplash.com/photos/brown-wooden-chair-lot-inside-room-C4G18Paw0d4')",
+          backgroundImage: "url('https://unsplash.com/photos/people-sitting-on-chair-in-front-of-computer-YRMWVcdyhmI')",
         }}
       >
-        <div className="bg-white/80 backdrop-blur-md p-10 rounded-2xl max-w-5xl text-center shadow-2xl mx-4">
-          <h1 className="text-4xl font-bold mb-6 text-[#7a1353]">
+        <div className="bg-white/90 backdrop-blur-md p-8 md:p-10 rounded-2xl max-w-4xl text-center shadow-2xl mx-4">
+          <h1 className="text-3xl md:text-4xl font-bold mb-6 text-[#7a1353]">
             الندوات التفاعلية (Webinars)
           </h1>
-          <p className="text-lg text-gray-800 leading-relaxed mb-4">
+          <p className="text-base md:text-lg text-gray-800 leading-relaxed mb-4">
             نقدم في مركز <span className="font-semibold text-[#7a1353]">المصباح للتدريب المهني</span>{" "}
             مجموعة من الندوات التفاعلية التي تجمع بين التعلم والمعرفة في بيئة رقمية تفاعلية.
             تهدف هذه الندوات إلى تعزيز التواصل المباشر بين المدرب والمتدرب عبر الإنترنت.
           </p>
-          <p className="text-lg text-gray-800 leading-relaxed mb-4">
+          <p className="text-base md:text-lg text-gray-800 leading-relaxed mb-4">
             تشمل مواضيع الندوات مجالات مهنية متعددة مثل القيادة والإدارة، 
             التسويق الرقمي، تطوير الذات، والمهارات التقنية الحديثة، 
             مع إمكانية المشاركة من أي مكان في العالم.
           </p>
-          <p className="text-lg text-gray-800 leading-relaxed mb-8">
+          <p className="text-base md:text-lg text-gray-800 leading-relaxed">
             الندوات لدينا مصممة بأسلوب احترافي يعتمد على الحوار، الأسئلة المباشرة، 
             ودراسة الحالات الواقعية لزيادة التفاعل والفهم العميق.
           </p>
