@@ -1,60 +1,66 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-// 🧩 مكون Toast بسيط وأنيق
+/* =========================
+   Small reusable Toast
+   ========================= */
 function Toast({ message, type = "info", onClose }) {
   useEffect(() => {
-    const timer = setTimeout(onClose, 4000);
-    return () => clearTimeout(timer);
+    const t = setTimeout(onClose, 4000);
+    return () => clearTimeout(t);
   }, [onClose]);
 
-  const bgColor =
+  const bg =
     type === "error"
-      ? "bg-red-500"
+      ? "bg-red-600"
       : type === "success"
-      ? "bg-green-500"
+      ? "bg-green-600"
       : type === "warning"
-      ? "bg-yellow-500"
+      ? "bg-yellow-600"
       : "bg-[#7b0b4c]";
 
   return (
     <div
-      className={`fixed left-1/2 transform -translate-x-1/2 ${bgColor} text-white 
-      px-6 py-3 rounded-lg shadow-lg text-sm font-medium z-[9999] transition-all duration-300
-      backdrop-blur-sm border border-white/20`}
-      style={{ top: "80px" }}
+      className={`${bg} text-white fixed left-1/2 -translate-x-1/2 top-20 z-50 px-5 py-3 rounded-lg shadow-lg backdrop-blur-sm border border-white/10 flex items-center gap-3`}
+      role="status"
+      aria-live="polite"
     >
-      <div className="flex items-center justify-center space-x-2 space-x-reverse">
-        {type === "success" && <span>✓</span>}
-        {type === "error" && <span>✕</span>}
-        {type === "warning" && <span>⚠</span>}
-        <span>{message}</span>
-      </div>
+      <span className="text-sm font-medium">{message}</span>
     </div>
   );
 }
 
-// أيقونات من مكتبة (بدون تثبيت مكتبات إضافية)
-const Icons = {
+/* =========================
+   Small UI helpers/icons
+   ========================= */
+const ICONS = {
+  category: "📚",
   calendar: "📅",
   clock: "⏰",
   level: "🎯",
   instructor: "👨‍🏫",
-  category: "📚",
   price: "💰",
   discount: "🎁",
+  search: "🔍",
   expand: "⌄",
   collapse: "⌃",
-  search: "🔍"
 };
 
+/* =========================
+   CSS keyframes (Tailwind can't define here, so use style tag)
+   ========================= */
+
+/* =========================
+   Main Page
+   ========================= */
 export default function CoursesSchedule() {
   const router = useRouter();
   const [toast, setToast] = useState(null);
+
   const showToast = (msg, type = "info") => setToast({ msg, type });
 
   const [courses, setCourses] = useState([]);
@@ -64,14 +70,26 @@ export default function CoursesSchedule() {
   const [expandedCourse, setExpandedCourse] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // For dropdown search
+  const [catQuery, setCatQuery] = useState("");
+  const dropdownRef = useRef(null);
+
+  // mapping categories to icons & color tags (you can expand)
+  const categoryMeta = {
+    "قانون": { icon: "⚖️", color: "bg-red-50 text-red-700" },
+    "لغة": { icon: "🗣️", color: "bg-blue-50 text-blue-700" },
+    "تقنية": { icon: "💻", color: "bg-green-50 text-green-700" },
+    // defaults
+    default: { icon: "📚", color: "bg-gray-50 text-gray-700" },
+  };
+
   useEffect(() => {
     fetchCourses();
   }, []);
 
   useEffect(() => {
     if (selectedCategory) {
-      const filtered = courses.filter(course => course.category === selectedCategory);
-      setFilteredCourses(filtered);
+      setFilteredCourses(courses.filter((c) => c.category === selectedCategory));
     } else {
       setFilteredCourses(courses);
     }
@@ -86,48 +104,70 @@ export default function CoursesSchedule() {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("❌ خطأ في جلب الدورات:", error);
+        console.error("Error loading courses:", error);
         showToast("فشل في تحميل الدورات", "error");
       } else {
         setCourses(data || []);
-        
-        // استخراج الفئات الفريدة
-        const uniqueCategories = [...new Set(data.map(course => course.category).filter(Boolean))];
+        const uniqueCategories = [
+          ...new Set((data || []).map((c) => c.category).filter(Boolean)),
+        ];
         setCategories(uniqueCategories);
-        
-        if (data.length === 0) {
-          showToast("لا توجد دورات متاحة حالياً", "warning");
-        } else {
-          showToast(`تم تحميل ${data.length} دورة بنجاح`, "success");
-        }
+        if (!data || data.length === 0) showToast("لا توجد دورات متاحة حالياً", "warning");
+        else showToast(`تم تحميل ${data.length} دورة`, "success");
       }
-    } catch (error) {
-      console.error("❌ خطأ غير متوقع:", error);
+    } catch (err) {
+      console.error(err);
       showToast("حدث خطأ غير متوقع", "error");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
-  const toggleCourse = (courseId) => {
-    setExpandedCourse(expandedCourse === courseId ? null : courseId);
-  };
-
-  // دالة لتنسيق التاريخ
+  // format date helper
   const formatDate = (dateString) => {
     if (!dateString) return "غير محدد";
     try {
-      return new Date(dateString).toLocaleDateString('ar-EG', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("ar-EG", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     } catch {
       return dateString;
     }
   };
 
+  // dropdown results filtered by search
+  const visibleCategories = useMemo(() => {
+    if (!catQuery) return categories;
+    return categories.filter((c) => c.toLowerCase().includes(catQuery.trim().toLowerCase()));
+  }, [catQuery, categories]);
+
+  // small toggle for accordion with smooth height
+  const toggleCourse = (id) => setExpandedCourse(expandedCourse === id ? null : id);
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      {/* injected page-level styles for animations */}
+      <style jsx>{`
+        .slide-fade-enter {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+        .slide-fade-enter-active {
+          opacity: 1;
+          transform: translateY(0);
+          transition: all 240ms ease;
+        }
+        .accordion-content {
+          transition: max-height 320ms cubic-bezier(.2,.9,.3,1), opacity 260ms ease;
+        }
+        .gradient-divider {
+          background: linear-gradient(90deg, rgba(123,11,76,0.0), rgba(123,11,76,0.12), rgba(94,8,57,0.0));
+          height: 2px;
+        }
+      `}</style>
+
       {toast && (
         <Toast
           message={toast.msg}
@@ -135,71 +175,147 @@ export default function CoursesSchedule() {
           onClose={() => setToast(null)}
         />
       )}
-      
+
       <Header />
-      
-      {/* قسم الهيرو - متدرج للأسفل */}
-      <section className="relative bg-gradient-to-b from-[#7b0b4c] to-[#5e0839] py-16 lg:py-20">
-        <div className="container mx-auto px-4 relative z-10">
+
+      {/* HERO */}
+      <section className="relative overflow-hidden">
+        {/* subtle pattern (SVG) positioned to right */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-10"
+          style={{
+            background:
+              "radial-gradient(circle at 10% 10%, rgba(255,255,255,0.03), transparent 20%), linear-gradient(180deg, rgba(123,11,76,0.85), rgba(94,8,57,0.88))",
+          }}
+        />
+        <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="max-w-4xl mx-auto text-center text-white">
-            <h1 className="text-3xl lg:text-5xl font-bold mb-6 leading-tight">
-              {Icons.calendar} جدول الدورات القادمة
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4" style={{ textShadow: "0 6px 18px rgba(0,0,0,0.25)" }}>
+              <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-pink-200 to-white">
+                {ICONS.calendar} جدول الدورات القادمة
+              </span>
             </h1>
-            <p className="text-lg lg:text-xl mb-6 leading-relaxed opacity-95">
-              يمكنك معرفة مواعيد إنعقاد الدورات التي تهمك بسهولة!
-            </p>
-            <div className="w-24 h-1 bg-white/50 mx-auto mb-6 rounded-full"></div>
-            <p className="text-base lg:text-lg opacity-90 leading-relaxed max-w-2xl mx-auto">
-              قم باختيار الموضوع من القائمة أدناه لتتمكن من استعراض مواعيد إنعقاد جميع الدورات المتعلقة به
+            <p className="text-lg sm:text-xl opacity-95 max-w-2xl mx-auto">
+              يمكنك معرفة مواعيد إنعقاد الدورات التي تهمك بسهولة — اختر فئة وشاهد التفاصيل داخل كل دورة.
             </p>
           </div>
         </div>
+
+        {/* decorative large faint icon on the right */}
+        <div className="absolute right-4 top-4 opacity-10 text-9xl select-none pointer-events-none">🎓</div>
       </section>
 
-      {/* المحتوى الرئيسي */}
+      {/* MAIN */}
       <main className="flex-grow py-12 lg:py-16 bg-white">
         <div className="container mx-auto px-4">
-          {/* قائمة الفئات المنسدلة */}
-          <div className="max-w-2xl mx-auto mb-12">
-            <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+          {/* Large dropdown + search + category card */}
+          <div className="max-w-3xl mx-auto mb-10">
+            <div className="bg-white rounded-xl shadow p-5 border border-gray-200">
               <label className="block text-lg font-semibold text-gray-800 mb-3 text-center">
-                {Icons.search} اختر مجال الدورات
+                {ICONS.search} اختر مجال الدورات
               </label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 focus:ring-2 focus:ring-[#7b0b4c] focus:border-[#7b0b4c] outline-none transition-all duration-200 text-base font-medium bg-white"
-              >
-                <option value="">جميع الفئات</option>
-                {categories.map((category, index) => (
-                  <option key={index} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+
+              <div className="flex gap-3 items-start">
+                {/* Left: big select + search */}
+                <div className="flex-1">
+                  <div className="mb-3">
+                    <input
+                      type="text"
+                      placeholder="ابحث عن فئة..."
+                      value={catQuery}
+                      onChange={(e) => setCatQuery(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7b0b4c] focus:border-transparent outline-none text-gray-800"
+                    />
+                  </div>
+
+                  <div className="max-h-48 overflow-auto border border-gray-100 rounded-lg">
+                    {visibleCategories.length === 0 ? (
+                      <div className="p-3 text-gray-500">لا توجد فئات مطابقة.</div>
+                    ) : (
+                      <ul className="divide-y">
+                        {visibleCategories.map((cat, idx) => {
+                          const meta = categoryMeta[cat] || categoryMeta.default;
+                          return (
+                            <li key={idx}>
+                              <button
+                                onClick={() => {
+                                  setSelectedCategory(cat);
+                                  setCatQuery("");
+                                }}
+                                className="w-full text-right px-4 py-3 hover:bg-gray-50 flex items-center justify-between gap-3"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-9 h-9 rounded-md flex items-center justify-center ${meta.color}`}>
+                                    <span className="text-sm">{meta.icon}</span>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-gray-900 font-medium">{cat}</div>
+                                    <div className="text-gray-500 text-sm">عرض الدورات المتعلقة بـ {cat}</div>
+                                  </div>
+                                </div>
+                                <div className="text-sm text-gray-400">عرض</div>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right: Category Card */}
+                <div className="w-80 hidden sm:block">
+                  <div className="p-4 border rounded-lg h-full bg-gradient-to-br from-white to-gray-50">
+                    <h4 className="text-sm text-gray-600">تفاصيل الفئة</h4>
+                    {selectedCategory ? (
+                      <div className="mt-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-md flex items-center justify-center bg-[#f8edf0] text-[#7b0b4c] text-lg">
+                            {(categoryMeta[selectedCategory] || categoryMeta.default).icon}
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-gray-900 text-lg">{selectedCategory}</div>
+                            <div className="text-gray-500 text-sm">عدد الدورات: {courses.filter(c => c.category === selectedCategory).length}</div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 text-sm text-gray-600">
+                          وصف موجز للفئة — يمكنك إضافة وصف ديناميكي من لوحة التحكم.
+                        </div>
+
+                        <div className="mt-4">
+                          <button
+                            onClick={() => setSelectedCategory("")}
+                            className="w-full text-gray-700 border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-100"
+                          >
+                            مسح الفئة
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-4 text-gray-500">اختر فئة لعرض التفاصيل هنا.</div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* حالة التحميل */}
+          {/* loading */}
           {loading && (
-            <div className="text-center py-16">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#7b0b4c] mx-auto mb-4"></div>
-              <p className="text-gray-600 text-lg">جاري تحميل الدورات...</p>
+            <div className="text-center py-12">
+              <div className="mx-auto w-16 h-16 rounded-full border-4 border-[#7b0b4c] border-t-transparent animate-spin mb-4"></div>
+              <p className="text-gray-600">جاري تحميل الدورات...</p>
             </div>
           )}
 
-          {/* قائمة الدورات */}
+          {/* Courses list */}
           {!loading && (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-5xl mx-auto">
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-[#7b0b4c] mb-2">
-                  {Icons.category} الدورات المتاحة
-                </h2>
-                {selectedCategory && (
-                  <p className="text-gray-600">
-                    في مجال <span className="font-semibold text-[#7b0b4c]">{selectedCategory}</span>
-                  </p>
-                )}
+                <h2 className="text-2xl font-bold text-[#7b0b4c] mb-2">{ICONS.category} الدورات المتاحة</h2>
+                {selectedCategory && <p className="text-gray-600">في مجال <span className="font-semibold text-[#7b0b4c]">{selectedCategory}</span></p>}
                 <div className="mt-2">
                   <span className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
                     إجمالي الدورات: {filteredCourses.length}
@@ -209,128 +325,113 @@ export default function CoursesSchedule() {
 
               {filteredCourses.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="text-5xl mb-4 opacity-50">{Icons.category}</div>
+                  <div className="text-5xl mb-4 opacity-50">{ICONS.category}</div>
                   <h3 className="text-xl font-semibold text-gray-700 mb-2">لا توجد دورات متاحة</h3>
                   <p className="text-gray-500">لا توجد دورات في هذه الفئة حالياً</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredCourses.map((course) => (
-                    <div
-                      key={course.id}
-                      className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300"
-                    >
-                      {/* عنوان الدورة */}
-                      <div
-                        className="p-4 cursor-pointer flex justify-between items-center"
-                        onClick={() => toggleCourse(course.id)}
-                      >
-                        <div className="flex items-center space-x-3 space-x-reverse flex-1">
-                          <div className="text-2xl text-[#7b0b4c]">
-                            {Icons.category}
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                              {course.title}
-                            </h3>
-                            <p className="text-gray-600 text-sm">{course.description}</p>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              <span className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
-                                {Icons.price} {course.price}
-                              </span>
-                              {course.discount && (
-                                <span className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium">
-                                  {Icons.discount} {course.discount}
+                  {filteredCourses.map((course) => {
+                    const meta = categoryMeta[course.category] || categoryMeta.default;
+                    return (
+                      <article key={course.id} className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+                        <header
+                          className="p-4 cursor-pointer flex items-start justify-between gap-4"
+                          onClick={() => toggleCourse(course.id)}
+                          aria-expanded={expandedCourse === course.id}
+                        >
+                          <div className="flex items-center gap-4 flex-1">
+                            <div className={`w-12 h-12 rounded-md flex items-center justify-center ${meta.color}`}>
+                              <span className="text-lg">{meta.icon}</span>
+                            </div>
+                            <div className="flex-1 text-right">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-1">{course.title}</h3>
+                              <p className="text-sm text-gray-600">{course.description}</p>
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                <span className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                                  {ICONS.price} {course.price || "مجاني"}
                                 </span>
-                              )}
+                                {course.discount && (
+                                  <span className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium">
+                                    {ICONS.discount} {course.discount}
+                                  </span>
+                                )}
+                                {course.level && (
+                                  <span className="inline-flex items-center px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium">
+                                    {ICONS.level} {course.level}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className={`transform transition-transform duration-300 ${expandedCourse === course.id ? "rotate-180" : ""}`}>
+                            <span className="text-xl text-gray-400">{expandedCourse === course.id ? ICONS.collapse : ICONS.expand}</span>
+                          </div>
+                        </header>
+
+                        {/* gradient divider */}
+                        <div className="gradient-divider" />
+
+                        {/* accordion content */}
+                        <div
+                          className="accordion-content bg-gray-50 px-4"
+                          style={{
+                            maxHeight: expandedCourse === course.id ? 420 : 0,
+                            opacity: expandedCourse === course.id ? 1 : 0,
+                          }}
+                          aria-hidden={expandedCourse !== course.id}
+                        >
+                          <div className="p-4">
+                            {/* table-like grid */}
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-right table-auto">
+                                <thead>
+                                  <tr className="text-sm text-gray-600">
+                                    <th className="p-2">المستوى</th>
+                                    <th className="p-2">المدة</th>
+                                    <th className="p-2">التاريخ</th>
+                                    <th className="p-2">المدرب</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr className="bg-white">
+                                    <td className="p-3 border">{course.level || "غير محدد"}</td>
+                                    <td className="p-3 border">{course.duration || "غير محددة"}</td>
+                                    <td className="p-3 border">{course.start_date ? formatDate(course.start_date) : (course.date || "سيعلن لاحقاً")}</td>
+                                    <td className="p-3 border">{course.instructor || "غير محدد"}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {/* extra details */}
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="p-3 rounded-lg bg-white border">
+                                <div className="text-sm text-gray-600">موعد الإنعقاد</div>
+                                <div className="font-semibold text-gray-800 mt-1">{course.schedule || "غير محدد"}</div>
+                              </div>
+
+                              <div className="p-3 rounded-lg bg-white border">
+                                <div className="text-sm text-gray-600">الفئة</div>
+                                <div className="font-semibold text-gray-800 mt-1">{course.category || "-"}</div>
+                              </div>
+                            </div>
+
+                            {/* actions */}
+                            <div className="mt-4 flex justify-end gap-2">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); router.push(`/Course_dates?courseId=${course.id}`); }}
+                                className="px-4 py-2 bg-[#7b0b4c] text-white rounded-lg hover:bg-[#5e0839]"
+                              >
+                                تفاصيل أكثر
+                              </button>
                             </div>
                           </div>
                         </div>
-                        <div className={`transform transition-transform duration-300 ${
-                          expandedCourse === course.id ? 'rotate-180' : ''
-                        }`}>
-                          <span className="text-xl text-gray-500">
-                            {expandedCourse === course.id ? Icons.collapse : Icons.expand}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* محتوى قابل للطي */}
-                      <div className={`overflow-hidden transition-all duration-500 ${
-                        expandedCourse === course.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                      }`}>
-                        <div className="p-4 border-t border-gray-100 bg-gray-50">
-                          {/* معلومات الدورة بشكل خطي */}
-                          <div className="space-y-3">
-                            {/* المستوى */}
-                            <div className="flex items-center justify-between py-2 border-b border-gray-200">
-                              <div className="flex items-center space-x-2 space-x-reverse">
-                                <span className="text-lg">{Icons.level}</span>
-                                <span className="text-gray-600 font-medium">المستوى:</span>
-                              </div>
-                              <span className="text-gray-800 font-semibold">{course.level || "غير محدد"}</span>
-                            </div>
-
-                            {/* المدة الزمنية */}
-                            <div className="flex items-center justify-between py-2 border-b border-gray-200">
-                              <div className="flex items-center space-x-2 space-x-reverse">
-                                <span className="text-lg">{Icons.clock}</span>
-                                <span className="text-gray-600 font-medium">المدة الزمنية:</span>
-                              </div>
-                              <span className="text-gray-800 font-semibold">{course.duration || "غير محددة"}</span>
-                            </div>
-
-                            {/* المدرب */}
-                            <div className="flex items-center justify-between py-2 border-b border-gray-200">
-                              <div className="flex items-center space-x-2 space-x-reverse">
-                                <span className="text-lg">{Icons.instructor}</span>
-                                <span className="text-gray-600 font-medium">المدرب:</span>
-                              </div>
-                              <span className="text-gray-800 font-semibold">{course.instructor || "غير محدد"}</span>
-                            </div>
-
-                            {/* موعد الإنعقاد */}
-                            <div className="flex items-center justify-between py-2 border-b border-gray-200">
-                              <div className="flex items-center space-x-2 space-x-reverse">
-                                <span className="text-lg">{Icons.calendar}</span>
-                                <span className="text-gray-600 font-medium">موعد الإنعقاد:</span>
-                              </div>
-                              <span className="text-gray-800 font-semibold">{course.schedule || "غير محدد"}</span>
-                            </div>
-
-                            {/* الفترة الزمنية */}
-                            {(course.start_date || course.end_date) && (
-                              <>
-                                <div className="flex items-center justify-between py-2 border-b border-gray-200">
-                                  <div className="flex items-center space-x-2 space-x-reverse">
-                                    <span className="text-lg">📅</span>
-                                    <span className="text-gray-600 font-medium">تاريخ البدء:</span>
-                                  </div>
-                                  <span className="text-gray-800 font-semibold">{formatDate(course.start_date)}</span>
-                                </div>
-                                <div className="flex items-center justify-between py-2 border-b border-gray-200">
-                                  <div className="flex items-center space-x-2 space-x-reverse">
-                                    <span className="text-lg">📅</span>
-                                    <span className="text-gray-600 font-medium">تاريخ الانتهاء:</span>
-                                  </div>
-                                  <span className="text-gray-800 font-semibold">{formatDate(course.end_date)}</span>
-                                </div>
-                              </>
-                            )}
-
-                            {/* الفئة */}
-                            <div className="flex items-center justify-between py-2">
-                              <div className="flex items-center space-x-2 space-x-reverse">
-                                <span className="text-lg">{Icons.category}</span>
-                                <span className="text-gray-600 font-medium">الفئة:</span>
-                              </div>
-                              <span className="text-gray-800 font-semibold">{course.category}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      </article>
+                    );
+                  })}
                 </div>
               )}
             </div>
