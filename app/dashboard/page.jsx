@@ -861,30 +861,48 @@ function AccountManager({ showToast, userName }) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    getUserEmail();
+    getUserData();
   }, []);
 
-  async function getUserEmail() {
+  async function getUserData() {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) {
         console.error("❌ خطأ في جلب بيانات المستخدم:", error);
+        showToast("❌ فشل في تحميل بيانات المستخدم", "error");
         return;
       }
+      
       if (user) {
-        setUserEmail(user.email || "");
+        setUserData({
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.name || 
+                user.user_metadata?.full_name || 
+                user.email?.split('@')[0] || 
+                "مدير النظام",
+          created_at: user.created_at
+        });
       }
     } catch (error) {
       console.error("❌ خطأ غير متوقع:", error);
+      showToast("❌ حدث خطأ غير متوقع", "error");
     }
   }
 
   async function handleChangePassword(e) {
     e.preventDefault();
     setLoading(true);
+
+    // التحقق من توفر بيانات المستخدم
+    if (!userData || !userData.email) {
+      showToast("❌ لا يمكن الوصول إلى بيانات المستخدم", "error");
+      setLoading(false);
+      return;
+    }
 
     // التحقق من المدخلات
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -908,13 +926,22 @@ function AccountManager({ showToast, userName }) {
     try {
       // أولاً: إعادة المصادقة بالمستخدم الحالي
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: userEmail,
+        email: userData.email,
         password: currentPassword
       });
 
       if (authError) {
         console.error("❌ خطأ في المصادقة:", authError);
-        showToast("❌ كلمة المرور الحالية غير صحيحة", "error");
+        
+        // رسائل خطأ أكثر وضوحاً
+        if (authError.message.includes("Invalid login credentials")) {
+          showToast("❌ كلمة المرور الحالية غير صحيحة", "error");
+        } else if (authError.message.includes("Email not confirmed")) {
+          showToast("❌ البريد الإلكتروني غير مفعل", "error");
+        } else {
+          showToast(`❌ خطأ في المصادقة: ${authError.message}`, "error");
+        }
+        
         setLoading(false);
         return;
       }
@@ -933,13 +960,34 @@ function AccountManager({ showToast, userName }) {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        
+        // إعادة تحميل بيانات المستخدم للتأكد من التحديث
+        getUserData();
       }
     } catch (error) {
       console.error("❌ خطأ غير متوقع:", error);
-      showToast("❌ حدث خطأ غير متوقع", "error");
+      showToast("❌ حدث خطأ غير متوقع أثناء تغيير كلمة المرور", "error");
     } finally {
       setLoading(false);
     }
+  }
+
+  // عرض حالة التحميل
+  if (!userData) {
+    return (
+      <div>
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+          <FaUser className="text-[#7a1353]" />
+          إدارة الحساب
+        </h2>
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7a1353] mx-auto mb-4"></div>
+            <p className="text-gray-600">جاري تحميل بيانات المستخدم...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -956,12 +1004,22 @@ function AccountManager({ showToast, userName }) {
             <FaUser className="text-[#7a1353]" />
             المعلومات الشخصية
           </h3>
-          
+
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
+                <p className="text-sm text-gray-600">معرف المستخدم</p>
+                <p className="font-semibold text-gray-800 text-xs font-mono">
+                  {userData.id.substring(0, 8)}...
+                </p>
+              </div>
+              <FaUser className="text-[#7a1353]" />
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
                 <p className="text-sm text-gray-600">الاسم</p>
-                <p className="font-semibold text-gray-800">{userName}</p>
+                <p className="font-semibold text-gray-800">{userData.name}</p>
               </div>
               <FaUser className="text-[#7a1353]" />
             </div>
@@ -969,9 +1027,19 @@ function AccountManager({ showToast, userName }) {
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="text-sm text-gray-600">البريد الإلكتروني</p>
-                <p className="font-semibold text-gray-800">{userEmail}</p>
+                <p className="font-semibold text-gray-800">{userData.email}</p>
               </div>
               <FaEnvelope className="text-[#7a1353]" />
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p className="text-sm text-gray-600">تاريخ الإنشاء</p>
+                <p className="font-semibold text-gray-800">
+                  {new Date(userData.created_at).toLocaleDateString('ar-EG')}
+                </p>
+              </div>
+              <FaCalendarAlt className="text-[#7a1353]" />
             </div>
           </div>
         </div>
@@ -995,6 +1063,7 @@ function AccountManager({ showToast, userName }) {
                 className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                 placeholder="أدخل كلمة المرور الحالية"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -1010,6 +1079,7 @@ function AccountManager({ showToast, userName }) {
                 placeholder="كلمة المرور الجديدة (6 أحرف على الأقل)"
                 required
                 minLength="6"
+                disabled={loading}
               />
             </div>
 
@@ -1024,6 +1094,7 @@ function AccountManager({ showToast, userName }) {
                 className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                 placeholder="أعد إدخال كلمة المرور الجديدة"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -1036,6 +1107,18 @@ function AccountManager({ showToast, userName }) {
               {loading ? "جاري التغيير..." : "تغيير كلمة المرور"}
             </button>
           </form>
+
+          {/* نصائح أمان */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
+              💡 نصائح لأمان أفضل
+            </h4>
+            <ul className="text-xs text-blue-700 space-y-1">
+              <li>• استخدم كلمة مرور قوية تحتوي على أحرف وأرقام ورموز</li>
+              <li>• لا تستخدم كلمات مرور مستخدمة في حسابات أخرى</li>
+              <li>• غير كلمة المرور定期 بانتظام</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
