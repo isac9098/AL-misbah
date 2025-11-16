@@ -906,14 +906,27 @@ function AccountManager({ showToast, userName }) {
     }
 
     try {
-      // تحديث كلمة المرور باستخدام Supabase
-      const { error } = await supabase.auth.updateUser({
+      // أولاً: إعادة المصادقة بالمستخدم الحالي
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: userEmail,
+        password: currentPassword
+      });
+
+      if (authError) {
+        console.error("❌ خطأ في المصادقة:", authError);
+        showToast("❌ كلمة المرور الحالية غير صحيحة", "error");
+        setLoading(false);
+        return;
+      }
+
+      // ثانياً: تحديث كلمة المرور بعد المصادقة الناجحة
+      const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
 
-      if (error) {
-        console.error("❌ خطأ في تغيير كلمة المرور:", error);
-        showToast(`❌ فشل في تغيير كلمة المرور: ${error.message}`, "error");
+      if (updateError) {
+        console.error("❌ خطأ في تغيير كلمة المرور:", updateError);
+        showToast(`❌ فشل في تغيير كلمة المرور: ${updateError.message}`, "error");
       } else {
         showToast("✅ تم تغيير كلمة المرور بنجاح", "success");
         // إعادة تعيين الحقول
@@ -979,7 +992,7 @@ function AccountManager({ showToast, userName }) {
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                 placeholder="أدخل كلمة المرور الحالية"
                 required
               />
@@ -993,7 +1006,7 @@ function AccountManager({ showToast, userName }) {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                 placeholder="كلمة المرور الجديدة (6 أحرف على الأقل)"
                 required
                 minLength="6"
@@ -1008,7 +1021,7 @@ function AccountManager({ showToast, userName }) {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                 placeholder="أعد إدخال كلمة المرور الجديدة"
                 required
               />
