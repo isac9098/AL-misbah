@@ -18,7 +18,10 @@ import {
   FaBook,
   FaUser,
   FaLock,
-  FaEnvelope
+  FaEnvelope,
+  FaBars,
+  FaTimesCircle,
+  FaUserPlus
 } from "react-icons/fa";
 
 // 🧩 مكون Toast بسيط
@@ -68,14 +71,15 @@ export default function CoursesDashboard() {
     price: "",
     discount: "",
     category: "",
-    schedule_time: "", // تم التعديل
+    schedule_time: "",
     start_date: "",
-    meeting_days: "" // تم التعديل
+    meeting_days: ""
   });
   const [imageFile, setImageFile] = useState(null);
   const [userName, setUserName] = useState("");
   const [editingCourse, setEditingCourse] = useState(null);
   const [activeTab, setActiveTab] = useState("courses");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const COURSES_BUCKET = "courses-images";
 
   useEffect(() => {
@@ -121,7 +125,6 @@ export default function CoursesDashboard() {
       return;
     }
 
-    // استخدام البيانات مباشرة من الحقول الجديدة
     setCourses(data || []);
   }
 
@@ -164,7 +167,6 @@ export default function CoursesDashboard() {
       if (!imageUrl) return;
     }
 
-    // إرسال البيانات مباشرة في الحقول الأساسية - تم التعديل
     const courseData = {
       title: newCourse.title,
       description: newCourse.description,
@@ -172,9 +174,9 @@ export default function CoursesDashboard() {
       price: newCourse.price,
       discount: newCourse.discount,
       category: newCourse.category,
-      schedule_time: newCourse.schedule_time || "", // تم التعديل
+      schedule_time: newCourse.schedule_time || "",
       start_date: newCourse.start_date || "",
-      meeting_days: newCourse.meeting_days || "" // تم التعديل
+      meeting_days: newCourse.meeting_days || ""
     };
 
     const { data, error } = await supabase
@@ -195,9 +197,9 @@ export default function CoursesDashboard() {
         price: "",
         discount: "",
         category: "",
-        schedule_time: "", // تم التعديل
+        schedule_time: "",
         start_date: "",
-        meeting_days: "" // تم التعديل
+        meeting_days: ""
       });
       setImageFile(null);
     }
@@ -205,19 +207,16 @@ export default function CoursesDashboard() {
 
   async function updateCourse(courseId, updates) {
     try {
-      // إرسال البيانات مباشرة في الحقول الأساسية - تم التعديل
       const courseData = {
         title: updates.title,
         description: updates.description,
         price: updates.price,
         discount: updates.discount,
         category: updates.category,
-        schedule_time: updates.schedule_time || "", // تم التعديل
+        schedule_time: updates.schedule_time || "",
         start_date: updates.start_date || "",
-        meeting_days: updates.meeting_days || "" // تم التعديل
+        meeting_days: updates.meeting_days || ""
       };
-
-      console.log('🔄 محاولة تحديث الدورة:', courseId, courseData);
 
       const { error } = await supabase
         .from("courses")
@@ -229,7 +228,6 @@ export default function CoursesDashboard() {
         showToast(`❌ حدث خطأ أثناء التحديث: ${error.message}`, "error");
         return false;
       } else {
-        // تحديث البيانات المحلية
         setCourses(courses.map(course => 
           course.id === courseId ? { 
             ...course, 
@@ -256,9 +254,9 @@ export default function CoursesDashboard() {
         price: course.price,
         discount: course.discount,
         category: course.category,
-        schedule_time: course.schedule_time || "", // تم التعديل
+        schedule_time: course.schedule_time || "",
         start_date: course.start_date || "",
-        meeting_days: course.meeting_days || "" // تم التعديل
+        meeting_days: course.meeting_days || ""
       });
     }
   };
@@ -309,6 +307,11 @@ export default function CoursesDashboard() {
     showToast("✅ تم حذف الدورة بنجاح!", "success");
   }
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setMobileMenuOpen(false); // إغلاق القائمة بعد اختيار تبويب
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 sm:p-8 text-right">
       {toast && (
@@ -322,8 +325,8 @@ export default function CoursesDashboard() {
       <div className="bg-white shadow-xl rounded-2xl p-4 sm:p-8 w-full max-w-7xl">
         {/* الهيدر */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
-          <div className="mb-4 sm:mb-0">
-            <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center justify-between w-full sm:w-auto">
+            <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-[#f8e8f1] rounded-full flex items-center justify-center">
                 <FaBook className="text-[#7a1353] text-xl" />
               </div>
@@ -334,19 +337,27 @@ export default function CoursesDashboard() {
                 </p>
               </div>
             </div>
+            
+            {/* زر القائمة للهواتف */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="sm:hidden p-2 rounded-lg bg-[#7a1353] text-white"
+            >
+              {mobileMenuOpen ? <FaTimesCircle /> : <FaBars />}
+            </button>
           </div>
 
-          <div className="flex gap-3 w-full sm:w-auto">
+          <div className="hidden sm:flex gap-3">
             <button
               onClick={() => router.push("/course-schedule")}
-              className="px-4 py-2 bg-[#7a1353] text-white rounded-lg hover:bg-[#6a124a] transition flex items-center gap-2 w-full sm:w-auto justify-center"
+              className="px-4 py-2 bg-[#7a1353] text-white rounded-lg hover:bg-[#6a124a] transition flex items-center gap-2"
             >
               <FaCalendarAlt />
               عرض جدول الدورات
             </button>
             <button
               onClick={() => router.push("/")}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition flex items-center gap-2 w-full sm:w-auto justify-center"
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition flex items-center gap-2"
             >
               <FaArrowLeft />
               الرئيسية
@@ -354,10 +365,84 @@ export default function CoursesDashboard() {
           </div>
         </div>
 
-        {/* التبويبات */}
-        <div className="flex border-b border-gray-200 mb-8 overflow-x-auto">
+        {/* القائمة الجانبية للهواتف */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
+            <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform transition-transform duration-300">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-xl font-bold text-[#7a1353]">القائمة</h2>
+                  <button
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-2 text-gray-500 hover:text-gray-700"
+                  >
+                    <FaTimesCircle className="text-xl" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <button
+                    onClick={() => handleTabChange("courses")}
+                    className={`w-full text-right px-4 py-3 rounded-lg transition-all flex items-center gap-3 ${
+                      activeTab === "courses" 
+                        ? "bg-[#7a1353] text-white" 
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    <FaBook />
+                    🎓 إدارة الدورات
+                  </button>
+
+                  <button
+                    onClick={() => handleTabChange("campaigns")}
+                    className={`w-full text-right px-4 py-3 rounded-lg transition-all flex items-center gap-3 ${
+                      activeTab === "campaigns" 
+                        ? "bg-[#7a1353] text-white" 
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    <FaImage />
+                    🖼️ الحملات الإعلانية
+                  </button>
+
+                  <button
+                    onClick={() => handleTabChange("account")}
+                    className={`w-full text-right px-4 py-3 rounded-lg transition-all flex items-center gap-3 ${
+                      activeTab === "account" 
+                        ? "bg-[#7a1353] text-white" 
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    <FaUser />
+                    👤 إدارة الحساب
+                  </button>
+
+                  <div className="border-t pt-4 mt-4">
+                    <button
+                      onClick={() => router.push("/course-schedule")}
+                      className="w-full text-right px-4 py-3 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition flex items-center gap-3 mb-2"
+                    >
+                      <FaCalendarAlt />
+                      عرض جدول الدورات
+                    </button>
+                    <button
+                      onClick={() => router.push("/")}
+                      className="w-full text-right px-4 py-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition flex items-center gap-3"
+                    >
+                      <FaArrowLeft />
+                      العودة للرئيسية
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* التبويبات للشاشات الكبيرة */}
+        <div className="hidden sm:flex border-b border-gray-200 mb-8 overflow-x-auto">
           <button
-            onClick={() => setActiveTab("courses")}
+            onClick={() => handleTabChange("courses")}
             className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap ${
               activeTab === "courses" 
                 ? "border-[#7a1353] text-[#7a1353]" 
@@ -367,7 +452,7 @@ export default function CoursesDashboard() {
             🎓 إدارة الدورات
           </button>
           <button
-            onClick={() => setActiveTab("campaigns")}
+            onClick={() => handleTabChange("campaigns")}
             className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap ${
               activeTab === "campaigns" 
                 ? "border-[#7a1353] text-[#7a1353]" 
@@ -377,7 +462,7 @@ export default function CoursesDashboard() {
             🖼️ الحملات الإعلانية
           </button>
           <button
-            onClick={() => setActiveTab("account")}
+            onClick={() => handleTabChange("account")}
             className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap ${
               activeTab === "account" 
                 ? "border-[#7a1353] text-[#7a1353]" 
@@ -388,17 +473,32 @@ export default function CoursesDashboard() {
           </button>
         </div>
 
+        {/* زر القائمة للهواتف - يظهر بدل التبويبات */}
+        <div className="sm:hidden mb-6">
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="w-full bg-[#7a1353] text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2"
+          >
+            <FaBars />
+            عرض القائمة - { 
+              activeTab === "courses" ? "🎓 إدارة الدورات" :
+              activeTab === "campaigns" ? "🖼️ الحملات" :
+              "👤 إدارة الحساب"
+            }
+          </button>
+        </div>
+
         {activeTab === "courses" && (
           <>
             {/* نموذج إضافة دورة */}
-            <div className="bg-white rounded-2xl p-6 mb-8 shadow-md border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 mb-6 shadow-md border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2">
                 <FaPlus className="text-[#7a1353]" />
                 إضافة دورة جديدة
               </h2>
 
               <form onSubmit={addCourse}>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
                   {/* المعلومات الأساسية */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">المعلومات الأساسية</h3>
@@ -409,7 +509,7 @@ export default function CoursesDashboard() {
                         type="text"
                         value={newCourse.title}
                         onChange={(e) => handleNewCourseInputChange('title', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="أدخل عنوان الدورة"
                         required
                       />
@@ -420,14 +520,14 @@ export default function CoursesDashboard() {
                       <textarea
                         value={newCourse.description}
                         onChange={(e) => handleNewCourseInputChange('description', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none"
                         rows="3"
                         placeholder="وصف مختصر للدورة"
                         required
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                           <FaTag />
@@ -437,7 +537,7 @@ export default function CoursesDashboard() {
                           type="text"
                           value={newCourse.price}
                           onChange={(e) => handleNewCourseInputChange('price', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                           placeholder="السعر"
                           required
                         />
@@ -451,8 +551,8 @@ export default function CoursesDashboard() {
                           type="text"
                           value={newCourse.discount}
                           onChange={(e) => handleNewCourseInputChange('discount', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                          placeholder="الخصم (اختياري)"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                          placeholder="السعر بعد الخصم"
                         />
                       </div>
                     </div>
@@ -463,7 +563,7 @@ export default function CoursesDashboard() {
                         type="text"
                         value={newCourse.category}
                         onChange={(e) => handleNewCourseInputChange('category', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="مثلاً: القانون / اللغة / التقنية"
                         required
                       />
@@ -478,7 +578,7 @@ export default function CoursesDashboard() {
                         type="file"
                         accept="image/*"
                         onChange={(e) => setImageFile(e.target.files[0])}
-                        className="w-full px-4 py-3 border border-gray-500 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#7a1353] file:text-white file:cursor-pointer transition-all"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[#7a1353] file:text-white file:cursor-pointer transition-all text-sm"
                       />
                     </div>
                   </div>
@@ -496,7 +596,7 @@ export default function CoursesDashboard() {
                         type="date"
                         value={newCourse.start_date}
                         onChange={(e) => handleNewCourseInputChange('start_date', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                       />
                     </div>
 
@@ -507,9 +607,9 @@ export default function CoursesDashboard() {
                       </label>
                       <input
                         type="text"
-                        value={newCourse.schedule_time} // تم التعديل
-                        onChange={(e) => handleNewCourseInputChange('schedule_time', e.target.value)} // تم التعديل
-                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        value={newCourse.schedule_time}
+                        onChange={(e) => handleNewCourseInputChange('schedule_time', e.target.value)}
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="6:00 مساءً - 8:00 مساءً"
                       />
                     </div>
@@ -521,9 +621,9 @@ export default function CoursesDashboard() {
                       </label>
                       <input
                         type="text"
-                        value={newCourse.meeting_days} // تم التعديل
-                        onChange={(e) => handleNewCourseInputChange('meeting_days', e.target.value)} // تم التعديل
-                        className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        value={newCourse.meeting_days}
+                        onChange={(e) => handleNewCourseInputChange('meeting_days', e.target.value)}
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                         placeholder="السبت، الإثنين، الأربعاء"
                       />
                     </div>
@@ -532,7 +632,7 @@ export default function CoursesDashboard() {
 
                 <button
                   type="submit"
-                  className="w-full bg-[#7a1353] text-white px-8 py-4 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  className="w-full bg-[#7a1353] text-white px-6 py-3 sm:py-4 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                 >
                   <FaPlus />
                   إضافة الدورة
@@ -541,43 +641,43 @@ export default function CoursesDashboard() {
             </div>
 
             {/* قائمة الدورات */}
-            <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2">
                 <FaBook className="text-[#7a1353]" />
                 الدورات الحالية ({courses.length})
               </h2>
 
               {courses.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-8 sm:py-12 text-gray-500">
                   <FaBook className="text-4xl mx-auto mb-4 opacity-50" />
                   <p className="text-lg">لا توجد دورات حالياً</p>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {courses.map((course) => (
-                    <div key={course.id} className="bg-gray-50 rounded-xl p-6 border border-gray-200 hover:border-[#7a1353]/30 transition-all duration-300">
+                    <div key={course.id} className="bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200 hover:border-[#7a1353]/30 transition-all duration-300">
                       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
                         <div className="flex-1">
-                          <div className="flex items-start gap-4 mb-3">
+                          <div className="flex items-start gap-3 sm:gap-4 mb-3">
                             {course.image && (
                               <img 
                                 src={course.image} 
                                 alt={course.title}
-                                className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                                className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover flex-shrink-0"
                               />
                             )}
                             <div className="flex-1">
                               <h3 className="text-lg font-bold text-gray-800 mb-1">{course.title}</h3>
                               <p className="text-gray-600 text-sm mb-2">{course.description}</p>
                               <div className="flex flex-wrap gap-2">
-                                <span className="px-3 py-1 bg-[#f8e8f1] text-[#7a1353] rounded-full text-xs font-medium">
+                                <span className="px-2 py-1 bg-[#f8e8f1] text-[#7a1353] rounded-full text-xs font-medium">
                                   {course.category}
                                 </span>
-                                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                                   {course.price}
                                 </span>
                                 {course.discount && (
-                                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                  <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                                     خصم: {course.discount}
                                   </span>
                                 )}
@@ -588,14 +688,14 @@ export default function CoursesDashboard() {
                         <div className="flex gap-2 flex-shrink-0">
                           <button
                             onClick={() => setEditingCourse(editingCourse === course.id ? null : course.id)}
-                            className="px-4 py-2 bg-[#7a1353] text-white rounded-lg hover:bg-[#6a124a] transition flex items-center gap-2 text-sm font-medium"
+                            className="px-3 py-2 sm:px-4 sm:py-2 bg-[#7a1353] text-white rounded-lg hover:bg-[#6a124a] transition flex items-center gap-2 text-sm font-medium"
                           >
                             <FaEdit />
-                            {editingCourse === course.id ? 'إلغاء' : 'تعديل الجدول'}
+                            {editingCourse === course.id ? 'إلغاء' : 'تعديل'}
                           </button>
                           <button
                             onClick={() => deleteCourse(course.id)}
-                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2 text-sm font-medium"
+                            className="px-3 py-2 sm:px-4 sm:py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2 text-sm font-medium"
                           >
                             <FaTrash />
                             حذف
@@ -603,57 +703,56 @@ export default function CoursesDashboard() {
                         </div>
                       </div>
 
-                      {/* عرض بيانات الجدول الزمني - تم التعديل */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                      {/* عرض بيانات الجدول الزمني */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-4">
+                        <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
                           <div className="flex items-center gap-2 mb-2">
                             <FaCalendarAlt className="text-[#7a1353]" />
                             <p className="text-sm text-gray-600">تاريخ البدء</p>
                           </div>
-                          <p className="font-semibold text-gray-800">
+                          <p className="font-semibold text-gray-800 text-sm">
                             {course.start_date ? new Date(course.start_date).toLocaleDateString('ar-EG') : "غير محدد"}
                           </p>
                         </div>
-                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
                           <div className="flex items-center gap-2 mb-2">
                             <FaClock className="text-[#7a1353]" />
                             <p className="text-sm text-gray-600">الموعد</p>
                           </div>
-                          <p className="font-semibold text-gray-800">{course.schedule_time || "غير محدد"}</p> {/* تم التعديل */}
+                          <p className="font-semibold text-gray-800 text-sm">{course.schedule_time || "غير محدد"}</p>
                         </div>
-                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
                           <div className="flex items-center gap-2 mb-2">
                             <FaCalendarDay className="text-[#7a1353]" />
                             <p className="text-sm text-gray-600">أيام الإنعقاد</p>
                           </div>
-                          <p className="font-semibold text-gray-800">{course.meeting_days || "غير محدد"}</p> {/* تم التعديل */}
+                          <p className="font-semibold text-gray-800 text-sm">{course.meeting_days || "غير محدد"}</p>
                         </div>
                       </div>
 
                       {editingCourse === course.id && (
-                        // وضع التعديل - الجدول الزمني فقط - تم التعديل
-                        <div className="bg-white border border-[#7a1353]/20 rounded-xl p-6 mt-4">
+                        <div className="bg-white border border-[#7a1353]/20 rounded-xl p-4 sm:p-6 mt-4">
                           <h4 className="font-semibold text-[#7a1353] mb-4 text-lg flex items-center gap-2">
                             <FaEdit />
                             تعديل الجدول الزمني
                           </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                             <div>
                               <label className="block text-sm text-gray-600 mb-2">تاريخ البدء</label>
                               <input
                                 type="date"
                                 value={course.start_date || ""}
                                 onChange={(e) => handleInputChange(course.id, 'start_date', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                className="w-full px-3 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
                               />
                             </div>
                             <div>
                               <label className="block text-sm text-gray-600 mb-2">الموعد</label>
                               <input
                                 type="text"
-                                value={course.schedule_time || ""} // تم التعديل
-                                onChange={(e) => handleInputChange(course.id, 'schedule_time', e.target.value)} // تم التعديل
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                value={course.schedule_time || ""}
+                                onChange={(e) => handleInputChange(course.id, 'schedule_time', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
                                 placeholder="6:00 مساءً - 8:00 مساءً"
                               />
                             </div>
@@ -661,9 +760,9 @@ export default function CoursesDashboard() {
                               <label className="block text-sm text-gray-600 mb-2">أيام الإنعقاد</label>
                               <input
                                 type="text"
-                                value={course.meeting_days || ""} // تم التعديل
-                                onChange={(e) => handleInputChange(course.id, 'meeting_days', e.target.value)} // تم التعديل
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                value={course.meeting_days || ""}
+                                onChange={(e) => handleInputChange(course.id, 'meeting_days', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
                                 placeholder="السبت، الإثنين، الأربعاء"
                               />
                             </div>
@@ -671,17 +770,17 @@ export default function CoursesDashboard() {
                           <div className="flex space-x-3 space-x-reverse justify-end mt-6">
                             <button
                               onClick={handleCancelEdit}
-                              className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition flex items-center gap-2"
+                              className="px-4 py-2 sm:px-6 sm:py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition flex items-center gap-2 text-sm"
                             >
                               <FaTimes />
                               إلغاء
                             </button>
                             <button
                               onClick={() => handleSaveCourse(course.id)}
-                              className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center gap-2"
+                              className="px-4 py-2 sm:px-6 sm:py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center gap-2 text-sm"
                             >
                               <FaSave />
-                              حفظ التغييرات
+                              حفظ
                             </button>
                           </div>
                         </div>
@@ -695,13 +794,13 @@ export default function CoursesDashboard() {
         )}
 
         {activeTab === "campaigns" && (
-          <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-200">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-200">
             <CampaignsManager showToast={showToast} />
           </div>
         )}
 
         {activeTab === "account" && (
-          <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-200">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-200">
             <AccountManager showToast={showToast} userName={userName} />
           </div>
         )}
@@ -810,23 +909,23 @@ function CampaignsManager({ showToast }) {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2">
         <FaImage className="text-[#7a1353]" />
         إدارة الحملات الإعلانية
       </h2>
 
-      <div className="bg-gray-50 rounded-xl p-6 shadow-inner border border-gray-200 mb-6">
+      <div className="bg-gray-50 rounded-xl p-4 sm:p-6 shadow-inner border border-gray-200 mb-4 sm:mb-6">
         <form onSubmit={addCampaignImage} className="flex flex-col sm:flex-row gap-4 items-center">
           <input
             type="file"
             accept="image/*"
             onChange={(e) => setImageFile(e.target.files[0])}
-            className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-[#7a1353] file:text-white file:border-none file:cursor-pointer w-full sm:w-auto transition-all duration-300"
+            className="border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-gray-800 file:mr-2 file:py-1 file:px-3 file:rounded-md file:bg-[#7a1353] file:text-white file:border-none file:cursor-pointer w-full sm:w-auto transition-all duration-300 text-sm"
           />
           <button
             type="submit"
             disabled={uploading}
-            className="bg-[#7a1353] text-white px-6 py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
+            className="bg-[#7a1353] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center gap-2 text-sm sm:text-base"
           >
             <FaPlus />
             {uploading ? "جاري الرفع..." : "رفع الصورة"}
@@ -834,11 +933,11 @@ function CampaignsManager({ showToast }) {
         </form>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {campaigns.map((c) => (
           <div key={c.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200">
-            <img src={c.image} alt="campaign" className="w-full h-48 object-cover" />
-            <div className="p-4 flex justify-between items-center">
+            <img src={c.image} alt="campaign" className="w-full h-40 sm:h-48 object-cover" />
+            <div className="p-3 sm:p-4 flex justify-between items-center">
               <span className="text-gray-600 text-sm">حملة #{c.id}</span>
               <button
                 onClick={() => deleteCampaign(c.id)}
@@ -897,14 +996,12 @@ function AccountManager({ showToast, userName }) {
     e.preventDefault();
     setLoading(true);
 
-    // التحقق من توفر بيانات المستخدم
     if (!userData || !userData.email) {
       showToast("❌ لا يمكن الوصول إلى بيانات المستخدم", "error");
       setLoading(false);
       return;
     }
 
-    // التحقق من المدخلات
     if (!currentPassword || !newPassword || !confirmPassword) {
       showToast("⚠️ الرجاء إدخال جميع الحقول", "error");
       setLoading(false);
@@ -924,7 +1021,6 @@ function AccountManager({ showToast, userName }) {
     }
 
     try {
-      // أولاً: إعادة المصادقة بالمستخدم الحالي
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: userData.email,
         password: currentPassword
@@ -933,7 +1029,6 @@ function AccountManager({ showToast, userName }) {
       if (authError) {
         console.error("❌ خطأ في المصادقة:", authError);
 
-        // رسائل خطأ أكثر وضوحاً
         if (authError.message.includes("Invalid login credentials")) {
           showToast("❌ كلمة المرور الحالية غير صحيحة", "error");
         } else if (authError.message.includes("Email not confirmed")) {
@@ -946,7 +1041,6 @@ function AccountManager({ showToast, userName }) {
         return;
       }
 
-      // ثانياً: تحديث كلمة المرور بعد المصادقة الناجحة
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
@@ -956,12 +1050,9 @@ function AccountManager({ showToast, userName }) {
         showToast(`❌ فشل في تغيير كلمة المرور: ${updateError.message}`, "error");
       } else {
         showToast("✅ تم تغيير كلمة المرور بنجاح", "success");
-        // إعادة تعيين الحقول
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-
-        // إعادة تحميل بيانات المستخدم للتأكد من التحديث
         getUserData();
       }
     } catch (error) {
@@ -972,15 +1063,14 @@ function AccountManager({ showToast, userName }) {
     }
   }
 
-  // عرض حالة التحميل
   if (!userData) {
     return (
       <div>
-        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2">
           <FaUser className="text-[#7a1353]" />
           إدارة الحساب
         </h2>
-        <div className="flex justify-center items-center py-12">
+        <div className="flex justify-center items-center py-8 sm:py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7a1353] mx-auto mb-4"></div>
             <p className="text-gray-600">جاري تحميل بيانات المستخدم...</p>
@@ -992,21 +1082,21 @@ function AccountManager({ showToast, userName }) {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2">
         <FaUser className="text-[#7a1353]" />
         إدارة الحساب
       </h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
         {/* معلومات الحساب */}
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <FaUser className="text-[#7a1353]" />
             المعلومات الشخصية
           </h3>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="text-sm text-gray-600">معرف المستخدم</p>
                 <p className="font-semibold text-gray-800 text-xs font-mono">
@@ -1016,7 +1106,7 @@ function AccountManager({ showToast, userName }) {
               <FaUser className="text-[#7a1353]" />
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="text-sm text-gray-600">الاسم</p>
                 <p className="font-semibold text-gray-800">{userData.name}</p>
@@ -1024,7 +1114,7 @@ function AccountManager({ showToast, userName }) {
               <FaUser className="text-[#7a1353]" />
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="text-sm text-gray-600">البريد الإلكتروني</p>
                 <p className="font-semibold text-gray-800">{userData.email}</p>
@@ -1032,7 +1122,7 @@ function AccountManager({ showToast, userName }) {
               <FaEnvelope className="text-[#7a1353]" />
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="text-sm text-gray-600">تاريخ الإنشاء</p>
                 <p className="font-semibold text-gray-800">
@@ -1045,7 +1135,7 @@ function AccountManager({ showToast, userName }) {
         </div>
 
         {/* تغيير كلمة المرور */}
-        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <FaLock className="text-[#7a1353]" />
             تغيير كلمة المرور
@@ -1060,7 +1150,7 @@ function AccountManager({ showToast, userName }) {
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                 placeholder="أدخل كلمة المرور الحالية"
                 required
                 disabled={loading}
@@ -1075,7 +1165,7 @@ function AccountManager({ showToast, userName }) {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                 placeholder="كلمة المرور الجديدة (6 أحرف على الأقل)"
                 required
                 minLength="6"
@@ -1091,7 +1181,7 @@ function AccountManager({ showToast, userName }) {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
                 placeholder="أعد إدخال كلمة المرور الجديدة"
                 required
                 disabled={loading}
@@ -1101,22 +1191,21 @@ function AccountManager({ showToast, userName }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#7a1353] text-white px-6 py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-[#7a1353] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <FaLock />
               {loading ? "جاري التغيير..." : "تغيير كلمة المرور"}
             </button>
           </form>
 
-          {/* نصائح أمان */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
               💡 نصائح لأمان أفضل
             </h4>
             <ul className="text-xs text-blue-700 space-y-1">
               <li>• استخدم كلمة مرور قوية تحتوي على أحرف وأرقام ورموز</li>
               <li>• لا تستخدم كلمات مرور مستخدمة في حسابات أخرى</li>
-              <li>• غير كلمة المرور定期 بانتظام</li>
+              <li>• غير كلمة المرور بانتظام</li>
             </ul>
           </div>
         </div>
