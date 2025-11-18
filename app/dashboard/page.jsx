@@ -20,8 +20,9 @@ import {
   FaLock,
   FaEnvelope,
   FaBars,
-  FaTimesCircle,
-  FaUserPlus
+  FaUserPlus,
+  FaAd,
+  FaCog
 } from "react-icons/fa";
 
 // 🧩 مكون Toast بسيط
@@ -309,7 +310,7 @@ export default function CoursesDashboard() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setMobileMenuOpen(false); // إغلاق القائمة بعد اختيار تبويب
+    setMobileMenuOpen(false);
   };
 
   return (
@@ -341,9 +342,9 @@ export default function CoursesDashboard() {
             {/* زر القائمة للهواتف */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="sm:hidden p-2 rounded-lg bg-[#7a1353] text-white"
+              className="sm:hidden p-3 rounded-lg bg-[#7a1353] text-white hover:bg-[#6a124a] transition-all duration-300"
             >
-              {mobileMenuOpen ? <FaTimesCircle /> : <FaBars />}
+              <FaBars className="text-lg" />
             </button>
           </div>
 
@@ -367,72 +368,85 @@ export default function CoursesDashboard() {
 
         {/* القائمة الجانبية للهواتف */}
         {mobileMenuOpen && (
-          <div className="sm:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-            <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform transition-transform duration-300">
-              <div className="p-6">
+          <div className="sm:hidden fixed inset-0 z-50">
+            {/* Overlay */}
+            <div 
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            
+            {/* القائمة */}
+            <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
+              <div className="p-6 h-full flex flex-col">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-xl font-bold text-[#7a1353]">القائمة</h2>
+                  <h2 className="text-xl font-bold text-[#7a1353]">القائمة الرئيسية</h2>
                   <button
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-2 text-gray-500 hover:text-gray-700"
+                    className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
                   >
-                    <FaTimesCircle className="text-xl" />
+                    <FaTimes className="text-xl" />
                   </button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 flex-1">
                   <button
                     onClick={() => handleTabChange("courses")}
-                    className={`w-full text-right px-4 py-3 rounded-lg transition-all flex items-center gap-3 ${
+                    className={`w-full text-right px-4 py-4 rounded-lg transition-all flex items-center gap-3 text-lg ${
                       activeTab === "courses" 
-                        ? "bg-[#7a1353] text-white" 
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-[#7a1353] text-white shadow-lg" 
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
                     }`}
                   >
-                    <FaBook />
-                    🎓 إدارة الدورات
+                    <FaBook className="text-lg" />
+                    إدارة الدورات
                   </button>
 
                   <button
                     onClick={() => handleTabChange("campaigns")}
-                    className={`w-full text-right px-4 py-3 rounded-lg transition-all flex items-center gap-3 ${
+                    className={`w-full text-right px-4 py-4 rounded-lg transition-all flex items-center gap-3 text-lg ${
                       activeTab === "campaigns" 
-                        ? "bg-[#7a1353] text-white" 
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-[#7a1353] text-white shadow-lg" 
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
                     }`}
                   >
-                    <FaImage />
-                    🖼️ الحملات الإعلانية
+                    <FaAd className="text-lg" />
+                    الحملات الإعلانية
                   </button>
 
                   <button
                     onClick={() => handleTabChange("account")}
-                    className={`w-full text-right px-4 py-3 rounded-lg transition-all flex items-center gap-3 ${
+                    className={`w-full text-right px-4 py-4 rounded-lg transition-all flex items-center gap-3 text-lg ${
                       activeTab === "account" 
-                        ? "bg-[#7a1353] text-white" 
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-[#7a1353] text-white shadow-lg" 
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
                     }`}
                   >
-                    <FaUser />
-                    👤 إدارة الحساب
+                    <FaUser className="text-lg" />
+                    إدارة الحساب
                   </button>
+                </div>
 
-                  <div className="border-t pt-4 mt-4">
-                    <button
-                      onClick={() => router.push("/course-schedule")}
-                      className="w-full text-right px-4 py-3 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition flex items-center gap-3 mb-2"
-                    >
-                      <FaCalendarAlt />
-                      عرض جدول الدورات
-                    </button>
-                    <button
-                      onClick={() => router.push("/")}
-                      className="w-full text-right px-4 py-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition flex items-center gap-3"
-                    >
-                      <FaArrowLeft />
-                      العودة للرئيسية
-                    </button>
-                  </div>
+                <div className="border-t border-gray-200 pt-4 mt-6 space-y-2">
+                  <button
+                    onClick={() => {
+                      router.push("/course-schedule");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full text-right px-4 py-3 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition flex items-center gap-3"
+                  >
+                    <FaCalendarAlt />
+                    عرض جدول الدورات
+                  </button>
+                  <button
+                    onClick={() => {
+                      router.push("/");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full text-right px-4 py-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition flex items-center gap-3"
+                  >
+                    <FaArrowLeft />
+                    العودة للرئيسية
+                  </button>
                 </div>
               </div>
             </div>
@@ -443,33 +457,36 @@ export default function CoursesDashboard() {
         <div className="hidden sm:flex border-b border-gray-200 mb-8 overflow-x-auto">
           <button
             onClick={() => handleTabChange("courses")}
-            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap ${
+            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
               activeTab === "courses" 
                 ? "border-[#7a1353] text-[#7a1353]" 
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
-            🎓 إدارة الدورات
+            <FaBook />
+            إدارة الدورات
           </button>
           <button
             onClick={() => handleTabChange("campaigns")}
-            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap ${
+            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
               activeTab === "campaigns" 
                 ? "border-[#7a1353] text-[#7a1353]" 
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
-            🖼️ الحملات الإعلانية
+            <FaAd />
+            الحملات الإعلانية
           </button>
           <button
             onClick={() => handleTabChange("account")}
-            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap ${
+            className={`px-6 py-3 font-medium text-lg border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
               activeTab === "account" 
                 ? "border-[#7a1353] text-[#7a1353]" 
                 : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
-            👤 إدارة الحساب
+            <FaUser />
+            إدارة الحساب
           </button>
         </div>
 
@@ -477,13 +494,13 @@ export default function CoursesDashboard() {
         <div className="sm:hidden mb-6">
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="w-full bg-[#7a1353] text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2"
+            className="w-full bg-[#7a1353] text-white py-4 rounded-lg font-medium flex items-center justify-center gap-3 text-lg shadow-lg hover:bg-[#6a124a] transition-all duration-300"
           >
             <FaBars />
             عرض القائمة - { 
-              activeTab === "courses" ? "🎓 إدارة الدورات" :
-              activeTab === "campaigns" ? "🖼️ الحملات" :
-              "👤 إدارة الحساب"
+              activeTab === "courses" ? "إدارة الدورات" :
+              activeTab === "campaigns" ? "الحملات الإعلانية" :
+              "إدارة الحساب"
             }
           </button>
         </div>
@@ -509,8 +526,8 @@ export default function CoursesDashboard() {
                         type="text"
                         value={newCourse.title}
                         onChange={(e) => handleNewCourseInputChange('title', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                        placeholder="أدخل عنوان الدورة"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500"
+                        placeholder="أدخل عنوان الدورة هنا"
                         required
                       />
                     </div>
@@ -520,9 +537,9 @@ export default function CoursesDashboard() {
                       <textarea
                         value={newCourse.description}
                         onChange={(e) => handleNewCourseInputChange('description', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none bg-white placeholder-gray-500"
                         rows="3"
-                        placeholder="وصف مختصر للدورة"
+                        placeholder="اكتب وصفاً مختصراً للدورة"
                         required
                       />
                     </div>
@@ -537,8 +554,8 @@ export default function CoursesDashboard() {
                           type="text"
                           value={newCourse.price}
                           onChange={(e) => handleNewCourseInputChange('price', e.target.value)}
-                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                          placeholder="السعر"
+                          className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500"
+                          placeholder="مثال: 500 ريال"
                           required
                         />
                       </div>
@@ -551,8 +568,8 @@ export default function CoursesDashboard() {
                           type="text"
                           value={newCourse.discount}
                           onChange={(e) => handleNewCourseInputChange('discount', e.target.value)}
-                          className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                          placeholder="السعر بعد الخصم"
+                          className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500"
+                          placeholder="مثال: 20%"
                         />
                       </div>
                     </div>
@@ -563,8 +580,8 @@ export default function CoursesDashboard() {
                         type="text"
                         value={newCourse.category}
                         onChange={(e) => handleNewCourseInputChange('category', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                        placeholder="مثلاً: القانون / اللغة / التقنية"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500"
+                        placeholder="مثال: القانون، اللغة، التقنية"
                         required
                       />
                     </div>
@@ -578,7 +595,7 @@ export default function CoursesDashboard() {
                         type="file"
                         accept="image/*"
                         onChange={(e) => setImageFile(e.target.files[0])}
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[#7a1353] file:text-white file:cursor-pointer transition-all text-sm"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#7a1353] file:text-white file:cursor-pointer transition-all bg-white"
                       />
                     </div>
                   </div>
@@ -596,7 +613,7 @@ export default function CoursesDashboard() {
                         type="date"
                         value={newCourse.start_date}
                         onChange={(e) => handleNewCourseInputChange('start_date', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white"
                       />
                     </div>
 
@@ -609,8 +626,8 @@ export default function CoursesDashboard() {
                         type="text"
                         value={newCourse.schedule_time}
                         onChange={(e) => handleNewCourseInputChange('schedule_time', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                        placeholder="6:00 مساءً - 8:00 مساءً"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500"
+                        placeholder="مثال: 6:00 مساءً - 8:00 مساءً"
                       />
                     </div>
 
@@ -623,8 +640,8 @@ export default function CoursesDashboard() {
                         type="text"
                         value={newCourse.meeting_days}
                         onChange={(e) => handleNewCourseInputChange('meeting_days', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                        placeholder="السبت، الإثنين، الأربعاء"
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500"
+                        placeholder="مثال: السبت، الإثنين، الأربعاء"
                       />
                     </div>
                   </div>
@@ -632,7 +649,7 @@ export default function CoursesDashboard() {
 
                 <button
                   type="submit"
-                  className="w-full bg-[#7a1353] text-white px-6 py-3 sm:py-4 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                  className="w-full bg-[#7a1353] text-white px-6 py-4 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-lg"
                 >
                   <FaPlus />
                   إضافة الدورة
@@ -743,7 +760,7 @@ export default function CoursesDashboard() {
                                 type="date"
                                 value={course.start_date || ""}
                                 onChange={(e) => handleInputChange(course.id, 'start_date', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white"
                               />
                             </div>
                             <div>
@@ -752,8 +769,8 @@ export default function CoursesDashboard() {
                                 type="text"
                                 value={course.schedule_time || ""}
                                 onChange={(e) => handleInputChange(course.id, 'schedule_time', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                placeholder="6:00 مساءً - 8:00 مساءً"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white placeholder-gray-500"
+                                placeholder="مثال: 6:00 مساءً - 8:00 مساءً"
                               />
                             </div>
                             <div>
@@ -762,8 +779,8 @@ export default function CoursesDashboard() {
                                 type="text"
                                 value={course.meeting_days || ""}
                                 onChange={(e) => handleInputChange(course.id, 'meeting_days', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none"
-                                placeholder="السبت، الإثنين، الأربعاء"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white placeholder-gray-500"
+                                placeholder="مثال: السبت، الإثنين، الأربعاء"
                               />
                             </div>
                           </div>
@@ -910,7 +927,7 @@ function CampaignsManager({ showToast }) {
   return (
     <div>
       <h2 className="text-xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2">
-        <FaImage className="text-[#7a1353]" />
+        <FaAd className="text-[#7a1353]" />
         إدارة الحملات الإعلانية
       </h2>
 
@@ -920,12 +937,13 @@ function CampaignsManager({ showToast }) {
             type="file"
             accept="image/*"
             onChange={(e) => setImageFile(e.target.files[0])}
-            className="border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-gray-800 file:mr-2 file:py-1 file:px-3 file:rounded-md file:bg-[#7a1353] file:text-white file:border-none file:cursor-pointer w-full sm:w-auto transition-all duration-300 text-sm"
+            className="border border-gray-300 rounded-lg px-3 sm:px-4 py-3 text-gray-800 file:mr-2 file:py-2 file:px-4 file:rounded-md file:bg-[#7a1353] file:text-white file:border-none file:cursor-pointer w-full sm:w-auto transition-all duration-300 bg-white"
+            placeholder="اختر صورة للحملة الإعلانية"
           />
           <button
             type="submit"
             disabled={uploading}
-            className="bg-[#7a1353] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-[#7a1353] text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
           >
             <FaPlus />
             {uploading ? "جاري الرفع..." : "رفع الصورة"}
@@ -976,6 +994,13 @@ function AccountManager({ showToast, userName }) {
       }
 
       if (user) {
+        // جلب بيانات إضافية من جدول profiles
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
         setUserData({
           id: user.id,
           email: user.email,
@@ -983,6 +1008,7 @@ function AccountManager({ showToast, userName }) {
                 user.user_metadata?.full_name || 
                 user.email?.split('@')[0] || 
                 "مدير النظام",
+          role: profile?.role || 'user',
           created_at: user.created_at
         });
       }
@@ -1100,7 +1126,7 @@ function AccountManager({ showToast, userName }) {
               <div>
                 <p className="text-sm text-gray-600">معرف المستخدم</p>
                 <p className="font-semibold text-gray-800 text-xs font-mono">
-                  {userData.id.substring(0, 8)}...
+                  {userData?.id?.substring(0, 8)}...
                 </p>
               </div>
               <FaUser className="text-[#7a1353]" />
@@ -1109,7 +1135,7 @@ function AccountManager({ showToast, userName }) {
             <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="text-sm text-gray-600">الاسم</p>
-                <p className="font-semibold text-gray-800">{userData.name}</p>
+                <p className="font-semibold text-gray-800">{userData?.name}</p>
               </div>
               <FaUser className="text-[#7a1353]" />
             </div>
@@ -1117,16 +1143,29 @@ function AccountManager({ showToast, userName }) {
             <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="text-sm text-gray-600">البريد الإلكتروني</p>
-                <p className="font-semibold text-gray-800">{userData.email}</p>
+                <p className="font-semibold text-gray-800">{userData?.email}</p>
               </div>
               <FaEnvelope className="text-[#7a1353]" />
             </div>
 
             <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
               <div>
+                <p className="text-sm text-gray-600">الصلاحية</p>
+                <p className="font-semibold text-gray-800">
+                  {userData?.role === 'super_admin' ? 'المشرف العام' : 
+                   userData?.role === 'manager' ? 'مدير' : 
+                   userData?.role === 'hr' ? 'مدير موارد بشرية' : 
+                   userData?.role === 'content' ? 'مدير محتوى' : 'مستخدم'}
+                </p>
+              </div>
+              <FaLock className="text-[#7a1353]" />
+            </div>
+
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
+              <div>
                 <p className="text-sm text-gray-600">تاريخ الإنشاء</p>
                 <p className="font-semibold text-gray-800">
-                  {new Date(userData.created_at).toLocaleDateString('ar-EG')}
+                  {userData?.created_at ? new Date(userData.created_at).toLocaleDateString('ar-EG') : "غير معروف"}
                 </p>
               </div>
               <FaCalendarAlt className="text-[#7a1353]" />
@@ -1150,7 +1189,7 @@ function AccountManager({ showToast, userName }) {
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500"
                 placeholder="أدخل كلمة المرور الحالية"
                 required
                 disabled={loading}
@@ -1165,8 +1204,8 @@ function AccountManager({ showToast, userName }) {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
-                placeholder="كلمة المرور الجديدة (6 أحرف على الأقل)"
+                className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500"
+                placeholder="أدخل كلمة المرور الجديدة (6 أحرف على الأقل)"
                 required
                 minLength="6"
                 disabled={loading}
@@ -1181,7 +1220,7 @@ function AccountManager({ showToast, userName }) {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-500 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all"
+                className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500"
                 placeholder="أعد إدخال كلمة المرور الجديدة"
                 required
                 disabled={loading}
@@ -1191,7 +1230,7 @@ function AccountManager({ showToast, userName }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#7a1353] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-[#7a1353] text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <FaLock />
               {loading ? "جاري التغيير..." : "تغيير كلمة المرور"}
@@ -1200,7 +1239,8 @@ function AccountManager({ showToast, userName }) {
 
           <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
-              💡 نصائح لأمان أفضل
+              <FaCog />
+              نصائح لأمان أفضل
             </h4>
             <ul className="text-xs text-blue-700 space-y-1">
               <li>• استخدم كلمة مرور قوية تحتوي على أحرف وأرقام ورموز</li>
@@ -1209,6 +1249,282 @@ function AccountManager({ showToast, userName }) {
             </ul>
           </div>
         </div>
+      </div>
+
+      {/* ✅ إضافة قسم إدارة المشرفين للمشرف العام فقط */}
+      {userData?.role === 'super_admin' && (
+        <AdminManager showToast={showToast} userData={userData} />
+      )}
+    </div>
+  );
+}
+
+/* 👇 الكومبوننت الخاص بإضافة المشرفين الجدد */
+function AdminManager({ showToast, userData }) {
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [newAdminName, setNewAdminName] = useState("");
+  const [newAdminRole, setNewAdminRole] = useState("manager");
+  const [addingAdmin, setAddingAdmin] = useState(false);
+  const [adminsList, setAdminsList] = useState([]);
+
+  // ✅ قائمة الأدوار المتاحة
+  const roles = [
+    { value: "super_admin", label: "المشرف العام" },
+    { value: "manager", label: "مدير" },
+    { value: "hr", label: "مدير موارد بشرية" },
+    { value: "content", label: "مدير محتوى" }
+  ];
+
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
+
+  async function fetchAdmins() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ خطأ في جلب قائمة المشرفين:', error);
+    } else {
+      setAdminsList(data || []);
+    }
+  }
+
+  const handleAddAdmin = async (e) => {
+    e.preventDefault();
+    
+    if (!newAdminEmail || !newAdminName) {
+      showToast("⚠️ الرجاء إدخال جميع البيانات", "error");
+      return;
+    }
+
+    // ✅ التحقق من صحة البريد الإلكتروني
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newAdminEmail)) {
+      showToast("❌ يرجى إدخال بريد إلكتروني صحيح", "error");
+      return;
+    }
+
+    setAddingAdmin(true);
+
+    try {
+      // ✅ إنشاء المستخدم الجديد في Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email: newAdminEmail.trim().toLowerCase(),
+        password: "123456", // كلمة مرور افتراضية
+        options: {
+          data: {
+            name: newAdminName,
+            role: newAdminRole
+          }
+        }
+      });
+
+      if (error) {
+        console.error('❌ خطأ في إنشاء المستخدم:', error);
+        
+        if (error.message.includes('User already registered')) {
+          showToast("❌ هذا البريد الإلكتروني مسجل بالفعل", "error");
+        } else {
+          showToast(`❌ خطأ في إنشاء المستخدم: ${error.message}`, "error");
+        }
+        return;
+      }
+
+      if (data.user) {
+        // ✅ إضافة المستخدم إلى جدول profiles
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: data.user.id,
+              email: newAdminEmail.trim().toLowerCase(),
+              name: newAdminName,
+              role: newAdminRole,
+              created_by: userData.id,
+              created_at: new Date().toISOString()
+            }
+          ]);
+
+        if (profileError) {
+          console.error("❌ خطأ في إنشاء البروفايل:", profileError);
+          
+          // حذف المستخدم من Auth إذا فشل إنشاء البروفايل
+          await supabase.auth.admin.deleteUser(data.user.id);
+          showToast("❌ فشل في إنشاء حساب المشرف", "error");
+          return;
+        }
+
+        showToast(`✅ تم إنشاء المشرف ${newAdminName} بنجاح! كلمة المرور: 123456`, "success");
+        
+        // تحديث القائمة
+        fetchAdmins();
+        
+        // مسح الحقول
+        setNewAdminEmail("");
+        setNewAdminName("");
+        setNewAdminRole("manager");
+      }
+    } catch (error) {
+      console.error("❌ خطأ غير متوقع:", error);
+      showToast("❌ حدث خطأ غير متوقع", "error");
+    } finally {
+      setAddingAdmin(false);
+    }
+  };
+
+  async function deleteAdmin(adminId) {
+    if (!confirm("هل أنت متأكد من حذف هذا المشرف؟")) return;
+
+    try {
+      // حذف من جدول profiles أولاً
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', adminId);
+
+      if (profileError) {
+        showToast(`❌ فشل حذف المشرف: ${profileError.message}`, "error");
+        return;
+      }
+
+      // حذف من Authentication (يتطلب صلاحيات admin)
+      const { error: authError } = await supabase.auth.admin.deleteUser(adminId);
+      
+      if (authError) {
+        console.warn("⚠️ تم حذف المشرف من القائمة ولكن قد يبقى في نظام المصادقة:", authError);
+      }
+
+      showToast("✅ تم حذف المشرف بنجاح", "success");
+      fetchAdmins();
+    } catch (error) {
+      console.error("❌ خطأ غير متوقع:", error);
+      showToast("❌ حدث خطأ أثناء حذف المشرف", "error");
+    }
+  }
+
+  const getRoleLabel = (role) => {
+    const roleObj = roles.find(r => r.value === role);
+    return roleObj ? roleObj.label : role;
+  };
+
+  return (
+    <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200 mt-6">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <FaUserPlus className="text-[#7a1353]" />
+        إدارة المشرفين
+      </h3>
+
+      {/* نموذج إضافة مشرف جديد */}
+      <form onSubmit={handleAddAdmin} className="space-y-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              البريد الإلكتروني *
+            </label>
+            <input
+              type="email"
+              value={newAdminEmail}
+              onChange={(e) => setNewAdminEmail(e.target.value)}
+              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white placeholder-gray-500"
+              placeholder="أدخل البريد الإلكتروني"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              الاسم الكامل *
+            </label>
+            <input
+              type="text"
+              value={newAdminName}
+              onChange={(e) => setNewAdminName(e.target.value)}
+              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white placeholder-gray-500"
+              placeholder="أدخل الاسم الكامل"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            الصلاحية
+          </label>
+          <select
+            value={newAdminRole}
+            onChange={(e) => setNewAdminRole(e.target.value)}
+            className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white"
+          >
+            {roles.map(role => (
+              <option key={role.value} value={role.value}>
+                {role.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+          <p className="text-yellow-800 text-sm">
+            <strong>ملاحظة:</strong> كلمة المرور الافتراضية هي <strong>123456</strong> 
+            <br />يمكن للمشرف تغييرها بعد تسجيل الدخول أول مرة
+          </p>
+        </div>
+
+        <button
+          type="submit"
+          disabled={addingAdmin}
+          className="w-full bg-[#7a1353] text-white px-6 py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          <FaUserPlus />
+          {addingAdmin ? "جاري الإضافة..." : "إضافة مشرف جديد"}
+        </button>
+      </form>
+
+      {/* قائمة المشرفين الحاليين */}
+      <div>
+        <h4 className="text-md font-semibold text-gray-800 mb-3">
+          قائمة المشرفين ({adminsList.length})
+        </h4>
+        
+        {adminsList.length === 0 ? (
+          <div className="text-center py-4 text-gray-500">
+            <p>لا يوجد مشرفين مضافين حالياً</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {adminsList.map((admin) => (
+              <div key={admin.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#f8e8f1] rounded-full flex items-center justify-center">
+                      <FaUser className="text-[#7a1353]" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">{admin.name}</p>
+                      <p className="text-sm text-gray-600">{admin.email}</p>
+                      <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs mt-1">
+                        {getRoleLabel(admin.role)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {admin.id !== userData.id && (
+                  <button
+                    onClick={() => deleteAdmin(admin.id)}
+                    className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                    title="حذف المشرف"
+                  >
+                    <FaTrash />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
