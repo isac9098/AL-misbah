@@ -64,7 +64,7 @@ function FloatingAdminBubble() {
     >
       <button
         onClick={goToDashboard}
-        className="flex items-center justify-center w-14 h-14 bg-purple-600 rounded-full shadow-lg hover:bg-purple-700 transition-all"
+        className="flex items-center justify-center w-14 h-14 bg-[#7b0b4c] rounded-full shadow-lg hover:bg-purple-700 transition-all"
       >
         {/* أيقونة الترس */}
         <svg 
