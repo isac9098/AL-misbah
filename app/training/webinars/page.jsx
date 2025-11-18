@@ -5,7 +5,7 @@ export default function WebinarsPage() {
       <div 
         className="flex-1 bg-cover bg-center bg-fixed flex flex-col items-center justify-center py-16"
         style={{
-          backgroundImage: "url('/images/dom-fou-YRMWVcdyhmI-unsplash.jpg')",
+          backgroundImage: "url('/images/dom-fou-YRMWVcdyhmI-unsplash.png')",
         }}
       >
         <div className="bg-white/90 backdrop-blur-md p-8 md:p-10 rounded-2xl max-w-4xl text-center shadow-2xl mx-4">
