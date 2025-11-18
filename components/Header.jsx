@@ -817,7 +817,14 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
         onClose();
-        router.push("/dashboard");
+        
+        // ✅ إرسال إشارة تحديث للفقاعة
+        window.dispatchEvent(new Event('authChange'));
+        
+        // ✅ الانتقال للداشبورد مع إعادة تحميل الصفحة لتظهر الفقاعة
+        router.push("/dashboard").then(() => {
+          window.location.reload();
+        });
       }
     } catch (error) {
       console.error("❌ خطأ غير متوقع:", error);
@@ -889,8 +896,6 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
     >
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative animate-scale-in text-right" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-3 left-3 text-gray-500 hover:text-gray-700">✕</button>
-
-        {/* ✅ إزالة قسم عرض البريدات المسموحة */}
 
         <h2 className="text-xl font-semibold text-center mb-4 text-[#7b0b4c]">
           تسجيل الدخول للإدارة
