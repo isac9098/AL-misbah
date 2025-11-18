@@ -552,7 +552,7 @@ export default function CoursesDashboard() {
                         onChange={(e) => handleNewCourseInputChange('description', e.target.value)}
                         className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none bg-white placeholder-gray-500"
                         rows="3"
-                        placeholder="اكتب وصفاً مختصراً للدورة"
+                        placeholder="اكتب وصفاً للدورة"
                         required
                       />
                     </div>
@@ -582,7 +582,7 @@ export default function CoursesDashboard() {
                           value={newCourse.discount}
                           onChange={(e) => handleNewCourseInputChange('discount', e.target.value)}
                           className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500"
-                          placeholder="مثال: 20%"
+                          placeholder="السعر بعد الخصم"
                         />
                       </div>
                     </div>
