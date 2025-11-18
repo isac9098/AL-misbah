@@ -840,7 +840,7 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
       if (checkError && checkError.code === 'PGRST116') {
         // المستخدم غير موجود - إنشاء سجل جديد كمشرف عام
         console.log('📝 إنشاء مستخدم جديد في الجدول كمشرف عام:', user.email);
-        
+
         const { error: insertError } = await supabase
           .from('users')
           .insert([
@@ -861,7 +861,7 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
       } else if (existingUser && existingUser.role !== 'super_admin') {
         // ✅ تحديث الصلاحية إلى مشرف عام إذا لم يكن كذلك
         console.log('🔄 تحديث صلاحية المستخدم إلى مشرف عام:', user.email);
-        
+
         const { error: updateError } = await supabase
           .from('users')
           .update({ role: 'super_admin' })
@@ -889,18 +889,8 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
     >
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative animate-scale-in text-right" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-3 left-3 text-gray-500 hover:text-gray-700">✕</button>
-        
-        {/* ✅ عرض البريدات المسموحة */}
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="text-sm font-semibold text-blue-800 mb-2 text-center">
-            البريدات المسموحة للدخول
-          </h3>
-          <div className="text-xs text-blue-700 space-y-1 text-center">
-            <div>fayhaalfatihhamida@gmail.com</div>
-            <div>alfathhamid599@gmail.com</div>
-            <div>atag4052@gmail.com</div>
-          </div>
-        </div>
+
+        {/* ✅ إزالة قسم عرض البريدات المسموحة */}
 
         <h2 className="text-xl font-semibold text-center mb-4 text-[#7b0b4c]">
           تسجيل الدخول للإدارة
@@ -922,7 +912,7 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7b0b4c] ${
                 emailError ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="أدخل بريدك المسموح"
+              placeholder="أدخل بريدك الإلكتروني"
               disabled={loading}
               onChange={() => setEmailError("")} // مسح الخطأ عند الكتابة
             />
@@ -971,10 +961,10 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
           </button>
         </form>
 
-        {/* ✅ معلومات إضافية */}
+        {/* ✅ معلومات إضافية - تم تبسيطها */}
         <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
           <p className="text-xs text-gray-600 text-center">
-            فقط البريدات المذكورة أعلاه مسموح لها بالدخول كمشرفين عامين
+            نظام الدخول مخصص للمشرفين المعتمدين فقط
           </p>
         </div>
       </div>
