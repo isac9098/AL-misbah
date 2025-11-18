@@ -720,7 +720,9 @@ function LangCurrencyFixed({ currency, toggleCurrency, lang, toggleLang, showLan
 function LoginModal({ mode, onClose, setAuthMode, setUser }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [generalError, setGeneralError] = useState("");
 
   useEffect(() => {
     const handleEsc = (e) => e.key === "Escape" && onClose();
@@ -728,92 +730,102 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
     return () => document.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  // ✅ قائمة البريد المسموح فقط
+  const allowedEmails = [
+    "alfathhamid599@gmail.com",
+    "fayhaalfatihhamida@gmail.com", 
+    "atag4052@gmail.com",
+    "admin@almisbah.com"
+  ];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    
+    // مسح جميع الأخطاء السابقة
+    setEmailError("");
+    setPasswordError("");
+    setGeneralError("");
 
     try {
       const form = new FormData(e.target);
-      const email = form.get("email");
+      const email = form.get("email").trim().toLowerCase();
       const password = form.get("password");
 
-      if (mode === "login") {
-        // تسجيل الدخول باستخدام Supabase Auth
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
+      // ✅ التحقق إذا كان البريد مسموحاً
+      if (!allowedEmails.includes(email)) {
+        setEmailError("❌ هذا البريد الإلكتروني غير مسموح بالدخول");
+        setLoading(false);
+        return;
+      }
 
-        if (error) throw error;
+      // ✅ التحقق من صحة البريد الإلكتروني
+      if (!email || !email.includes('@')) {
+        setEmailError("❌ يرجى إدخال بريد إلكتروني صحيح");
+        setLoading(false);
+        return;
+      }
 
-        if (data.user) {
-          // جلب بيانات المستخدم الإضافية من جدول profiles
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('name, role')
-            .eq('id', data.user.id)
-            .single();
+      // ✅ التحقق من كلمة المرور
+      if (!password || password.length < 6) {
+        setPasswordError("❌ كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+        setLoading(false);
+        return;
+      }
 
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-          }
+      console.log('🔐 محاولة تسجيل الدخول:', email);
 
-          const userData = {
-            id: data.user.id,
-            email: data.user.email,
-            name: profile?.name || data.user.email,
-            role: profile?.role || 'user'
-          };
+      // تسجيل الدخول باستخدام Supabase Auth
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
 
-          localStorage.setItem("user", JSON.stringify(userData));
-          setUser(userData);
-          onClose();
-          router.push("/dashboard");
+      if (error) {
+        console.error('❌ خطأ في تسجيل الدخول:', error);
+        
+        if (error.message.includes('Invalid login credentials')) {
+          setPasswordError("❌ كلمة المرور غير صحيحة");
+        } else if (error.message.includes('Email not confirmed')) {
+          setGeneralError("❌ يرجى تأكيد بريدك الإلكتروني أولاً");
+        } else {
+          setGeneralError(`❌ خطأ في التسجيل: ${error.message}`);
         }
-      } else {
-        // إنشاء حساب جديد
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              name: email.split('@')[0] // اسم افتراضي من البريد الإلكتروني
-            }
-          }
-        });
+        setLoading(false);
+        return;
+      }
 
-        if (error) throw error;
+      if (data.user) {
+        console.log('✅ تم تسجيل الدخول بنجاح:', data.user);
+        
+        // جلب بيانات المستخدم الإضافية
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('name, role')
+          .eq('id', data.user.id)
+          .single();
 
-        if (data.user) {
-          // إنشاء profile للمستخدم الجديد
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              {
-                id: data.user.id,
-                email: data.user.email,
-                name: email.split('@')[0],
-                role: 'user'
-              }
-            ]);
+        const userData = {
+          id: data.user.id,
+          email: data.user.email,
+          name: profile?.name || data.user.user_metadata?.name || data.user.email,
+          role: profile?.role || 'user'
+        };
 
-          if (profileError) {
-            console.error("Error creating profile:", profileError);
-          }
-
-          alert("✅ تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.");
-          setAuthMode("login");
-        }
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+        onClose();
+        router.push("/dashboard");
       }
     } catch (error) {
-      console.error("Authentication error:", error);
-      setError(error.message || "❌ حدث خطأ أثناء المصادقة!");
+      console.error("❌ خطأ غير متوقع:", error);
+      setGeneralError("❌ حدث خطأ غير متوقع أثناء التسجيل");
     } finally {
       setLoading(false);
     }
   };
 
+  // ✅ إخفاء زر إنشاء حساب جديد - فقط تسجيل الدخول مسموح
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
@@ -823,12 +835,12 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative animate-scale-in text-right" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-3 left-3 text-gray-500 hover:text-gray-700">✕</button>
         <h2 className="text-xl font-semibold text-center mb-4 text-[#7b0b4c]">
-          {mode === "login" ? "تسجيل الدخول" : "إنشاء حساب جديد"}
+          تسجيل الدخول للإدارة
         </h2>
         
-        {error && (
+        {generalError && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="text-red-700 text-sm font-medium">{error}</div>
+            <div className="text-red-700 text-sm font-medium">{generalError}</div>
           </div>
         )}
 
@@ -839,22 +851,41 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
               type="email"
               name="email"
               required
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7b0b4c]"
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7b0b4c] ${
+                emailError ? 'border-red-500' : 'border-gray-300'
+              }`}
               placeholder="example@mail.com"
               disabled={loading}
+              onChange={() => setEmailError("")} // مسح الخطأ عند الكتابة
             />
+            {emailError && (
+              <div className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                <span>⚠️</span>
+                {emailError}
+              </div>
+            )}
           </div>
+          
           <div>
             <label className="block text-sm mb-1">كلمة المرور</label>
             <input 
               type="password" 
               name="password" 
               required 
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7b0b4c]" 
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7b0b4c] ${
+                passwordError ? 'border-red-500' : 'border-gray-300'
+              }`} 
               disabled={loading}
-              minLength={6}
+              onChange={() => setPasswordError("")} // مسح الخطأ عند الكتابة
             />
+            {passwordError && (
+              <div className="text-red-600 text-xs mt-1 flex items-center gap-1">
+                <span>⚠️</span>
+                {passwordError}
+              </div>
+            )}
           </div>
+          
           <button 
             type="submit" 
             className="w-full bg-[#7b0b4c] text-white py-2 rounded-lg font-medium hover:bg-[#5e0839] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -863,23 +894,15 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                {mode === "login" ? "جاري تسجيل الدخول..." : "جاري إنشاء الحساب..."}
+                جاري تسجيل الدخول...
               </>
             ) : (
-              mode === "login" ? "تسجيل الدخول" : "إنشاء حساب"
+              "تسجيل الدخول"
             )}
           </button>
         </form>
 
-        <div className="mt-4 text-center">
-          <button
-            type="button"
-            onClick={() => setAuthMode(mode === "login" ? "register" : "login")}
-            className="text-sm text-[#7b0b4c] hover:underline"
-          >
-            {mode === "login" ? "ليس لديك حساب؟ سجل الآن" : "لديك حساب بالفعل؟ سجل الدخول"}
-          </button>
-        </div>
+        {/* ✅ إزالة رابط إنشاء حساب جديد */}
       </div>
     </div>
   );
