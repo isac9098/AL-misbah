@@ -7,6 +7,11 @@ import { useApp } from "../app/context/AppContext";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 
+// ✅ إعداد Supabase
+const supabaseUrl = "https://kyazwzdyodysnmlqmljv.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5YXp3emR5b2R5c25tbHFtbGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjI4ODcsImV4cCI6MjA3NTc5ODg4N30.5oPcHui5y6onGAr9EYkq8fSihKeb4iC8LQFsLijIco4";
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 /* ======================= GlobalAnimations ======================= */
 function GlobalAnimations() {
   useEffect(() => {
@@ -30,17 +35,46 @@ export default function Header() {
   const { currency, setCurrency, t, lang, toggleLang } = useApp();
   const [authMode, setAuthMode] = useState(null);
   const [user, setUser] = useState(null);
-  // ✅ حالة التحكم في إظهار/إخفاء زر اللغة
   const [showLanguageButton, setShowLanguageButton] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) setUser(JSON.parse(storedUser));
+    const loadUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name, role')
+          .eq('id', session.user.id)
+          .single();
+        
+        const userData = {
+          id: session.user.id,
+          email: session.user.email,
+          name: profile?.name || session.user.email,
+          role: profile?.role || 'user'
+        };
+        
+        setUser(userData);
+        localStorage.setItem("user", JSON.stringify(userData));
+      } else {
+        // Fallback to localStorage if no session but user exists in localStorage
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) setUser(JSON.parse(storedUser));
+      }
+    };
+    
+    loadUser();
   }, []);
 
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem("user");
+    }
   };
 
   const toggleCurrency = () => setCurrency(currency === "USD" ? "QAR" : "USD");
@@ -52,14 +86,13 @@ export default function Header() {
       {/* Top Bar */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-gray-100 relative z-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        
-  {/* Logo */}
+
+          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <img src="/logo1.png" alt="AL Misbah Logo" className="w-10 h-10 object-contain" />
-            
-<span className="font-extrabold tracking-wide text-[#7b0b4c]" style={{ fontFamily: 'var(--font-aref)' }}>
-  مركز المصباح
-</span>
+            <span className="font-extrabold tracking-wide text-[#7b0b4c]" style={{ fontFamily: 'var(--font-aref)' }}>
+              مركز المصباح
+            </span>
           </Link>
 
           {/* Controls */}
@@ -71,7 +104,7 @@ export default function Header() {
               toggleCurrency={toggleCurrency}
               lang={lang}
               toggleLang={toggleLang}
-              showLanguageButton={showLanguageButton} // ✅ تمرير الحالة
+              showLanguageButton={showLanguageButton}
             />
           </div>
         </div>
@@ -81,7 +114,7 @@ export default function Header() {
       <div className="absolute top-16 left-0 w-full bg-white/10 backdrop-blur-sm z-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between">
           <button className="flex items-center gap-2 text-gray-800 hover:text-[#7b0b4c]">
-            
+            {/* يمكن إضافة أي عناصر إضافية هنا */}
           </button>
 
           <div className="flex items-center gap-3">
@@ -129,13 +162,6 @@ export default function Header() {
   );
 }
 
-// ✅ إعداد Supabase
-const supabaseUrl = "https://kyazwzdyodysnmlqmljv.supabase.co";
-const supabaseKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5YXp3emR5b2R5c25tbHFtbGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjI4ODcsImV4cCI6MjA3NTc5ODg4N30.5oPcHui5y6onGAr9EYkq8fSihKeb4iC8LQFsLijIco4";
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-
 /* ======================= SearchButton ======================= */
 function SearchButton() {
   const [open, setOpen] = useState(false);
@@ -144,22 +170,18 @@ function SearchButton() {
   const [loading, setLoading] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [error, setError] = useState(null);
-  const [toast, setToast] = useState(null); // ✅ إضافة حالة للـ Toast
-  
-  // ✅ استخدام Context للعملة
+  const [toast, setToast] = useState(null);
+
   const { formatCurrency } = useApp();
 
-  // ✅ إظهار Toast
   const showToast = (message, type = "success") => {
     setToast({ message, type });
   };
 
-  // ✅ إغلاق Toast
   const closeToast = () => {
     setToast(null);
   };
 
-  // ✅ البحث المباشر من Supabase
   useEffect(() => {
     if (!query.trim()) {
       setSuggestions([]);
@@ -173,7 +195,6 @@ function SearchButton() {
       console.log('🔍 جاري البحث عن:', query);
 
       try {
-        // ✅ استعلام بالأعمدة الموجودة فقط
         const { data, error } = await supabase
           .from("courses")
           .select("id, title, category, description, price, image")
@@ -201,7 +222,6 @@ function SearchButton() {
     return () => clearTimeout(delayDebounce);
   }, [query]);
 
-  // ✅ عند تنفيذ البحث الكامل
   const handleSearch = (e) => {
     e.preventDefault();
     if (!query.trim()) return;
@@ -210,7 +230,6 @@ function SearchButton() {
     setOpen(false);
   };
 
-  // ✅ عند الضغط على اقتراح
   const handleSelect = (course) => {
     setSelectedCourse(course);
     setQuery("");
@@ -218,12 +237,10 @@ function SearchButton() {
     setSuggestions([]);
   };
 
-  // ✅ إغلاق النافذة المنبثقة
   const handleClosePopup = () => {
     setSelectedCourse(null);
   };
 
-  // ✅ إضافة الدورة إلى السلة
   const handleAddToCart = (course) => {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
     const existingItem = cart.find(item => item.id === course.id);
@@ -235,14 +252,13 @@ function SearchButton() {
       });
       localStorage.setItem("cart", JSON.stringify(cart));
       window.dispatchEvent(new Event("cartUpdated"));
-      showToast("تمت إضافة الدورة إلى السلة بنجاح!", "success"); // ✅ استخدام Toast
+      showToast("تمت إضافة الدورة إلى السلة بنجاح!", "success");
     } else {
-      showToast("هذه الدورة موجودة بالفعل في السلة!", "warning"); // ✅ استخدام Toast
+      showToast("هذه الدورة موجودة بالفعل في السلة!", "warning");
     }
     handleClosePopup();
   };
 
-  // ✅ الانتقال إلى قسم الدورات
   const scrollToCourses = () => {
     const section = document.getElementById("courses-section");
     if (section) {
@@ -250,7 +266,6 @@ function SearchButton() {
     }
   };
 
-  // ✅ إغلاق البحث عند النقر خارج المربع
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (open && !event.target.closest('.search-container')) {
@@ -305,7 +320,6 @@ function SearchButton() {
               </button>
             </form>
 
-            {/* ✅ عرض الخطأ إذا وجد */}
             {error && (
               <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <div className="text-red-700 text-sm font-medium">{error}</div>
@@ -315,7 +329,6 @@ function SearchButton() {
               </div>
             )}
 
-            {/* قائمة النتائج */}
             {loading && (
               <div className="flex justify-center py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#7b0b4c]"></div>
@@ -344,7 +357,7 @@ function SearchButton() {
                     )}
                     {course.price && (
                       <div className="text-xs text-gray-600 mt-1">
-                        السعر: {formatCurrency(parseFloat(course.price.replace(/[^\d.]/g, "") || 0))} {/* ✅ استخدام formatCurrency */}
+                        السعر: {formatCurrency(parseFloat(course.price.replace(/[^\d.]/g, "") || 0))}
                       </div>
                     )}
                   </div>
@@ -384,7 +397,7 @@ function SearchButton() {
         />
       )}
 
-      {/* ✅ عرض Toast */}
+      {/* عرض Toast */}
       {toast && (
         <Toast 
           message={toast.message} 
@@ -398,7 +411,7 @@ function SearchButton() {
 
 /* ======================= CoursePopup ======================= */
 function CoursePopup({ course, onClose, onAddToCart }) {
-  const { formatCurrency } = useApp(); // ✅ استخدام Context للعملة
+  const { formatCurrency } = useApp();
 
   useEffect(() => {
     const handleEsc = (e) => e.key === "Escape" && onClose();
@@ -459,7 +472,7 @@ function CoursePopup({ course, onClose, onAddToCart }) {
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="text-center mb-4">
                 <div className="text-3xl font-bold text-[#7b0b4c]">
-                  {formatCurrency(parseFloat(course.price?.replace(/[^\d.]/g, "") || 0))} {/* ✅ استخدام formatCurrency */}
+                  {formatCurrency(parseFloat(course.price?.replace(/[^\d.]/g, "") || 0))}
                 </div>
                 <div className="text-sm text-gray-600 mt-1">سعر الدورة</div>
               </div>
@@ -489,7 +502,7 @@ function CoursePopup({ course, onClose, onAddToCart }) {
   );
 }
 
-// ✅ مكون Toast (يجب إضافته في نفس الملف)
+/* ======================= Toast ======================= */
 function Toast({ message, type = "success", onClose }) {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -526,14 +539,12 @@ function CartButton() {
   const { currency, formatCurrency, t } = useApp();
   const [open, setOpen] = useState(false);
   const [cart, setCart] = useState([]);
-  const [toast, setToast] = useState(null); // ✅ إضافة حالة للـ Toast
+  const [toast, setToast] = useState(null);
 
-  // ✅ إظهار Toast
   const showToast = (message, type = "success") => {
     setToast({ message, type });
   };
 
-  // ✅ إغلاق Toast
   const closeToast = () => {
     setToast(null);
   };
@@ -559,15 +570,15 @@ function CartButton() {
     setCart(updated);
     localStorage.setItem("cart", JSON.stringify(updated));
     window.dispatchEvent(new Event("cartUpdated"));
-    showToast("تم إزالة الدورة من السلة", "success"); // ✅ استخدام Toast
+    showToast("تم إزالة الدورة من السلة", "success");
   };
 
   const handleWhatsAppOrder = () => {
     if (!cart.length) {
-      showToast("السلة فارغة!", "warning"); // ✅ استخدام Toast
+      showToast("السلة فارغة!", "warning");
       return;
     }
-    
+
     const message =
       "مرحباً! أود طلب الدورات التالية:\n\n" +
       cart
@@ -576,7 +587,7 @@ function CartButton() {
       `\n\n${t("cart")} الإجمالي: ${formatCurrency(totalPrice)}`;
     window.open("https://wa.me/+97472041794?text=" + encodeURIComponent(message), "_blank");
     setOpen(false);
-    showToast("جاري فتح واتساب لإكمال الطلب...", "success"); // ✅ استخدام Toast
+    showToast("جاري فتح واتساب لإكمال الطلب...", "success");
   };
 
   const modal = (
@@ -588,11 +599,11 @@ function CartButton() {
         >
           ✕
         </button>
-        
+
         <h3 className="font-bold text-[#7b0b4c] mb-4 text-lg border-b pb-2 border-gray-100">
           {t("cart")}
         </h3>
-        
+
         {cart.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-3">🛒</div>
@@ -627,14 +638,14 @@ function CartButton() {
                 </li>
               ))}
             </ul>
-            
+
             <div className="flex justify-between items-center text-sm font-medium mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <span className="text-gray-700 font-semibold">الإجمالي:</span>
               <span className="text-[#7b0b4c] font-bold text-lg">
                 {formatCurrency(totalPrice)}
               </span>
             </div>
-            
+
             <button
               onClick={handleWhatsAppOrder}
               className="w-full bg-[#25D366] text-white py-3 rounded-lg text-sm font-bold hover:bg-[#1eb15a] transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
@@ -664,10 +675,10 @@ function CartButton() {
           </span>
         )}
       </button>
-      
+
       {open && typeof window !== "undefined" && createPortal(modal, document.body)}
-      
-      {/* ✅ عرض Toast */}
+
+      {/* عرض Toast */}
       {toast && (
         <Toast 
           message={toast.message} 
@@ -690,8 +701,8 @@ function LangCurrencyFixed({ currency, toggleCurrency, lang, toggleLang, showLan
         <DollarSign className="w-4 h-4" />
         <span>{currency}</span>
       </div>
-      
-      {/* ✅ زر اللغة - مخفي افتراضياً */}
+
+      {/* زر اللغة - مخفي افتراضياً */}
       {showLanguageButton && (
         <div
           onClick={toggleLang}
@@ -708,6 +719,8 @@ function LangCurrencyFixed({ currency, toggleCurrency, lang, toggleLang, showLan
 /* ======================= LoginModal ======================= */
 function LoginModal({ mode, onClose, setAuthMode, setUser }) {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const handleEsc = (e) => e.key === "Escape" && onClose();
@@ -715,26 +728,89 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
     return () => document.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const users = [
-      { name: "المدير العام", email: "alfathhamid599@gmail.com", password: "123456", role: "general_manager" },
-      { name: "المدير التنفيذي", email: "fayhaalfatihhamida@gmail.com", password: "123456", role: "executive" },
-      { name: "مدير الموارد البشرية", email: "atag4052@gmail.com", password: "123456", role: "hr" },
-    ];
+    setLoading(true);
+    setError("");
 
-    const form = new FormData(e.target);
-    const email = form.get("email");
-    const password = form.get("password");
-    const foundUser = users.find((u) => u.email === email && u.password === password);
+    try {
+      const form = new FormData(e.target);
+      const email = form.get("email");
+      const password = form.get("password");
 
-    if (foundUser) {
-      localStorage.setItem("user", JSON.stringify(foundUser));
-      setUser(foundUser);
-      onClose();
-      router.push("/dashboard");
-    } else {
-      alert("❌ البريد الإلكتروني أو كلمة المرور غير صحيحة!");
+      if (mode === "login") {
+        // تسجيل الدخول باستخدام Supabase Auth
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+          // جلب بيانات المستخدم الإضافية من جدول profiles
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('name, role')
+            .eq('id', data.user.id)
+            .single();
+
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+          }
+
+          const userData = {
+            id: data.user.id,
+            email: data.user.email,
+            name: profile?.name || data.user.email,
+            role: profile?.role || 'user'
+          };
+
+          localStorage.setItem("user", JSON.stringify(userData));
+          setUser(userData);
+          onClose();
+          router.push("/dashboard");
+        }
+      } else {
+        // إنشاء حساب جديد
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name: email.split('@')[0] // اسم افتراضي من البريد الإلكتروني
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+          // إنشاء profile للمستخدم الجديد
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: data.user.id,
+                email: data.user.email,
+                name: email.split('@')[0],
+                role: 'user'
+              }
+            ]);
+
+          if (profileError) {
+            console.error("Error creating profile:", profileError);
+          }
+
+          alert("✅ تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.");
+          setAuthMode("login");
+        }
+      }
+    } catch (error) {
+      console.error("Authentication error:", error);
+      setError(error.message || "❌ حدث خطأ أثناء المصادقة!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -749,6 +825,13 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
         <h2 className="text-xl font-semibold text-center mb-4 text-[#7b0b4c]">
           {mode === "login" ? "تسجيل الدخول" : "إنشاء حساب جديد"}
         </h2>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="text-red-700 text-sm font-medium">{error}</div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm mb-1">البريد الإلكتروني</label>
@@ -756,18 +839,47 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
               type="email"
               name="email"
               required
-              className="w-full px-3 py-2 border rounded-lg"
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7b0b4c]"
               placeholder="example@mail.com"
+              disabled={loading}
             />
           </div>
           <div>
             <label className="block text-sm mb-1">كلمة المرور</label>
-            <input type="password" name="password" required className="w-full px-3 py-2 border rounded-lg" />
+            <input 
+              type="password" 
+              name="password" 
+              required 
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7b0b4c]" 
+              disabled={loading}
+              minLength={6}
+            />
           </div>
-          <button type="submit" className="w-full bg-[#7b0b4c] text-white py-2 rounded-lg font-medium hover:bg-[#5e0839]">
-            {mode === "login" ? "تسجيل الدخول" : "تسجيل"}
+          <button 
+            type="submit" 
+            className="w-full bg-[#7b0b4c] text-white py-2 rounded-lg font-medium hover:bg-[#5e0839] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                {mode === "login" ? "جاري تسجيل الدخول..." : "جاري إنشاء الحساب..."}
+              </>
+            ) : (
+              mode === "login" ? "تسجيل الدخول" : "إنشاء حساب"
+            )}
           </button>
         </form>
+
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => setAuthMode(mode === "login" ? "register" : "login")}
+            className="text-sm text-[#7b0b4c] hover:underline"
+          >
+            {mode === "login" ? "ليس لديك حساب؟ سجل الآن" : "لديك حساب بالفعل؟ سجل الدخول"}
+          </button>
+        </div>
       </div>
     </div>
   );
