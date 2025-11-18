@@ -88,7 +88,7 @@ export default function CoursesDashboard() {
     getUserName();
   }, []);
 
-  // دالة لجلب اسم المستخدم من Supabase Auth
+  // دالة لجلب اسم المستخدم من Supabase Auth وجدول users
   async function getUserName() {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -100,11 +100,24 @@ export default function CoursesDashboard() {
       }
 
       if (user) {
-        const name = user.user_metadata?.name || 
-                    user.user_metadata?.full_name || 
-                    user.email?.split('@')[0] || 
-                    "مدير النظام";
-        setUserName(name);
+        // جلب البيانات من جدول users
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('name, role')
+          .eq('id', user.id)
+          .single();
+
+        if (userError) {
+          console.error("❌ خطأ في جلب بيانات الجدول:", userError);
+          // استخدام البيانات من Auth كبديل
+          const name = user.user_metadata?.name || 
+                      user.user_metadata?.full_name || 
+                      user.email?.split('@')[0] || 
+                      "مدير النظام";
+          setUserName(name);
+        } else {
+          setUserName(userData?.name || user.email?.split('@')[0] || "مدير النظام");
+        }
       } else {
         setUserName("مدير النظام");
       }
@@ -994,21 +1007,18 @@ function AccountManager({ showToast, userName }) {
       }
 
       if (user) {
-        // جلب بيانات إضافية من جدول profiles
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
+        // جلب البيانات من جدول users بدلاً من profiles
+        const { data: userTableData, error: userError } = await supabase
+          .from('users')
+          .select('name, role')
           .eq('id', user.id)
           .single();
 
         setUserData({
           id: user.id,
           email: user.email,
-          name: user.user_metadata?.name || 
-                user.user_metadata?.full_name || 
-                user.email?.split('@')[0] || 
-                "مدير النظام",
-          role: profile?.role || 'user',
+          name: userTableData?.name || user.user_metadata?.name || user.email?.split('@')[0],
+          role: userTableData?.role || 'user',
           created_at: user.created_at
         });
       }
@@ -1281,7 +1291,7 @@ function AdminManager({ showToast, userData }) {
 
   async function fetchAdmins() {
     const { data, error } = await supabase
-      .from('profiles')
+      .from('users') // ✅ تغيير من profiles إلى users
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -1334,9 +1344,9 @@ function AdminManager({ showToast, userData }) {
       }
 
       if (data.user) {
-        // ✅ إضافة المستخدم إلى جدول profiles
-        const { error: profileError } = await supabase
-          .from('profiles')
+        // ✅ إضافة المستخدم إلى جدول users بدلاً من profiles
+        const { error: userTableError } = await supabase
+          .from('users')
           .insert([
             {
               id: data.user.id,
@@ -1348,10 +1358,10 @@ function AdminManager({ showToast, userData }) {
             }
           ]);
 
-        if (profileError) {
-          console.error("❌ خطأ في إنشاء البروفايل:", profileError);
+        if (userTableError) {
+          console.error("❌ خطأ في إنشاء المستخدم في الجدول:", userTableError);
           
-          // حذف المستخدم من Auth إذا فشل إنشاء البروفايل
+          // حذف المستخدم من Auth إذا فشل إنشاء السجل في الجدول
           await supabase.auth.admin.deleteUser(data.user.id);
           showToast("❌ فشل في إنشاء حساب المشرف", "error");
           return;
@@ -1379,14 +1389,14 @@ function AdminManager({ showToast, userData }) {
     if (!confirm("هل أنت متأكد من حذف هذا المشرف؟")) return;
 
     try {
-      // حذف من جدول profiles أولاً
-      const { error: profileError } = await supabase
-        .from('profiles')
+      // حذف من جدول users أولاً
+      const { error: userTableError } = await supabase
+        .from('users')
         .delete()
         .eq('id', adminId);
 
-      if (profileError) {
-        showToast(`❌ فشل حذف المشرف: ${profileError.message}`, "error");
+      if (userTableError) {
+        showToast(`❌ فشل حذف المشرف: ${userTableError.message}`, "error");
         return;
       }
 
