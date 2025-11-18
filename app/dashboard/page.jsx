@@ -875,7 +875,7 @@ function AccountManager({ showToast, userName }) {
         showToast("❌ فشل في تحميل بيانات المستخدم", "error");
         return;
       }
-      
+
       if (user) {
         setUserData({
           id: user.id,
@@ -932,7 +932,7 @@ function AccountManager({ showToast, userName }) {
 
       if (authError) {
         console.error("❌ خطأ في المصادقة:", authError);
-        
+
         // رسائل خطأ أكثر وضوحاً
         if (authError.message.includes("Invalid login credentials")) {
           showToast("❌ كلمة المرور الحالية غير صحيحة", "error");
@@ -941,7 +941,7 @@ function AccountManager({ showToast, userName }) {
         } else {
           showToast(`❌ خطأ في المصادقة: ${authError.message}`, "error");
         }
-        
+
         setLoading(false);
         return;
       }
@@ -960,7 +960,7 @@ function AccountManager({ showToast, userName }) {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        
+
         // إعادة تحميل بيانات المستخدم للتأكد من التحديث
         getUserData();
       }
