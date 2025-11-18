@@ -1,36 +1,70 @@
-"use client";
-
+'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 function FloatingAdminBubble() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-  // تفحص إذا كان فيه مستخدم مسجل دخول
+  // ✅ التحقق من حالة تسجيل الدخول
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
+    const checkAuth = () => {
+      try {
+        // التحقق من localStorage
+        const userData = localStorage.getItem("user");
+        if (userData) {
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+          setIsVisible(true);
+        } else {
+          setUser(null);
+          setIsVisible(false);
+        }
+      } catch (error) {
+        console.error("❌ خطأ في قراءة بيانات المستخدم:", error);
+        setUser(null);
+        setIsVisible(false);
+      }
+    };
+
+    // التحقق فوراً
+    checkAuth();
+
+    // ✅ الاستماع لتغييرات localStorage
+    const handleStorageChange = (e) => {
+      if (e.key === "user") {
+        checkAuth();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
-  // إذا ما فيه مستخدم مسجل، ما تظهرشي الفقاعة
-  if (!user) {
+  // ✅ الانتقال إلى Dashboard
+  const goToDashboard = () => {
+    if (user) {
+      router.push("/dashboard");
+    }
+  };
+
+  // ✅ إخفاء الفقاعة إذا لم يكن هناك مستخدم مسجل
+  if (!isVisible || !user) {
     return null;
   }
 
-  // الانتقال للداشبورد
-  const goToDashboard = () => {
-    router.push("/dashboard");
-  };
-
   return (
-    <div className="fixed bottom-6 left-6 z-50">
+    <div
+      className="fixed bottom-6 left-6 z-50"
+      title="لوحة التحكم - انقر للانتقال"
+    >
       <button
         onClick={goToDashboard}
         className="flex items-center justify-center w-14 h-14 bg-purple-600 rounded-full shadow-lg hover:bg-purple-700 transition-all"
-        title="اذهب إلى لوحة التحكم"
       >
         {/* أيقونة الترس */}
         <svg 
