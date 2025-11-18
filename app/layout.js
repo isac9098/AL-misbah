@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Cairo } from "next/font/google";
 import { AppProvider } from "./context/AppContext";
+import FloatingAdminBubble from "../components/FloatingAdminBubble";
 
 const cairo = Cairo({
   subsets: ["arabic"],
@@ -8,7 +9,7 @@ const cairo = Cairo({
 });
 
 export const metadata = {
-  title: "مركز المصباح للتدريب. ",
+  title: "مركز المصباح للتدريب",
   description: "موقع تدريب ودورات أونلاين",
 };
 
@@ -20,7 +21,10 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
       <body className={`${cairo.className} bg-white text-gray-900`}>
-        <AppProvider>{children}</AppProvider>
+        <AppProvider>
+          {children}
+          <FloatingAdminBubble />
+        </AppProvider>
       </body>
     </html>
   );
