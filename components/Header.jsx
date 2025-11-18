@@ -730,18 +730,17 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
     return () => document.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  // ✅ قائمة البريد المسموح فقط
+  // ✅ قائمة البريد المسموح فقط - 3 مشرفين فقط
   const allowedEmails = [
-    "alfathhamid599@gmail.com",
-    "fayhaalfatihhamida@gmail.com", 
-    "atag4052@gmail.com",
-    "admin@almisbah.com"
+    "fayhaalfatihhamida@gmail.com",
+    "alfathhamid599@gmail.com", 
+    "atag4052@gmail.com"
   ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     // مسح جميع الأخطاء السابقة
     setEmailError("");
     setPasswordError("");
@@ -783,7 +782,7 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
 
       if (error) {
         console.error('❌ خطأ في تسجيل الدخول:', error);
-        
+
         if (error.message.includes('Invalid login credentials')) {
           setPasswordError("❌ كلمة المرور غير صحيحة");
         } else if (error.message.includes('Email not confirmed')) {
@@ -797,10 +796,13 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
 
       if (data.user) {
         console.log('✅ تم تسجيل الدخول بنجاح:', data.user);
-        
+
+        // ✅ التأكد من أن المستخدم مضاف في جدول users كمشرف عام
+        await ensureUserInTable(data.user);
+
         // جلب بيانات المستخدم الإضافية
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
+        const { data: userTableData, error: userError } = await supabase
+          .from('users')
           .select('name, role')
           .eq('id', data.user.id)
           .single();
@@ -808,8 +810,8 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
         const userData = {
           id: data.user.id,
           email: data.user.email,
-          name: profile?.name || data.user.user_metadata?.name || data.user.email,
-          role: profile?.role || 'user'
+          name: userTableData?.name || data.user.user_metadata?.name || data.user.email,
+          role: userTableData?.role || 'super_admin' // ✅ دور افتراضي كمشرف عام
         };
 
         localStorage.setItem("user", JSON.stringify(userData));
@@ -825,6 +827,59 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
     }
   };
 
+  // ✅ دالة للتأكد من وجود المستخدم في جدول users كمشرف عام
+  const ensureUserInTable = async (user) => {
+    try {
+      // التحقق إذا كان المستخدم موجوداً في الجدول
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (checkError && checkError.code === 'PGRST116') {
+        // المستخدم غير موجود - إنشاء سجل جديد كمشرف عام
+        console.log('📝 إنشاء مستخدم جديد في الجدول كمشرف عام:', user.email);
+        
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: user.id,
+              email: user.email,
+              name: user.user_metadata?.name || user.email?.split('@')[0] || 'المشرف',
+              role: 'super_admin', // ✅ جميع المستخدمين المسموحين يكونون مشرفين عامين
+              created_at: new Date().toISOString()
+            }
+          ]);
+
+        if (insertError) {
+          console.error('❌ خطأ في إنشاء المستخدم:', insertError);
+        } else {
+          console.log('✅ تم إنشاء المستخدم كمشرف عام في الجدول');
+        }
+      } else if (existingUser && existingUser.role !== 'super_admin') {
+        // ✅ تحديث الصلاحية إلى مشرف عام إذا لم يكن كذلك
+        console.log('🔄 تحديث صلاحية المستخدم إلى مشرف عام:', user.email);
+        
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ role: 'super_admin' })
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.error('❌ خطأ في تحديث الصلاحية:', updateError);
+        } else {
+          console.log('✅ تم تحديث الصلاحية إلى مشرف عام');
+        }
+      } else {
+        console.log('✅ المستخدم موجود مسبقاً كمشرف عام في الجدول');
+      }
+    } catch (error) {
+      console.error('❌ خطأ في ensureUserInTable:', error);
+    }
+  };
+
   // ✅ إخفاء زر إنشاء حساب جديد - فقط تسجيل الدخول مسموح
   return (
     <div
@@ -834,10 +889,23 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
     >
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative animate-scale-in text-right" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-3 left-3 text-gray-500 hover:text-gray-700">✕</button>
+        
+        {/* ✅ عرض البريدات المسموحة */}
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="text-sm font-semibold text-blue-800 mb-2 text-center">
+            البريدات المسموحة للدخول
+          </h3>
+          <div className="text-xs text-blue-700 space-y-1 text-center">
+            <div>fayhaalfatihhamida@gmail.com</div>
+            <div>alfathhamid599@gmail.com</div>
+            <div>atag4052@gmail.com</div>
+          </div>
+        </div>
+
         <h2 className="text-xl font-semibold text-center mb-4 text-[#7b0b4c]">
           تسجيل الدخول للإدارة
         </h2>
-        
+
         {generalError && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
             <div className="text-red-700 text-sm font-medium">{generalError}</div>
@@ -854,7 +922,7 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7b0b4c] ${
                 emailError ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="example@mail.com"
+              placeholder="أدخل بريدك المسموح"
               disabled={loading}
               onChange={() => setEmailError("")} // مسح الخطأ عند الكتابة
             />
@@ -865,7 +933,7 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
               </div>
             )}
           </div>
-          
+
           <div>
             <label className="block text-sm mb-1">كلمة المرور</label>
             <input 
@@ -875,6 +943,7 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7b0b4c] ${
                 passwordError ? 'border-red-500' : 'border-gray-300'
               }`} 
+              placeholder="أدخل كلمة المرور"
               disabled={loading}
               onChange={() => setPasswordError("")} // مسح الخطأ عند الكتابة
             />
@@ -885,7 +954,7 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
               </div>
             )}
           </div>
-          
+
           <button 
             type="submit" 
             className="w-full bg-[#7b0b4c] text-white py-2 rounded-lg font-medium hover:bg-[#5e0839] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -902,7 +971,12 @@ function LoginModal({ mode, onClose, setAuthMode, setUser }) {
           </button>
         </form>
 
-        {/* ✅ إزالة رابط إنشاء حساب جديد */}
+        {/* ✅ معلومات إضافية */}
+        <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <p className="text-xs text-gray-600 text-center">
+            فقط البريدات المذكورة أعلاه مسموح لها بالدخول كمشرفين عامين
+          </p>
+        </div>
       </div>
     </div>
   );
