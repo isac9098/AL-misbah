@@ -37,10 +37,10 @@ export default function Footer() {
           <p className="flex justify-center md:justify-start items-center gap-2 text-lg">
             <Mail className="w-5 h-5 text-[#7b1e1e]" />
             <a
-              href="mailto:fayhaalfatihhamida@gmail.com"
+              href="mailto:info@almisbahcenter.com"
               className="hover:underline hover:text-[#a52a2a]"
             >
-              fayhaalfatihhamida@gmail.com
+              info@almisbahcenter.com
             </a>
           </p>
         </div>
