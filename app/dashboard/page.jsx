@@ -1213,11 +1213,9 @@ function AccountManager({ showToast, userName }) {
         <button
           type="button"
           className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-          onClick={() => {
-            const input = document.querySelector('input[type="password"]');
-            if (input) {
-              input.type = input.type === 'password' ? 'text' : 'password';
-            }
+          onClick={(e) => {
+            const input = e.target.closest('.relative').querySelector('input');
+            input.type = input.type === 'password' ? 'text' : 'password';
           }}
         >
           <FaEye className="text-lg" />
