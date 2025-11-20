@@ -24,32 +24,180 @@ import {
   FaAd,
   FaCog,
   FaEye,
-  FaSpinner
+  FaSpinner,
+  FaCheck,
+  FaExclamationTriangle,
+  FaInfoCircle
 } from "react-icons/fa";
 
-// 🧩 مكون Toast بسيط
-function Toast({ message, type = "info", onClose }) {
+// 🧩 مكون Toast احترافي
+function Toast({ message, type = "info", onClose, action }) {
   useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
+    const timer = setTimeout(onClose, type === "confirm" ? 10000 : 5000);
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, [onClose, type]);
 
-  const bgColor =
-    type === "error"
-      ? "bg-red-600"
-      : type === "success"
-      ? "bg-green-600"
-      : type === "warning"
-      ? "bg-yellow-600"
-      : "bg-[#7a1353]";
+  const bgColor = {
+    error: "bg-red-500",
+    success: "bg-green-500",
+    warning: "bg-yellow-500",
+    info: "bg-blue-500",
+    confirm: "bg-orange-500"
+  }[type];
+
+  const icon = {
+    error: <FaTimes className="text-lg" />,
+    success: <FaCheck className="text-lg" />,
+    warning: <FaExclamationTriangle className="text-lg" />,
+    info: <FaInfoCircle className="text-lg" />,
+    confirm: <FaExclamationTriangle className="text-lg" />
+  }[type];
 
   return (
-    <div
-      className={`fixed left-1/2 transform -translate-x-1/2 ${bgColor} text-white 
-      px-5 py-3 rounded-xl shadow-lg text-sm md:text-base z-[9999] transition-all duration-500`}
-      style={{ top: "70px" }}
-    >
-      {message}
+    <div className={`fixed top-4 right-4 ${bgColor} text-white p-4 rounded-lg shadow-lg max-w-sm z-[9999] animate-slide-in`}>
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 mt-0.5">
+          {icon}
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium">{message}</p>
+          {action && type === "confirm" && (
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={action.onConfirm}
+                className="px-3 py-1 bg-white text-red-600 rounded text-xs font-medium hover:bg-gray-100 transition-colors"
+              >
+                نعم، احذف
+              </button>
+              <button
+                onClick={onClose}
+                className="px-3 py-1 bg-gray-600 text-white rounded text-xs font-medium hover:bg-gray-700 transition-colors"
+              >
+                إلغاء
+              </button>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="flex-shrink-0 text-white hover:text-gray-200 transition-colors"
+        >
+          <FaTimes className="text-sm" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 🧩 مكون لحقول الإدخال مع التحقق من الصحة
+function InputField({ label, type = "text", value, onChange, placeholder, required, error, disabled, icon, ...props }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+        {icon}
+        {label}
+        {required && <span className="text-red-500">*</span>}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        className={`w-full px-3 sm:px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700 ${
+          error ? "border-red-500" : "border-gray-300"
+        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        placeholder={placeholder}
+        required={required}
+        disabled={disabled}
+        {...props}
+      />
+      {error && (
+        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+          <FaExclamationTriangle className="text-xs" />
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// 🧩 مكون للنصوص الطويلة مع التحقق
+function TextareaField({ label, value, onChange, placeholder, required, error, disabled, rows = 3, ...props }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+        {required && <span className="text-red-500">*</span>}
+      </label>
+      <textarea
+        value={value}
+        onChange={onChange}
+        className={`w-full px-3 sm:px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none bg-white placeholder-gray-500 text-gray-700 ${
+          error ? "border-red-500" : "border-gray-300"
+        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        placeholder={placeholder}
+        required={required}
+        disabled={disabled}
+        rows={rows}
+        {...props}
+      />
+      {error && (
+        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+          <FaExclamationTriangle className="text-xs" />
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// 🧩 مكون لكلمة المرور مع إظهار/إخفاء
+function PasswordField({ label, value, onChange, placeholder, required, error, disabled, showPassword, onToggleShowPassword }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+        {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        <input
+          type={showPassword ? "text" : "password"}
+          value={value}
+          onChange={onChange}
+          className={`w-full px-3 sm:px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700 pr-10 ${
+            error ? "border-red-500" : "border-gray-300"
+          } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          placeholder={placeholder}
+          required={required}
+          disabled={disabled}
+        />
+        <button
+          type="button"
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+          onClick={onToggleShowPassword}
+          disabled={disabled}
+        >
+          <FaEye className={`text-lg ${showPassword ? "text-[#7a1353]" : ""}`} />
+        </button>
+      </div>
+      {error && (
+        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+          <FaExclamationTriangle className="text-xs" />
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// 🧩 مكون لعرض المعلومات
+function InfoCard({ icon, label, value, className = "" }) {
+  return (
+    <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
+      <div>
+        <p className="text-sm text-gray-600">{label}</p>
+        <p className={`font-semibold text-gray-800 ${className}`}>{value}</p>
+      </div>
+      {icon}
     </div>
   );
 }
@@ -64,7 +212,7 @@ function getFileNameFromUrl(url, bucketName) {
 export default function CoursesDashboard() {
   const router = useRouter();
   const [toast, setToast] = useState(null);
-  const showToast = (msg, type = "info") => setToast({ msg, type });
+  const showToast = (msg, type = "info", action = null) => setToast({ msg, type, action });
 
   const [courses, setCourses] = useState([]);
   const [newCourse, setNewCourse] = useState({
@@ -78,12 +226,13 @@ export default function CoursesDashboard() {
     start_date: "",
     meeting_days: ""
   });
+  const [formErrors, setFormErrors] = useState({});
   const [imageFile, setImageFile] = useState(null);
   const [userName, setUserName] = useState("");
   const [editingCourse, setEditingCourse] = useState(null);
   const [activeTab, setActiveTab] = useState("courses");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [loading, setLoading] = useState(false); // إضافة حالة التحميل
+  const [loading, setLoading] = useState(false);
   const COURSES_BUCKET = "courses-images";
 
   useEffect(() => {
@@ -91,116 +240,109 @@ export default function CoursesDashboard() {
     getUserName();
   }, []);
 
-  // دالة لجلب اسم المستخدم من Supabase Auth وجدول users
+  // التحقق من صحة النموذج
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!newCourse.title.trim()) {
+      errors.title = "حقل العنوان مطلوب";
+    }
+    
+    if (!newCourse.description.trim()) {
+      errors.description = "حقل الوصف مطلوب";
+    }
+    
+    if (!newCourse.price.trim()) {
+      errors.price = "حقل السعر مطلوب";
+    } else if (isNaN(Number(newCourse.price))) {
+      errors.price = "السعر يجب أن يكون رقماً";
+    }
+    
+    if (!newCourse.category.trim()) {
+      errors.category = "حقل الفئة مطلوب";
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // دالة لجلب اسم المستخدم
   async function getUserName() {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
-
-      if (error) {
-        console.error("❌ خطأ في جلب بيانات المستخدم:", error);
-        setUserName("مدير النظام");
-        return;
-      }
+      if (error) throw error;
 
       if (user) {
-        // جلب البيانات من جدول users
-        const { data: userData, error: userError } = await supabase
+        const { data: userData } = await supabase
           .from('users')
           .select('name, role')
           .eq('id', user.id)
           .single();
 
-        if (userError) {
-          console.error("❌ خطأ في جلب بيانات الجدول:", userError);
-          // استخدام البيانات من Auth كبديل
-          const name = user.user_metadata?.name || 
-                      user.user_metadata?.full_name || 
-                      user.email?.split('@')[0] || 
-                      "مدير النظام";
-          setUserName(name);
-        } else {
-          setUserName(userData?.name || user.email?.split('@')[0] || "مدير النظام");
-        }
-      } else {
-        setUserName("مدير النظام");
+        setUserName(userData?.name || user.email?.split('@')[0] || "مدير النظام");
       }
     } catch (error) {
-      console.error("❌ خطأ غير متوقع:", error);
+      console.error("❌ خطأ في جلب بيانات المستخدم:", error);
       setUserName("مدير النظام");
     }
   }
 
   async function fetchCourses() {
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
+      if (error) throw error;
+      setCourses(data || []);
+    } catch (error) {
       console.error("❌ خطأ في جلب الدورات:", error);
       showToast("❌ فشل في تحميل الدورات", "error");
-      return;
     }
-
-    setCourses(data || []);
   }
 
   async function uploadImage(file) {
-  try {
-    const fileName = `${Date.now()}-${file.name}`;
-    
-    console.log('📤 جاري رفع الصورة:', fileName);
-    
-    // 1. رفع الملف إلى Storage
-    const { data, error } = await supabase.storage
-      .from(COURSES_BUCKET)
-      .upload(fileName, file);
+    try {
+      const fileName = `${Date.now()}-${file.name}`;
+      
+      const { data, error } = await supabase.storage
+        .from(COURSES_BUCKET)
+        .upload(fileName, file);
 
-    if (error) {
-      console.error("❌ خطأ أثناء رفع الصورة:", error);
-      throw new Error(error.message);
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(COURSES_BUCKET)
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error("❌ خطأ في رفع الصورة:", error);
+      showToast("❌ فشل في رفع الصورة", "error");
+      return null;
     }
-
-    // 2. جلب الرابط العام مباشرة
-    const { data: { publicUrl } } = supabase.storage
-      .from(COURSES_BUCKET)
-      .getPublicUrl(fileName);
-
-    console.log('✅ تم الرفع بنجاح:', publicUrl);
-    return publicUrl;
-    
-  } catch (error) {
-    console.error("❌ خطأ في رفع الصورة:", error);
-    showToast(`فشل رفع الصورة: ${error.message}`, "error");
-    return null;
   }
-}
 
   async function addCourse(e) {
     e.preventDefault();
-    setLoading(true); // بدء التحميل
+    
+    if (!validateForm()) {
+      showToast("⚠️ يوجد أخطاء في النموذج، يرجى تصحيحها", "warning");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      if (
-        !newCourse.title ||
-        !newCourse.description ||
-        !newCourse.price ||
-        !newCourse.category
-      ) {
-        showToast("⚠️ الرجاء إدخال جميع البيانات المطلوبة", "error");
-        return;
-      }
-
-      let imageUrl = newCourse.image;
+      let imageUrl = "";
 
       if (imageFile) {
-        console.log("📤 جاري رفع الصورة...");
         imageUrl = await uploadImage(imageFile);
         if (!imageUrl) {
           setLoading(false);
           return;
         }
-        console.log("✅ تم رفع الصورة بنجاح:", imageUrl);
       }
 
       const courseData = {
@@ -212,46 +354,40 @@ export default function CoursesDashboard() {
         category: newCourse.category,
         schedule_time: newCourse.schedule_time || "",
         start_date: newCourse.start_date || "",
-        meeting_days: newCourse.meeting_days || "",
-        created_at: new Date().toISOString()
+        meeting_days: newCourse.meeting_days || ""
       };
-
-      console.log("📝 جاري إضافة الدورة...", courseData);
 
       const { data, error } = await supabase
         .from("courses")
         .insert([courseData])
         .select();
 
-      if (error) {
-        console.error("❌ خطأ أثناء إضافة الدورة:", error);
-        showToast(`حدث خطأ أثناء الإضافة: ${error.message}`, "error");
-      } else {
-        console.log("✅ تمت إضافة الدورة بنجاح:", data);
-        showToast("✅ تمت إضافة الدورة بنجاح!", "success");
-        setCourses([data[0], ...courses]);
-        setNewCourse({
-          title: "",
-          description: "",
-          image: "",
-          price: "",
-          discount: "",
-          category: "",
-          schedule_time: "",
-          start_date: "",
-          meeting_days: ""
-        });
-        setImageFile(null);
-        
-        // إعادة تعيين حقل الملف
-        const fileInput = document.querySelector('input[type="file"]');
-        if (fileInput) fileInput.value = '';
-      }
+      if (error) throw error;
+
+      showToast("✅ تمت إضافة الدورة بنجاح!", "success");
+      setCourses([data[0], ...courses]);
+      setNewCourse({
+        title: "",
+        description: "",
+        image: "",
+        price: "",
+        discount: "",
+        category: "",
+        schedule_time: "",
+        start_date: "",
+        meeting_days: ""
+      });
+      setImageFile(null);
+      setFormErrors({});
+      
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) fileInput.value = '';
+
     } catch (error) {
-      console.error("❌ خطأ غير متوقع:", error);
-      showToast("حدث خطأ غير متوقع", "error");
+      console.error("❌ خطأ أثناء إضافة الدورة:", error);
+      showToast(`❌ حدث خطأ أثناء الإضافة: ${error.message}`, "error");
     } finally {
-      setLoading(false); // إنهاء التحميل
+      setLoading(false);
     }
   }
 
@@ -324,37 +460,50 @@ export default function CoursesDashboard() {
 
   const handleNewCourseInputChange = (field, value) => {
     setNewCourse(prev => ({ ...prev, [field]: value }));
+    // مسح خطأ الحقل عند البدء بالكتابة
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  // دالة الحذف مع تأكيد
+  const confirmDelete = (courseId, courseTitle) => {
+    showToast(
+      `هل أنت متأكد من حذف الدورة "${courseTitle}"؟`,
+      "confirm",
+      {
+        onConfirm: () => deleteCourse(courseId)
+      }
+    );
   };
 
   async function deleteCourse(id) {
-    if (!confirm("هل أنت متأكد من حذف هذه الدورة؟")) return;
+    try {
+      const courseToDelete = courses.find((c) => c.id === id);
+      if (!courseToDelete) return;
 
-    const courseToDelete = courses.find((c) => c.id === id);
-    if (!courseToDelete) return;
+      const { error: dbError } = await supabase
+        .from("courses")
+        .delete()
+        .eq("id", id);
 
-    const { error: dbError } = await supabase
-      .from("courses")
-      .delete()
-      .eq("id", id);
+      if (dbError) throw dbError;
 
-    if (dbError) {
-      showToast(`❌ فشل حذف الدورة: ${dbError.message}`, "error");
-      return;
-    }
-
-    if (courseToDelete.image) {
-      const fileName = getFileNameFromUrl(courseToDelete.image, COURSES_BUCKET);
-      if (fileName) {
-        const { error: storageError } = await supabase.storage
-          .from(COURSES_BUCKET)
-          .remove([fileName]);
-        if (storageError)
-          console.warn("⚠️ فشل حذف الصورة من التخزين:", storageError);
+      if (courseToDelete.image) {
+        const fileName = getFileNameFromUrl(courseToDelete.image, COURSES_BUCKET);
+        if (fileName) {
+          await supabase.storage
+            .from(COURSES_BUCKET)
+            .remove([fileName]);
+        }
       }
-    }
 
-    setCourses(courses.filter((c) => c.id !== id));
-    showToast("✅ تم حذف الدورة بنجاح!", "success");
+      setCourses(courses.filter((c) => c.id !== id));
+      showToast("✅ تم حذف الدورة بنجاح!", "success");
+    } catch (error) {
+      console.error("❌ خطأ في الحذف:", error);
+      showToast("❌ فشل في حذف الدورة", "error");
+    }
   }
 
   const handleTabChange = (tab) => {
@@ -368,6 +517,7 @@ export default function CoursesDashboard() {
         <Toast
           message={toast.msg}
           type={toast.type}
+          action={toast.action}
           onClose={() => setToast(null)}
         />
       )}
@@ -388,7 +538,6 @@ export default function CoursesDashboard() {
               </div>
             </div>
             
-            {/* زر القائمة للهواتف */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="sm:hidden p-3 rounded-lg bg-[#7a1353] text-white hover:bg-[#6a124a] transition-all duration-300"
@@ -418,13 +567,11 @@ export default function CoursesDashboard() {
         {/* القائمة الجانبية للهواتف */}
         {mobileMenuOpen && (
           <div className="sm:hidden fixed inset-0 z-50">
-            {/* Overlay */}
             <div 
               className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
               onClick={() => setMobileMenuOpen(false)}
             />
             
-            {/* القائمة */}
             <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
               <div className="p-6 h-full flex flex-col">
                 <div className="flex items-center justify-between mb-8">
@@ -539,7 +686,7 @@ export default function CoursesDashboard() {
           </button>
         </div>
 
-        {/* زر القائمة للهواتف - يظهر بدل التبويبات */}
+        {/* زر القائمة للهواتف */}
         <div className="sm:hidden mb-6">
           <button
             onClick={() => setMobileMenuOpen(true)}
@@ -569,76 +716,57 @@ export default function CoursesDashboard() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">المعلومات الأساسية</h3>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">عنوان الدورة *</label>
-                      <input
-                        type="text"
-                        value={newCourse.title}
-                        onChange={(e) => handleNewCourseInputChange('title', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-                        placeholder="أدخل عنوان الدورة هنا"
-                        required
-                        disabled={loading}
-                      />
-                    </div>
+                    <InputField
+                      label="عنوان الدورة"
+                      value={newCourse.title}
+                      onChange={(e) => handleNewCourseInputChange('title', e.target.value)}
+                      placeholder="أدخل عنوان الدورة هنا"
+                      required
+                      error={formErrors.title}
+                      disabled={loading}
+                      icon={<FaBook />}
+                    />
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">الوصف *</label>
-                      <textarea
-                        value={newCourse.description}
-                        onChange={(e) => handleNewCourseInputChange('description', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none bg-white placeholder-gray-500 text-gray-700"
-                        rows="3"
-                        placeholder="اكتب وصفاً للدورة"
-                        required
-                        disabled={loading}
-                      />
-                    </div>
+                    <TextareaField
+                      label="الوصف"
+                      value={newCourse.description}
+                      onChange={(e) => handleNewCourseInputChange('description', e.target.value)}
+                      placeholder="اكتب وصفاً للدورة"
+                      required
+                      error={formErrors.description}
+                      disabled={loading}
+                    />
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                          <FaTag />
-                          السعر *
-                        </label>
-                        <input
-                          type="text"
-                          value={newCourse.price}
-                          onChange={(e) => handleNewCourseInputChange('price', e.target.value)}
-                          className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-                          placeholder="مثال: 500"
-                          required
-                          disabled={loading}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                          <FaPercent />
-                          الخصم
-                        </label>
-                        <input
-                          type="text"
-                          value={newCourse.discount}
-                          onChange={(e) => handleNewCourseInputChange('discount', e.target.value)}
-                          className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-                          placeholder="السعر بعد الخصم"
-                          disabled={loading}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">الفئة *</label>
-                      <input
-                        type="text"
-                        value={newCourse.category}
-                        onChange={(e) => handleNewCourseInputChange('category', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-                        placeholder="مثال: القانون، اللغة، التقنية"
+                      <InputField
+                        label="السعر"
+                        value={newCourse.price}
+                        onChange={(e) => handleNewCourseInputChange('price', e.target.value)}
+                        placeholder="مثال: 500"
                         required
+                        error={formErrors.price}
                         disabled={loading}
+                        icon={<FaTag />}
+                      />
+                      <InputField
+                        label="الخصم"
+                        value={newCourse.discount}
+                        onChange={(e) => handleNewCourseInputChange('discount', e.target.value)}
+                        placeholder="السعر بعد الخصم"
+                        disabled={loading}
+                        icon={<FaPercent />}
                       />
                     </div>
+
+                    <InputField
+                      label="الفئة"
+                      value={newCourse.category}
+                      onChange={(e) => handleNewCourseInputChange('category', e.target.value)}
+                      placeholder="مثال: القانون، اللغة، التقنية"
+                      required
+                      error={formErrors.category}
+                      disabled={loading}
+                    />
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
@@ -651,13 +779,7 @@ export default function CoursesDashboard() {
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (file) {
-                            // التحقق من حجم الصورة (5MB كحد أقصى)
-                            if (file.size > 5 * 1024 * 1024) {
-                              showToast('حجم الصورة كبير جداً. الحد الأقصى 5MB', "error");
-                              e.target.value = '';
-                              return;
-                            }
-                            // التحقق من نوع الصورة
+                            // إزالة التحقق من حجم الصورة
                             if (!file.type.startsWith('image/')) {
                               showToast('الرجاء اختيار ملف صورة فقط', "error");
                               e.target.value = '';
@@ -669,7 +791,7 @@ export default function CoursesDashboard() {
                         className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#7a1353] file:text-white file:cursor-pointer transition-all bg-white text-gray-700 disabled:opacity-50"
                         disabled={loading}
                       />
-                      <p className="text-xs text-gray-500 mt-1">الحد الأقصى لحجم الصورة: 5MB</p>
+                      <p className="text-xs text-gray-500 mt-1">جميع أحجام الصور مقبولة - الصيغ المدعومة: JPG, PNG, GIF, WebP</p>
                     </div>
                   </div>
 
@@ -677,49 +799,32 @@ export default function CoursesDashboard() {
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">الجدول الزمني</h3>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                        <FaCalendarAlt />
-                        تاريخ البدء
-                      </label>
-                      <input
-                        type="date"
-                        value={newCourse.start_date}
-                        onChange={(e) => handleNewCourseInputChange('start_date', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white text-gray-700"
-                        disabled={loading}
-                      />
-                    </div>
+                    <InputField
+                      label="تاريخ البدء"
+                      type="date"
+                      value={newCourse.start_date}
+                      onChange={(e) => handleNewCourseInputChange('start_date', e.target.value)}
+                      disabled={loading}
+                      icon={<FaCalendarAlt />}
+                    />
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                        <FaClock />
-                        الموعد
-                      </label>
-                      <input
-                        type="text"
-                        value={newCourse.schedule_time}
-                        onChange={(e) => handleNewCourseInputChange('schedule_time', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-                        placeholder="مثال: 6:00 مساءً - 8:00 مساءً"
-                        disabled={loading}
-                      />
-                    </div>
+                    <InputField
+                      label="الموعد"
+                      value={newCourse.schedule_time}
+                      onChange={(e) => handleNewCourseInputChange('schedule_time', e.target.value)}
+                      placeholder="مثال: 6:00 مساءً - 8:00 مساءً"
+                      disabled={loading}
+                      icon={<FaClock />}
+                    />
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                        <FaCalendarDay />
-                        أيام الإنعقاد
-                      </label>
-                      <input
-                        type="text"
-                        value={newCourse.meeting_days}
-                        onChange={(e) => handleNewCourseInputChange('meeting_days', e.target.value)}
-                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-                        placeholder="مثال: السبت، الإثنين، الأربعاء"
-                        disabled={loading}
-                      />
-                    </div>
+                    <InputField
+                      label="أيام الإنعقاد"
+                      value={newCourse.meeting_days}
+                      onChange={(e) => handleNewCourseInputChange('meeting_days', e.target.value)}
+                      placeholder="مثال: السبت، الإثنين، الأربعاء"
+                      disabled={loading}
+                      icon={<FaCalendarDay />}
+                    />
                   </div>
                 </div>
                 
@@ -800,7 +905,7 @@ export default function CoursesDashboard() {
                             {editingCourse === course.id ? 'إلغاء' : 'تعديل'}
                           </button>
                           <button
-                            onClick={() => deleteCourse(course.id)}
+                            onClick={() => confirmDelete(course.id, course.title)}
                             className="px-3 py-2 sm:px-4 sm:py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-2 text-sm font-medium"
                           >
                             <FaTrash />
@@ -843,35 +948,24 @@ export default function CoursesDashboard() {
                             تعديل الجدول الزمني
                           </h4>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-                            <div>
-                              <label className="block text-sm text-gray-600 mb-2">تاريخ البدء</label>
-                              <input
-                                type="date"
-                                value={course.start_date || ""}
-                                onChange={(e) => handleInputChange(course.id, 'start_date', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm text-gray-600 mb-2">الموعد</label>
-                              <input
-                                type="text"
-                                value={course.schedule_time || ""}
-                                onChange={(e) => handleInputChange(course.id, 'schedule_time', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white placeholder-gray-500"
-                                placeholder="مثال: 6:00 مساءً - 8:00 مساءً"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm text-gray-600 mb-2">أيام الإنعقاد</label>
-                              <input
-                                type="text"
-                                value={course.meeting_days || ""}
-                                onChange={(e) => handleInputChange(course.id, 'meeting_days', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white placeholder-gray-500"
-                                placeholder="مثال: السبت، الإثنين، الأربعاء"
-                              />
-                            </div>
+                            <InputField
+                              label="تاريخ البدء"
+                              type="date"
+                              value={course.start_date || ""}
+                              onChange={(e) => handleInputChange(course.id, 'start_date', e.target.value)}
+                            />
+                            <InputField
+                              label="الموعد"
+                              value={course.schedule_time || ""}
+                              onChange={(e) => handleInputChange(course.id, 'schedule_time', e.target.value)}
+                              placeholder="مثال: 6:00 مساءً - 8:00 مساءً"
+                            />
+                            <InputField
+                              label="أيام الإنعقاد"
+                              value={course.meeting_days || ""}
+                              onChange={(e) => handleInputChange(course.id, 'meeting_days', e.target.value)}
+                              placeholder="مثال: السبت، الإثنين، الأربعاء"
+                            />
                           </div>
                           <div className="flex space-x-3 space-x-reverse justify-end mt-6">
                             <button
@@ -915,11 +1009,12 @@ export default function CoursesDashboard() {
   );
 }
 
-/* 👇 الكومبوننت الخاص بالحملات */
+/* 👇 الكومبوننت الخاص بالحملات الإعلانية */
 function CampaignsManager({ showToast }) {
   const [campaigns, setCampaigns] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
   const CAMPAIGN_BUCKET = "campaigns-images";
 
   useEffect(() => {
@@ -927,99 +1022,139 @@ function CampaignsManager({ showToast }) {
   }, []);
 
   async function fetchCampaigns() {
-    const { data, error } = await supabase
-      .from("campaigns")
-      .select("*")
-      .order("id", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("campaigns")
+        .select("*")
+        .order("id", { ascending: false });
 
-    if (error) console.error("❌ خطأ في جلب الحملات:", error);
-    else setCampaigns(data || []);
+      if (error) throw error;
+      setCampaigns(data || []);
+    } catch (error) {
+      console.error("❌ خطأ في جلب الحملات:", error);
+      showToast("❌ فشل في تحميل الحملات", "error");
+    }
   }
 
   async function uploadImage(file) {
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${file.name}`;
-    
     try {
+      const fileName = `${Date.now()}-${file.name}`;
+      
       const { data, error } = await supabase.storage
         .from(CAMPAIGN_BUCKET)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+        .upload(fileName, file);
 
-      if (error) {
-        console.error("❌ خطأ أثناء رفع صورة الحملة:", error);
-        throw new Error(error.message);
-      }
+      if (error) throw error;
 
-      const { data: publicUrlData } = supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from(CAMPAIGN_BUCKET)
         .getPublicUrl(fileName);
 
-      return publicUrlData.publicUrl;
+      return publicUrl;
     } catch (error) {
       console.error("❌ خطأ في رفع الصورة:", error);
-      showToast(`فشل رفع الصورة: ${error.message}`, "error");
+      showToast("❌ فشل في رفع الصورة", "error");
       return null;
     }
   }
 
+  const validateFile = (file) => {
+    const errors = {};
+    
+    if (!file) {
+      errors.file = "يجب اختيار صورة";
+      return errors;
+    }
+
+    // إزالة التحقق من حجم الصورة
+    if (!file.type.startsWith('image/')) {
+      errors.file = "الرجاء اختيار ملف صورة فقط";
+    }
+
+    return errors;
+  };
+
   async function addCampaignImage(e) {
     e.preventDefault();
+    
     if (!imageFile) {
       showToast("⚠️ الرجاء اختيار صورة أولاً", "warning");
       return;
     }
 
-    setUploading(true);
-    const imageUrl = await uploadImage(imageFile);
-    setUploading(false);
-
-    if (!imageUrl) return;
-
-    const { data, error } = await supabase
-      .from("campaigns")
-      .insert([{ image: imageUrl }])
-      .select();
-
-    if (error) {
-      showToast("❌ حدث خطأ أثناء إضافة الصورة!", "error");
-      console.error(error);
-    } else {
-      showToast("✅ تمت إضافة الصورة بنجاح!", "success");
-      setCampaigns([data[0], ...campaigns]);
-      setImageFile(null);
-    }
-  }
-
-  async function deleteCampaign(id) {
-    if (!confirm("هل أنت متأكد من حذف هذه الحملة؟")) return;
-
-    const campaignToDelete = campaigns.find(c => c.id === id);
-    if (!campaignToDelete) return;
-
-    const fileName = getFileNameFromUrl(campaignToDelete.image, CAMPAIGN_BUCKET);
-
-    const { error: dbError } = await supabase.from("campaigns").delete().eq("id", id);
-
-    if (dbError) {
-      showToast(`❌ فشل حذف السجل من قاعدة البيانات. الخطأ: ${dbError.message}`, "error");
-      console.error("Database Delete Failed:", dbError);
+    const errors = validateFile(imageFile);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      showToast("⚠️ يوجد خطأ في الملف المرفوع", "warning");
       return;
     }
 
-    if (fileName) {
-      const { error: storageError } = await supabase.storage
-        .from(CAMPAIGN_BUCKET)
-        .remove([fileName]);
+    setUploading(true);
+    setFormErrors({});
 
-      if (storageError) {
-        console.warn("⚠️ فشل حذف الصورة من التخزين (السجل حُذف):", storageError);
+    try {
+      const imageUrl = await uploadImage(imageFile);
+      if (!imageUrl) {
+        setUploading(false);
+        return;
       }
-    }
 
-    setCampaigns(campaigns.filter((c) => c.id !== id));
-    showToast("✅ تم حذف الحملة والصورة المرتبطة بها بنجاح!", "success");
+      const { data, error } = await supabase
+        .from("campaigns")
+        .insert([{ image: imageUrl }])
+        .select();
+
+      if (error) throw error;
+
+      showToast("✅ تمت إضافة الصورة بنجاح!", "success");
+      setCampaigns([data[0], ...campaigns]);
+      setImageFile(null);
+      
+      // إعادة تعيين حقل الملف
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) fileInput.value = '';
+
+    } catch (error) {
+      console.error("❌ خطأ أثناء إضافة الحملة:", error);
+      showToast(`❌ حدث خطأ أثناء الإضافة: ${error.message}`, "error");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const confirmDeleteCampaign = (campaignId) => {
+    showToast(
+      "هل أنت متأكد من حذف هذه الحملة الإعلانية؟",
+      "confirm",
+      {
+        onConfirm: () => deleteCampaign(campaignId)
+      }
+    );
+  };
+
+  async function deleteCampaign(id) {
+    try {
+      const campaignToDelete = campaigns.find(c => c.id === id);
+      if (!campaignToDelete) return;
+
+      const { error: dbError } = await supabase.from("campaigns").delete().eq("id", id);
+      if (dbError) throw dbError;
+
+      if (campaignToDelete.image) {
+        const fileName = getFileNameFromUrl(campaignToDelete.image, CAMPAIGN_BUCKET);
+        if (fileName) {
+          await supabase.storage
+            .from(CAMPAIGN_BUCKET)
+            .remove([fileName]);
+        }
+      }
+
+      setCampaigns(campaigns.filter((c) => c.id !== id));
+      showToast("✅ تم حذف الحملة بنجاح!", "success");
+    } catch (error) {
+      console.error("❌ خطأ في الحذف:", error);
+      showToast("❌ فشل في حذف الحملة", "error");
+    }
   }
 
   return (
@@ -1030,42 +1165,93 @@ function CampaignsManager({ showToast }) {
       </h2>
 
       <div className="bg-gray-50 rounded-xl p-4 sm:p-6 shadow-inner border border-gray-200 mb-4 sm:mb-6">
-        <form onSubmit={addCampaignImage} className="flex flex-col sm:flex-row gap-4 items-center">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setImageFile(e.target.files[0])}
-            className="border border-gray-300 rounded-lg px-3 sm:px-4 py-3 text-gray-800 file:mr-2 file:py-2 file:px-4 file:rounded-md file:bg-[#7a1353] file:text-white file:border-none file:cursor-pointer w-full sm:w-auto transition-all duration-300 bg-white"
-            placeholder="اختر صورة للحملة الإعلانية"
-          />
+        <form onSubmit={addCampaignImage} className="flex flex-col sm:flex-row gap-4 items-start">
+          <div className="flex-1">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                setImageFile(file);
+                if (file) {
+                  const errors = validateFile(file);
+                  setFormErrors(errors);
+                } else {
+                  setFormErrors({});
+                }
+              }}
+              className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-3 text-gray-800 file:mr-2 file:py-2 file:px-4 file:rounded-md file:bg-[#7a1353] file:text-white file:border-none file:cursor-pointer transition-all duration-300 bg-white"
+              placeholder="اختر صورة للحملة الإعلانية"
+              disabled={uploading}
+            />
+            {formErrors.file && (
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <FaExclamationTriangle className="text-xs" />
+                {formErrors.file}
+              </p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">جميع أحجام الصور مقبولة - الصيغ المدعومة: JPG, PNG, GIF, WebP</p>
+          </div>
           <button
             type="submit"
-            disabled={uploading}
-            className="bg-[#7a1353] text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 w-full sm:w-auto font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
+            disabled={uploading || !imageFile}
+            className="bg-[#7a1353] text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            <FaPlus />
-            {uploading ? "جاري الرفع..." : "رفع الصورة"}
+            {uploading ? (
+              <>
+                <FaSpinner className="animate-spin" />
+                جاري الرفع...
+              </>
+            ) : (
+              <>
+                <FaPlus />
+                رفع الصورة
+              </>
+            )}
           </button>
         </form>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {campaigns.map((c) => (
-          <div key={c.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200">
-            <img src={c.image} alt="campaign" className="w-full h-40 sm:h-48 object-cover" />
-            <div className="p-3 sm:p-4 flex justify-between items-center">
-              <span className="text-gray-600 text-sm">حملة #{c.id}</span>
-              <button
-                onClick={() => deleteCampaign(c.id)}
-                className="text-red-600 hover:text-red-800 text-sm font-semibold transition-colors flex items-center gap-1"
-              >
-                <FaTrash />
-                حذف
-              </button>
+      {campaigns.length === 0 ? (
+        <div className="text-center py-8 sm:py-12 text-gray-500">
+          <FaAd className="text-4xl mx-auto mb-4 opacity-50" />
+          <p className="text-lg">لا توجد حملات إعلانية حالياً</p>
+          <p className="text-sm text-gray-400 mt-2">قم برفع صورة لإضافة حملة إعلانية جديدة</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {campaigns.map((c) => (
+            <div key={c.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200 group">
+              <div className="relative overflow-hidden">
+                <img 
+                  src={c.image} 
+                  alt={`حملة إعلانية ${c.id}`} 
+                  className="w-full h-40 sm:h-48 object-cover transition-transform duration-300 group-hover:scale-105" 
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+                  <button
+                    onClick={() => confirmDeleteCampaign(c.id)}
+                    className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
+                    title="حذف الحملة"
+                  >
+                    <FaTrash className="text-sm" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-3 sm:p-4 flex justify-between items-center">
+                <span className="text-gray-600 text-sm">حملة #{c.id}</span>
+                <button
+                  onClick={() => confirmDeleteCampaign(c.id)}
+                  className="text-red-600 hover:text-red-800 text-sm font-semibold transition-colors flex items-center gap-1 sm:hidden"
+                >
+                  <FaTrash />
+                  حذف
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1077,6 +1263,10 @@ function AccountManager({ showToast, userName }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     getUserData();
@@ -1085,15 +1275,10 @@ function AccountManager({ showToast, userName }) {
   async function getUserData() {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) {
-        console.error("❌ خطأ في جلب بيانات المستخدم:", error);
-        showToast("❌ فشل في تحميل بيانات المستخدم", "error");
-        return;
-      }
+      if (error) throw error;
 
       if (user) {
-        // جلب البيانات من جدول users بدلاً من profiles
-        const { data: userTableData, error: userError } = await supabase
+        const { data: userTableData } = await supabase
           .from('users')
           .select('name, role')
           .eq('id', user.id)
@@ -1108,77 +1293,81 @@ function AccountManager({ showToast, userName }) {
         });
       }
     } catch (error) {
-      console.error("❌ خطأ غير متوقع:", error);
-      showToast("❌ حدث خطأ غير متوقع", "error");
+      console.error("❌ خطأ في جلب بيانات المستخدم:", error);
+      showToast("❌ فشل في تحميل بيانات المستخدم", "error");
     }
   }
 
+  const validatePasswordForm = () => {
+    const errors = {};
+
+    if (!currentPassword.trim()) {
+      errors.currentPassword = "كلمة المرور الحالية مطلوبة";
+    }
+
+    if (!newPassword.trim()) {
+      errors.newPassword = "كلمة المرور الجديدة مطلوبة";
+    } else if (newPassword.length < 6) {
+      errors.newPassword = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
+    }
+
+    if (!confirmPassword.trim()) {
+      errors.confirmPassword = "تأكيد كلمة المرور مطلوب";
+    } else if (newPassword !== confirmPassword) {
+      errors.confirmPassword = "كلمة المرور غير متطابقة";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   async function handleChangePassword(e) {
     e.preventDefault();
+    
+    if (!validatePasswordForm()) {
+      showToast("⚠️ يوجد أخطاء في النموذج، يرجى تصحيحها", "warning");
+      return;
+    }
+
     setLoading(true);
 
-    if (!userData || !userData.email) {
-      showToast("❌ لا يمكن الوصول إلى بيانات المستخدم", "error");
-      setLoading(false);
-      return;
-    }
-
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      showToast("⚠️ الرجاء إدخال جميع الحقول", "error");
-      setLoading(false);
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      showToast("⚠️ كلمة المرور الجديدة غير متطابقة", "error");
-      setLoading(false);
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      showToast("⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل", "error");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      if (!userData || !userData.email) {
+        throw new Error("لا يمكن الوصول إلى بيانات المستخدم");
+      }
+
+      // التحقق من كلمة المرور الحالية
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email: userData.email,
         password: currentPassword
       });
 
       if (authError) {
-        console.error("❌ خطأ في المصادقة:", authError);
-
         if (authError.message.includes("Invalid login credentials")) {
-          showToast("❌ كلمة المرور الحالية غير صحيحة", "error");
+          throw new Error("كلمة المرور الحالية غير صحيحة");
         } else if (authError.message.includes("Email not confirmed")) {
-          showToast("❌ البريد الإلكتروني غير مفعل", "error");
+          throw new Error("البريد الإلكتروني غير مفعل");
         } else {
-          showToast(`❌ خطأ في المصادقة: ${authError.message}`, "error");
+          throw new Error(`خطأ في المصادقة: ${authError.message}`);
         }
-
-        setLoading(false);
-        return;
       }
 
+      // تحديث كلمة المرور
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
 
-      if (updateError) {
-        console.error("❌ خطأ في تغيير كلمة المرور:", updateError);
-        showToast(`❌ فشل في تغيير كلمة المرور: ${updateError.message}`, "error");
-      } else {
-        showToast("✅ تم تغيير كلمة المرور بنجاح", "success");
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-        getUserData();
-      }
+      if (updateError) throw new Error(`فشل في تغيير كلمة المرور: ${updateError.message}`);
+
+      showToast("✅ تم تغيير كلمة المرور بنجاح", "success");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setFormErrors({});
+      
     } catch (error) {
-      console.error("❌ خطأ غير متوقع:", error);
-      showToast("❌ حدث خطأ غير متوقع أثناء تغيير كلمة المرور", "error");
+      console.error("❌ خطأ في تغيير كلمة المرور:", error);
+      showToast(`❌ ${error.message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -1217,54 +1406,41 @@ function AccountManager({ showToast, userName }) {
           </h3>
 
           <div className="space-y-3 sm:space-y-4">
-            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">معرف المستخدم</p>
-                <p className="font-semibold text-gray-800 text-xs font-mono">
-                  {userData?.id?.substring(0, 8)}...
-                </p>
-              </div>
-              <FaUser className="text-[#7a1353]" />
-            </div>
+            <InfoCard 
+              icon={<FaUser className="text-[#7a1353]" />}
+              label="معرف المستخدم"
+              value={`${userData?.id?.substring(0, 8)}...`}
+              className="font-mono text-xs"
+            />
 
-            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">الاسم</p>
-                <p className="font-semibold text-gray-800">{userData?.name}</p>
-              </div>
-              <FaUser className="text-[#7a1353]" />
-            </div>
+            <InfoCard 
+              icon={<FaUser className="text-[#7a1353]" />}
+              label="الاسم"
+              value={userData?.name}
+            />
 
-            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">البريد الإلكتروني</p>
-                <p className="font-semibold text-gray-800">{userData?.email}</p>
-              </div>
-              <FaEnvelope className="text-[#7a1353]" />
-            </div>
+            <InfoCard 
+              icon={<FaEnvelope className="text-[#7a1353]" />}
+              label="البريد الإلكتروني"
+              value={userData?.email}
+            />
 
-            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">الصلاحية</p>
-                <p className="font-semibold text-gray-800">
-                  {userData?.role === 'super_admin' ? 'المشرف العام' : 
-                   userData?.role === 'manager' ? 'مدير' : 
-                   userData?.role === 'hr' ? 'مدير موارد بشرية' : 
-                   userData?.role === 'content' ? 'مدير محتوى' : 'مستخدم'}
-                </p>
-              </div>
-              <FaLock className="text-[#7a1353]" />
-            </div>
+            <InfoCard 
+              icon={<FaLock className="text-[#7a1353]" />}
+              label="الصلاحية"
+              value={
+                userData?.role === 'super_admin' ? 'المشرف العام' : 
+                userData?.role === 'manager' ? 'مدير' : 
+                userData?.role === 'hr' ? 'مدير موارد بشرية' : 
+                userData?.role === 'content' ? 'مدير محتوى' : 'مستخدم'
+              }
+            />
 
-            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600">تاريخ الإنشاء</p>
-                <p className="font-semibold text-gray-800">
-                  {userData?.created_at ? new Date(userData.created_at).toLocaleDateString('ar-EG') : "غير معروف"}
-                </p>
-              </div>
-              <FaCalendarAlt className="text-[#7a1353]" />
-            </div>
+            <InfoCard 
+              icon={<FaCalendarAlt className="text-[#7a1353]" />}
+              label="تاريخ الإنشاء"
+              value={userData?.created_at ? new Date(userData.created_at).toLocaleDateString('ar-EG') : "غير معروف"}
+            />
           </div>
         </div>
 
@@ -1276,103 +1452,76 @@ function AccountManager({ showToast, userName }) {
           </h3>
 
           <form onSubmit={handleChangePassword} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                كلمة المرور الحالية
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700 pr-10"
-                  placeholder="أدخل كلمة المرور الحالية"
-                  required
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-                  onClick={(e) => {
-                    const input = e.target.closest('.relative').querySelector('input');
-                    input.type = input.type === 'password' ? 'text' : 'password';
-                  }}
-                >
-                  <FaEye className="text-lg" />
-                </button>
-              </div>
-            </div>
+            <PasswordField
+              label="كلمة المرور الحالية"
+              value={currentPassword}
+              onChange={(e) => {
+                setCurrentPassword(e.target.value);
+                if (formErrors.currentPassword) {
+                  setFormErrors(prev => ({ ...prev, currentPassword: "" }));
+                }
+              }}
+              placeholder="أدخل كلمة المرور الحالية"
+              required
+              error={formErrors.currentPassword}
+              disabled={loading}
+              showPassword={showCurrentPassword}
+              onToggleShowPassword={() => setShowCurrentPassword(!showCurrentPassword)}
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                كلمة المرور الجديدة
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700 pr-10"
-                  placeholder="أدخل كلمة المرور الجديدة (6 أحرف على الأقل)"
-                  required
-                  minLength="6"
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-                  onClick={(e) => {
-                    const input = e.target.closest('.relative').querySelector('input');
-                    input.type = input.type === 'password' ? 'text' : 'password';
-                  }}
-                >
-                  <FaEye className="text-lg" />
-                </button>
-              </div>
-            </div>
+            <PasswordField
+              label="كلمة المرور الجديدة"
+              value={newPassword}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                if (formErrors.newPassword) {
+                  setFormErrors(prev => ({ ...prev, newPassword: "" }));
+                }
+                if (formErrors.confirmPassword) {
+                  setFormErrors(prev => ({ ...prev, confirmPassword: "" }));
+                }
+              }}
+              placeholder="أدخل كلمة المرور الجديدة (6 أحرف على الأقل)"
+              required
+              error={formErrors.newPassword}
+              disabled={loading}
+              showPassword={showNewPassword}
+              onToggleShowPassword={() => setShowNewPassword(!showNewPassword)}
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                تأكيد كلمة المرور الجديدة
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700 pr-10"
-                  placeholder="أعد إدخال كلمة المرور الجديدة"
-                  required
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-                  onClick={(e) => {
-                    const input = e.target.closest('.relative').querySelector('input');
-                    input.type = input.type === 'password' ? 'text' : 'password';
-                  }}
-                >
-                  <FaEye className="text-lg" />
-                </button>
-              </div>
-            </div>
+            <PasswordField
+              label="تأكيد كلمة المرور الجديدة"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (formErrors.confirmPassword) {
+                  setFormErrors(prev => ({ ...prev, confirmPassword: "" }));
+                }
+              }}
+              placeholder="أعد إدخال كلمة المرور الجديدة"
+              required
+              error={formErrors.confirmPassword}
+              disabled={loading}
+              showPassword={showConfirmPassword}
+              onToggleShowPassword={() => setShowConfirmPassword(!showConfirmPassword)}
+            />
 
             <button
               type="submit"
-              className="w-full bg-[#7a1353] text-white py-3 px-4 rounded-lg hover:bg-[#6a1248] transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#7a1353] text-white py-3 px-4 rounded-lg hover:bg-[#6a1248] transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               disabled={loading}
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
+                <>
                   <FaSpinner className="animate-spin" />
                   جاري التحديث...
-                </span>
+                </>
               ) : (
                 'تغيير كلمة المرور'
               )}
             </button>
           </form>
+          
           <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
               <FaCog />
@@ -1382,6 +1531,7 @@ function AccountManager({ showToast, userName }) {
               <li>• استخدم كلمة مرور قوية تحتوي على أحرف وأرقام ورموز</li>
               <li>• لا تستخدم كلمات مرور مستخدمة في حسابات أخرى</li>
               <li>• غير كلمة المرور بانتظام</li>
+              <li>• استخدم كلمة مرور لا تقل عن 8 أحرف</li>
             </ul>
           </div>
         </div>
@@ -1402,8 +1552,8 @@ function AdminManager({ showToast, userData }) {
   const [newAdminRole, setNewAdminRole] = useState("manager");
   const [addingAdmin, setAddingAdmin] = useState(false);
   const [adminsList, setAdminsList] = useState([]);
+  const [formErrors, setFormErrors] = useState({});
 
-  // ✅ قائمة الأدوار المتاحة
   const roles = [
     { value: "super_admin", label: "المشرف العام" },
     { value: "manager", label: "مدير" },
@@ -1416,40 +1566,53 @@ function AdminManager({ showToast, userData }) {
   }, []);
 
   async function fetchAdmins() {
-    const { data, error } = await supabase
-      .from('users') // ✅ تغيير من profiles إلى users
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('❌ خطأ في جلب قائمة المشرفين:', error);
-    } else {
+      if (error) throw error;
       setAdminsList(data || []);
+    } catch (error) {
+      console.error('❌ خطأ في جلب قائمة المشرفين:', error);
+      showToast("❌ فشل في تحميل قائمة المشرفين", "error");
     }
   }
+
+  const validateAdminForm = () => {
+    const errors = {};
+    
+    if (!newAdminEmail.trim()) {
+      errors.email = "البريد الإلكتروني مطلوب";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newAdminEmail)) {
+      errors.email = "البريد الإلكتروني غير صحيح";
+    }
+    
+    if (!newAdminName.trim()) {
+      errors.name = "الاسم الكامل مطلوب";
+    } else if (newAdminName.trim().length < 2) {
+      errors.name = "الاسم يجب أن يكون على الأقل حرفين";
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleAddAdmin = async (e) => {
     e.preventDefault();
     
-    if (!newAdminEmail || !newAdminName) {
-      showToast("⚠️ الرجاء إدخال جميع البيانات", "error");
-      return;
-    }
-
-    // ✅ التحقق من صحة البريد الإلكتروني
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newAdminEmail)) {
-      showToast("❌ يرجى إدخال بريد إلكتروني صحيح", "error");
+    if (!validateAdminForm()) {
+      showToast("⚠️ يوجد أخطاء في النموذج، يرجى تصحيحها", "warning");
       return;
     }
 
     setAddingAdmin(true);
 
     try {
-      // ✅ إنشاء المستخدم الجديد في Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email: newAdminEmail.trim().toLowerCase(),
-        password: "123456", // كلمة مرور افتراضية
+        password: "123456",
         options: {
           data: {
             name: newAdminName,
@@ -1459,18 +1622,14 @@ function AdminManager({ showToast, userData }) {
       });
 
       if (error) {
-        console.error('❌ خطأ في إنشاء المستخدم:', error);
-        
         if (error.message.includes('User already registered')) {
-          showToast("❌ هذا البريد الإلكتروني مسجل بالفعل", "error");
+          throw new Error("هذا البريد الإلكتروني مسجل بالفعل");
         } else {
-          showToast(`❌ خطأ في إنشاء المستخدم: ${error.message}`, "error");
+          throw new Error(`خطأ في إنشاء المستخدم: ${error.message}`);
         }
-        return;
       }
 
       if (data.user) {
-        // ✅ إضافة المستخدم إلى جدول users بدلاً من profiles
         const { error: userTableError } = await supabase
           .from('users')
           .insert([
@@ -1485,35 +1644,38 @@ function AdminManager({ showToast, userData }) {
           ]);
 
         if (userTableError) {
-          console.error("❌ خطأ في إنشاء المستخدم في الجدول:", userTableError);
-          
           // حذف المستخدم من Auth إذا فشل إنشاء السجل في الجدول
           await supabase.auth.admin.deleteUser(data.user.id);
-          showToast("❌ فشل في إنشاء حساب المشرف", "error");
-          return;
+          throw new Error("فشل في إنشاء حساب المشرف");
         }
 
         showToast(`✅ تم إنشاء المشرف ${newAdminName} بنجاح! كلمة المرور: 123456`, "success");
         
-        // تحديث القائمة
         fetchAdmins();
-        
-        // مسح الحقول
         setNewAdminEmail("");
         setNewAdminName("");
         setNewAdminRole("manager");
+        setFormErrors({});
       }
     } catch (error) {
-      console.error("❌ خطأ غير متوقع:", error);
-      showToast("❌ حدث خطأ غير متوقع", "error");
+      console.error("❌ خطأ في إضافة المشرف:", error);
+      showToast(`❌ ${error.message}`, "error");
     } finally {
       setAddingAdmin(false);
     }
   };
 
-  async function deleteAdmin(adminId) {
-    if (!confirm("هل أنت متأكد من حذف هذا المشرف؟")) return;
+  const confirmDeleteAdmin = (adminId, adminName) => {
+    showToast(
+      `هل أنت متأكد من حذف المشرف "${adminName}"؟`,
+      "confirm",
+      {
+        onConfirm: () => deleteAdmin(adminId)
+      }
+    );
+  };
 
+  async function deleteAdmin(adminId) {
     try {
       // حذف من جدول users أولاً
       const { error: userTableError } = await supabase
@@ -1521,12 +1683,9 @@ function AdminManager({ showToast, userData }) {
         .delete()
         .eq('id', adminId);
 
-      if (userTableError) {
-        showToast(`❌ فشل حذف المشرف: ${userTableError.message}`, "error");
-        return;
-      }
+      if (userTableError) throw new Error(`فشل حذف المشرف: ${userTableError.message}`);
 
-      // حذف من Authentication (يتطلب صلاحيات admin)
+      // حذف من Authentication
       const { error: authError } = await supabase.auth.admin.deleteUser(adminId);
       
       if (authError) {
@@ -1537,7 +1696,7 @@ function AdminManager({ showToast, userData }) {
       fetchAdmins();
     } catch (error) {
       console.error("❌ خطأ غير متوقع:", error);
-      showToast("❌ حدث خطأ أثناء حذف المشرف", "error");
+      showToast(`❌ ${error.message}`, "error");
     }
   }
 
@@ -1556,33 +1715,36 @@ function AdminManager({ showToast, userData }) {
       {/* نموذج إضافة مشرف جديد */}
       <form onSubmit={handleAddAdmin} className="space-y-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              البريد الإلكتروني *
-            </label>
-            <input
-              type="email"
-              value={newAdminEmail}
-              onChange={(e) => setNewAdminEmail(e.target.value)}
-              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white placeholder-gray-500"
-              placeholder="أدخل البريد الإلكتروني"
-              required
-            />
-          </div>
+          <InputField
+            label="البريد الإلكتروني"
+            type="email"
+            value={newAdminEmail}
+            onChange={(e) => {
+              setNewAdminEmail(e.target.value);
+              if (formErrors.email) {
+                setFormErrors(prev => ({ ...prev, email: "" }));
+              }
+            }}
+            placeholder="أدخل البريد الإلكتروني"
+            required
+            error={formErrors.email}
+            disabled={addingAdmin}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              الاسم الكامل *
-            </label>
-            <input
-              type="text"
-              value={newAdminName}
-              onChange={(e) => setNewAdminName(e.target.value)}
-              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white placeholder-gray-500"
-              placeholder="أدخل الاسم الكامل"
-              required
-            />
-          </div>
+          <InputField
+            label="الاسم الكامل"
+            value={newAdminName}
+            onChange={(e) => {
+              setNewAdminName(e.target.value);
+              if (formErrors.name) {
+                setFormErrors(prev => ({ ...prev, name: "" }));
+              }
+            }}
+            placeholder="أدخل الاسم الكامل"
+            required
+            error={formErrors.name}
+            disabled={addingAdmin}
+          />
         </div>
 
         <div>
@@ -1593,6 +1755,7 @@ function AdminManager({ showToast, userData }) {
             value={newAdminRole}
             onChange={(e) => setNewAdminRole(e.target.value)}
             className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] outline-none bg-white"
+            disabled={addingAdmin}
           >
             {roles.map(role => (
               <option key={role.value} value={role.value}>
@@ -1612,10 +1775,19 @@ function AdminManager({ showToast, userData }) {
         <button
           type="submit"
           disabled={addingAdmin}
-          className="w-full bg-[#7a1353] text-white px-6 py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full bg-[#7a1353] text-white px-6 py-3 rounded-lg hover:bg-[#6a124a] transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          <FaUserPlus />
-          {addingAdmin ? "جاري الإضافة..." : "إضافة مشرف جديد"}
+          {addingAdmin ? (
+            <>
+              <FaSpinner className="animate-spin" />
+              جاري الإضافة...
+            </>
+          ) : (
+            <>
+              <FaUserPlus />
+              إضافة مشرف جديد
+            </>
+          )}
         </button>
       </form>
 
@@ -1627,12 +1799,13 @@ function AdminManager({ showToast, userData }) {
         
         {adminsList.length === 0 ? (
           <div className="text-center py-4 text-gray-500">
+            <FaUser className="text-3xl mx-auto mb-2 opacity-50" />
             <p>لا يوجد مشرفين مضافين حالياً</p>
           </div>
         ) : (
           <div className="space-y-3">
             {adminsList.map((admin) => (
-              <div key={admin.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div key={admin.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-[#7a1353]/30 transition-all duration-200">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-[#f8e8f1] rounded-full flex items-center justify-center">
@@ -1650,7 +1823,7 @@ function AdminManager({ showToast, userData }) {
                 
                 {admin.id !== userData.id && (
                   <button
-                    onClick={() => deleteAdmin(admin.id)}
+                    onClick={() => confirmDeleteAdmin(admin.id, admin.name)}
                     className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
                     title="حذف المشرف"
                   >
