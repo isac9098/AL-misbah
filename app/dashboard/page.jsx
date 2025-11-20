@@ -83,6 +83,7 @@ export default function CoursesDashboard() {
   const [editingCourse, setEditingCourse] = useState(null);
   const [activeTab, setActiveTab] = useState("courses");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(false); // إضافة حالة التحميل
   const COURSES_BUCKET = "courses-images";
 
   useEffect(() => {
@@ -145,79 +146,109 @@ export default function CoursesDashboard() {
   }
 
   async function uploadImage(file) {
-    const fileName = `${Date.now()}-${file.name}`;
-    const { data, error } = await supabase.storage
-      .from(COURSES_BUCKET)
-      .upload(fileName, file);
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${file.name}`;
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from(COURSES_BUCKET)
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-    if (error) {
-      console.error("❌ خطأ أثناء رفع الصورة:", error);
-      showToast("فشل رفع الصورة!", "error");
+      if (error) {
+        console.error("❌ خطأ أثناء رفع الصورة:", error);
+        throw new Error(error.message);
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from(COURSES_BUCKET)
+        .getPublicUrl(fileName);
+
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error("❌ خطأ في رفع الصورة:", error);
+      showToast(`فشل رفع الصورة: ${error.message}`, "error");
       return null;
     }
-
-    const { data: publicUrlData } = supabase.storage
-      .from(COURSES_BUCKET)
-      .getPublicUrl(fileName);
-
-    return publicUrlData.publicUrl;
   }
 
   async function addCourse(e) {
     e.preventDefault();
+    setLoading(true); // بدء التحميل
 
-    if (
-      !newCourse.title ||
-      !newCourse.description ||
-      !newCourse.price ||
-      !newCourse.category
-    ) {
-      showToast("⚠️ الرجاء إدخال جميع البيانات المطلوبة", "error");
-      return;
-    }
+    try {
+      if (
+        !newCourse.title ||
+        !newCourse.description ||
+        !newCourse.price ||
+        !newCourse.category
+      ) {
+        showToast("⚠️ الرجاء إدخال جميع البيانات المطلوبة", "error");
+        return;
+      }
 
-    let imageUrl = newCourse.image;
+      let imageUrl = newCourse.image;
 
-    if (imageFile) {
-      imageUrl = await uploadImage(imageFile);
-      if (!imageUrl) return;
-    }
+      if (imageFile) {
+        console.log("📤 جاري رفع الصورة...");
+        imageUrl = await uploadImage(imageFile);
+        if (!imageUrl) {
+          setLoading(false);
+          return;
+        }
+        console.log("✅ تم رفع الصورة بنجاح:", imageUrl);
+      }
 
-    const courseData = {
-      title: newCourse.title,
-      description: newCourse.description,
-      image: imageUrl,
-      price: newCourse.price,
-      discount: newCourse.discount,
-      category: newCourse.category,
-      schedule_time: newCourse.schedule_time || "",
-      start_date: newCourse.start_date || "",
-      meeting_days: newCourse.meeting_days || ""
-    };
+      const courseData = {
+        title: newCourse.title,
+        description: newCourse.description,
+        image: imageUrl,
+        price: newCourse.price,
+        discount: newCourse.discount,
+        category: newCourse.category,
+        schedule_time: newCourse.schedule_time || "",
+        start_date: newCourse.start_date || "",
+        meeting_days: newCourse.meeting_days || "",
+        created_at: new Date().toISOString()
+      };
 
-    const { data, error } = await supabase
-      .from("courses")
-      .insert([courseData])
-      .select();
+      console.log("📝 جاري إضافة الدورة...", courseData);
 
-    if (error) {
-      console.error("❌ خطأ أثناء الإضافة:", error);
-      showToast(`حدث خطأ أثناء الإضافة: ${error.message}`, "error");
-    } else {
-      showToast("✅ تمت إضافة الدورة بنجاح!", "success");
-      setCourses([data[0], ...courses]);
-      setNewCourse({
-        title: "",
-        description: "",
-        image: "",
-        price: "",
-        discount: "",
-        category: "",
-        schedule_time: "",
-        start_date: "",
-        meeting_days: ""
-      });
-      setImageFile(null);
+      const { data, error } = await supabase
+        .from("courses")
+        .insert([courseData])
+        .select();
+
+      if (error) {
+        console.error("❌ خطأ أثناء إضافة الدورة:", error);
+        showToast(`حدث خطأ أثناء الإضافة: ${error.message}`, "error");
+      } else {
+        console.log("✅ تمت إضافة الدورة بنجاح:", data);
+        showToast("✅ تمت إضافة الدورة بنجاح!", "success");
+        setCourses([data[0], ...courses]);
+        setNewCourse({
+          title: "",
+          description: "",
+          image: "",
+          price: "",
+          discount: "",
+          category: "",
+          schedule_time: "",
+          start_date: "",
+          meeting_days: ""
+        });
+        setImageFile(null);
+        
+        // إعادة تعيين حقل الملف
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) fileInput.value = '';
+      }
+    } catch (error) {
+      console.error("❌ خطأ غير متوقع:", error);
+      showToast("حدث خطأ غير متوقع", "error");
+    } finally {
+      setLoading(false); // إنهاء التحميل
     }
   }
 
@@ -523,157 +554,194 @@ export default function CoursesDashboard() {
         {activeTab === "courses" && (
           <>
             {/* نموذج إضافة دورة */}
-<div className="bg-white rounded-2xl p-4 sm:p-6 mb-6 shadow-md border border-gray-200">
-  <h2 className="text-xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2">
-    <FaPlus className="text-[#7a1353]" />
-    إضافة دورة جديدة
-  </h2>
+            <div className="bg-white rounded-2xl p-4 sm:p-6 mb-6 shadow-md border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2">
+                <FaPlus className="text-[#7a1353]" />
+                إضافة دورة جديدة
+              </h2>
 
-  <form onSubmit={addCourse}>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-      {/* المعلومات الأساسية */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">المعلومات الأساسية</h3>
+              <form onSubmit={addCourse}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+                  {/* المعلومات الأساسية */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">المعلومات الأساسية</h3>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">عنوان الدورة *</label>
-          <input
-            type="text"
-            value={newCourse.title}
-            onChange={(e) => handleNewCourseInputChange('title', e.target.value)}
-            className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-            placeholder="أدخل عنوان الدورة هنا"
-            required
-          />
-        </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">عنوان الدورة *</label>
+                      <input
+                        type="text"
+                        value={newCourse.title}
+                        onChange={(e) => handleNewCourseInputChange('title', e.target.value)}
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
+                        placeholder="أدخل عنوان الدورة هنا"
+                        required
+                        disabled={loading}
+                      />
+                    </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">الوصف *</label>
-          <textarea
-            value={newCourse.description}
-            onChange={(e) => handleNewCourseInputChange('description', e.target.value)}
-            className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none bg-white placeholder-gray-500 text-gray-700"
-            rows="3"
-            placeholder="اكتب وصفاً للدورة"
-            required
-          />
-        </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">الوصف *</label>
+                      <textarea
+                        value={newCourse.description}
+                        onChange={(e) => handleNewCourseInputChange('description', e.target.value)}
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all resize-none bg-white placeholder-gray-500 text-gray-700"
+                        rows="3"
+                        placeholder="اكتب وصفاً للدورة"
+                        required
+                        disabled={loading}
+                      />
+                    </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <FaTag />
-              السعر *
-            </label>
-            <input
-              type="text"
-              value={newCourse.price}
-              onChange={(e) => handleNewCourseInputChange('price', e.target.value)}
-              className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-              placeholder="مثال: 500"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <FaPercent />
-              الخصم
-            </label>
-            <input
-              type="text"
-              value={newCourse.discount}
-              onChange={(e) => handleNewCourseInputChange('discount', e.target.value)}
-              className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-              placeholder="السعر بعد الخصم"
-            />
-          </div>
-        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                          <FaTag />
+                          السعر *
+                        </label>
+                        <input
+                          type="text"
+                          value={newCourse.price}
+                          onChange={(e) => handleNewCourseInputChange('price', e.target.value)}
+                          className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
+                          placeholder="مثال: 500"
+                          required
+                          disabled={loading}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                          <FaPercent />
+                          الخصم
+                        </label>
+                        <input
+                          type="text"
+                          value={newCourse.discount}
+                          onChange={(e) => handleNewCourseInputChange('discount', e.target.value)}
+                          className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
+                          placeholder="السعر بعد الخصم"
+                          disabled={loading}
+                        />
+                      </div>
+                    </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">الفئة *</label>
-          <input
-            type="text"
-            value={newCourse.category}
-            onChange={(e) => handleNewCourseInputChange('category', e.target.value)}
-            className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-            placeholder="مثال: القانون، اللغة، التقنية"
-            required
-          />
-        </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">الفئة *</label>
+                      <input
+                        type="text"
+                        value={newCourse.category}
+                        onChange={(e) => handleNewCourseInputChange('category', e.target.value)}
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
+                        placeholder="مثال: القانون، اللغة، التقنية"
+                        required
+                        disabled={loading}
+                      />
+                    </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <FaImage />
-            صورة الدورة
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setImageFile(e.target.files[0])}
-            className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#7a1353] file:text-white file:cursor-pointer transition-all bg-white text-gray-700"
-          />
-        </div>
-      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <FaImage />
+                        صورة الدورة
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            // التحقق من حجم الصورة (5MB كحد أقصى)
+                            if (file.size > 5 * 1024 * 1024) {
+                              showToast('حجم الصورة كبير جداً. الحد الأقصى 5MB', "error");
+                              e.target.value = '';
+                              return;
+                            }
+                            // التحقق من نوع الصورة
+                            if (!file.type.startsWith('image/')) {
+                              showToast('الرجاء اختيار ملف صورة فقط', "error");
+                              e.target.value = '';
+                              return;
+                            }
+                            setImageFile(file);
+                          }
+                        }}
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#7a1353] file:text-white file:cursor-pointer transition-all bg-white text-gray-700 disabled:opacity-50"
+                        disabled={loading}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">الحد الأقصى لحجم الصورة: 5MB</p>
+                    </div>
+                  </div>
 
-      {/* الجدول الزمني */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">الجدول الزمني</h3>
+                  {/* الجدول الزمني */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">الجدول الزمني</h3>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <FaCalendarAlt />
-            تاريخ البدء
-          </label>
-          <input
-            type="date"
-            value={newCourse.start_date}
-            onChange={(e) => handleNewCourseInputChange('start_date', e.target.value)}
-            className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white text-gray-700"
-          />
-        </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <FaCalendarAlt />
+                        تاريخ البدء
+                      </label>
+                      <input
+                        type="date"
+                        value={newCourse.start_date}
+                        onChange={(e) => handleNewCourseInputChange('start_date', e.target.value)}
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white text-gray-700"
+                        disabled={loading}
+                      />
+                    </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <FaClock />
-            الموعد
-          </label>
-          <input
-            type="text"
-            value={newCourse.schedule_time}
-            onChange={(e) => handleNewCourseInputChange('schedule_time', e.target.value)}
-            className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-            placeholder="مثال: 6:00 مساءً - 8:00 مساءً"
-          />
-        </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <FaClock />
+                        الموعد
+                      </label>
+                      <input
+                        type="text"
+                        value={newCourse.schedule_time}
+                        onChange={(e) => handleNewCourseInputChange('schedule_time', e.target.value)}
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
+                        placeholder="مثال: 6:00 مساءً - 8:00 مساءً"
+                        disabled={loading}
+                      />
+                    </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <FaCalendarDay />
-            أيام الإنعقاد
-          </label>
-          <input
-            type="text"
-            value={newCourse.meeting_days}
-            onChange={(e) => handleNewCourseInputChange('meeting_days', e.target.value)}
-            className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
-            placeholder="مثال: السبت، الإثنين، الأربعاء"
-          />
-        </div>
-      </div>
-    </div>
-    
-    {/* زر الإضافة */}
-    <div className="flex justify-end">
-      <button
-        type="submit"
-        className="bg-[#7a1353] text-white px-6 py-3 rounded-lg hover:bg-[#6a1248] transition-all duration-200 font-medium flex items-center gap-2"
-      >
-        <FaPlus />
-        إضافة الدورة
-      </button>
-    </div>
-  </form>
-</div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <FaCalendarDay />
+                        أيام الإنعقاد
+                      </label>
+                      <input
+                        type="text"
+                        value={newCourse.meeting_days}
+                        onChange={(e) => handleNewCourseInputChange('meeting_days', e.target.value)}
+                        className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700"
+                        placeholder="مثال: السبت، الإثنين، الأربعاء"
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* زر الإضافة مع سبينر */}
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="bg-[#7a1353] text-white px-6 py-3 rounded-lg hover:bg-[#6a1248] transition-all duration-200 font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <FaSpinner className="animate-spin" />
+                        جاري الإضافة...
+                      </>
+                    ) : (
+                      <>
+                        <FaPlus />
+                        إضافة الدورة
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
 
             {/* قائمة الدورات */}
             <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-gray-200">
@@ -866,22 +934,31 @@ function CampaignsManager({ showToast }) {
   }
 
   async function uploadImage(file) {
-    const fileName = `${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage
-      .from(CAMPAIGN_BUCKET)
-      .upload(fileName, file);
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${file.name}`;
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from(CAMPAIGN_BUCKET)
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-    if (error) {
-      console.error("❌ خطأ أثناء رفع صورة الحملة:", error);
-      showToast("فشل رفع الصورة!", "error");
+      if (error) {
+        console.error("❌ خطأ أثناء رفع صورة الحملة:", error);
+        throw new Error(error.message);
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from(CAMPAIGN_BUCKET)
+        .getPublicUrl(fileName);
+
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error("❌ خطأ في رفع الصورة:", error);
+      showToast(`فشل رفع الصورة: ${error.message}`, "error");
       return null;
     }
-
-    const { data: publicUrlData } = supabase.storage
-      .from(CAMPAIGN_BUCKET)
-      .getPublicUrl(fileName);
-
-    return publicUrlData.publicUrl;
   }
 
   async function addCampaignImage(e) {
@@ -1189,110 +1266,110 @@ function AccountManager({ showToast, userName }) {
         </div>
 
         {/* تغيير كلمة المرور */}
-<div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200">
-  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-    <FaLock className="text-[#7a1353]" />
-    تغيير كلمة المرور
-  </h3>
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <FaLock className="text-[#7a1353]" />
+            تغيير كلمة المرور
+          </h3>
 
-  <form onSubmit={handleChangePassword} className="space-y-4">
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        كلمة المرور الحالية
-      </label>
-      <div className="relative">
-        <input
-          type="password"
-          value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
-          className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700 pr-10"
-          placeholder="أدخل كلمة المرور الحالية"
-          required
-          disabled={loading}
-        />
-        <button
-          type="button"
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-          onClick={(e) => {
-            const input = e.target.closest('.relative').querySelector('input');
-            input.type = input.type === 'password' ? 'text' : 'password';
-          }}
-        >
-          <FaEye className="text-lg" />
-        </button>
-      </div>
-    </div>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                كلمة المرور الحالية
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700 pr-10"
+                  placeholder="أدخل كلمة المرور الحالية"
+                  required
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                  onClick={(e) => {
+                    const input = e.target.closest('.relative').querySelector('input');
+                    input.type = input.type === 'password' ? 'text' : 'password';
+                  }}
+                >
+                  <FaEye className="text-lg" />
+                </button>
+              </div>
+            </div>
 
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        كلمة المرور الجديدة
-      </label>
-      <div className="relative">
-        <input
-          type="password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700 pr-10"
-          placeholder="أدخل كلمة المرور الجديدة (6 أحرف على الأقل)"
-          required
-          minLength="6"
-          disabled={loading}
-        />
-        <button
-          type="button"
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-          onClick={(e) => {
-            const input = e.target.closest('.relative').querySelector('input');
-            input.type = input.type === 'password' ? 'text' : 'password';
-          }}
-        >
-          <FaEye className="text-lg" />
-        </button>
-      </div>
-    </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                كلمة المرور الجديدة
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700 pr-10"
+                  placeholder="أدخل كلمة المرور الجديدة (6 أحرف على الأقل)"
+                  required
+                  minLength="6"
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                  onClick={(e) => {
+                    const input = e.target.closest('.relative').querySelector('input');
+                    input.type = input.type === 'password' ? 'text' : 'password';
+                  }}
+                >
+                  <FaEye className="text-lg" />
+                </button>
+              </div>
+            </div>
 
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        تأكيد كلمة المرور الجديدة
-      </label>
-      <div className="relative">
-        <input
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700 pr-10"
-          placeholder="أعد إدخال كلمة المرور الجديدة"
-          required
-          disabled={loading}
-        />
-        <button
-          type="button"
-          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-          onClick={(e) => {
-            const input = e.target.closest('.relative').querySelector('input');
-            input.type = input.type === 'password' ? 'text' : 'password';
-          }}
-        >
-          <FaEye className="text-lg" />
-        </button>
-      </div>
-    </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                تأكيد كلمة المرور الجديدة
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7a1353] focus:border-[#7a1353] outline-none transition-all bg-white placeholder-gray-500 text-gray-700 pr-10"
+                  placeholder="أعد إدخال كلمة المرور الجديدة"
+                  required
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                  onClick={(e) => {
+                    const input = e.target.closest('.relative').querySelector('input');
+                    input.type = input.type === 'password' ? 'text' : 'password';
+                  }}
+                >
+                  <FaEye className="text-lg" />
+                </button>
+              </div>
+            </div>
 
-    <button
-      type="submit"
-      className="w-full bg-[#7a1353] text-white py-3 px-4 rounded-lg hover:bg-[#6a1248] transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-      disabled={loading}
-    >
-      {loading ? (
-        <span className="flex items-center justify-center gap-2">
-          <FaSpinner className="animate-spin" />
-          جاري التحديث...
-        </span>
-      ) : (
-        'تغيير كلمة المرور'
-      )}
-    </button>
-  </form>
+            <button
+              type="submit"
+              className="w-full bg-[#7a1353] text-white py-3 px-4 rounded-lg hover:bg-[#6a1248] transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <FaSpinner className="animate-spin" />
+                  جاري التحديث...
+                </span>
+              ) : (
+                'تغيير كلمة المرور'
+              )}
+            </button>
+          </form>
           <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
               <FaCog />
