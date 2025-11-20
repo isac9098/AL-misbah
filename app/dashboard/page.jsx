@@ -146,32 +146,35 @@ export default function CoursesDashboard() {
   }
 
   async function uploadImage(file) {
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}-${file.name}`;
+  try {
+    const fileName = `${Date.now()}-${file.name}`;
     
-    try {
-      const { data, error } = await supabase.storage
-        .from(COURSES_BUCKET)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+    console.log('📤 جاري رفع الصورة:', fileName);
+    
+    // 1. رفع الملف إلى Storage
+    const { data, error } = await supabase.storage
+      .from(COURSES_BUCKET)
+      .upload(fileName, file);
 
-      if (error) {
-        console.error("❌ خطأ أثناء رفع الصورة:", error);
-        throw new Error(error.message);
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from(COURSES_BUCKET)
-        .getPublicUrl(fileName);
-
-      return publicUrlData.publicUrl;
-    } catch (error) {
-      console.error("❌ خطأ في رفع الصورة:", error);
-      showToast(`فشل رفع الصورة: ${error.message}`, "error");
-      return null;
+    if (error) {
+      console.error("❌ خطأ أثناء رفع الصورة:", error);
+      throw new Error(error.message);
     }
+
+    // 2. جلب الرابط العام مباشرة
+    const { data: { publicUrl } } = supabase.storage
+      .from(COURSES_BUCKET)
+      .getPublicUrl(fileName);
+
+    console.log('✅ تم الرفع بنجاح:', publicUrl);
+    return publicUrl;
+    
+  } catch (error) {
+    console.error("❌ خطأ في رفع الصورة:", error);
+    showToast(`فشل رفع الصورة: ${error.message}`, "error");
+    return null;
   }
+}
 
   async function addCourse(e) {
     e.preventDefault();
