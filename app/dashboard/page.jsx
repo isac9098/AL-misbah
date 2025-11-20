@@ -22,8 +22,7 @@ import {
   FaBars,
   FaUserPlus,
   FaAd,
-  FaCog, 
-  FaLock,
+  FaCog,
   FaEye,
   FaSpinner
 } from "react-icons/fa";
