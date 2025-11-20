@@ -86,10 +86,10 @@ export default function Footer() {
             <p className="mt-1">
               ✉️{" "}
               <a
-                href="mailto:fayhaalfatihhamida@gmail.com"
+                href="mailto:info@almisbahcenter.com"
                 className="hover:text-[#7a1353]"
               >
-                fayhaalfatihhamida@gmail.com
+                info@almisbahcenter.com
               </a>
             </p>
           </div>
