@@ -206,7 +206,7 @@ export default function Hero() {
             تعلّم اليوم، لِتقودَّ غدًا
           </h1>
           <p className="mt-3 text-lg text-white/80 mb-6">
-            تعلّم.. طوِّر.. وحقق نجاحك مع مركز المصباح للتدريب الفني والعمالة
+            تعلّم.. طوِّر.. وحقق نجاحك مع مركز المصباح للتدريب الفني للعمالة
           </p>
 
           {/* ✅ شريط البحث مع الاقتراحات */}
@@ -217,7 +217,7 @@ export default function Hero() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="ابحث عن دورة تدريبية..."
+                  placeholder="ابحث عن دورة... "
                   className="w-full rounded-2xl bg-white/95 shadow-lg focus:outline-none focus:ring-4 focus:ring-[#7b0b4c]/40 px-14 py-4 text-lg placeholder-gray-400"
                 />
 
