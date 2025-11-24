@@ -439,6 +439,7 @@ function SearchButton() {
     </div>
   );
 }
+
 /* ======================= CoursePopup ======================= */
 function CoursePopup({ course, onClose, onAddToCart }) {
   const { formatCurrency } = useApp();
@@ -448,6 +449,10 @@ function CoursePopup({ course, onClose, onAddToCart }) {
     document.addEventListener("keydown", handleEsc);
     return () => document.removeEventListener("keydown", handleEsc);
   }, [onClose]);
+
+  // تحديد السعر المعروض (الخصم أولاً)
+  const displayPrice = course.discount && course.discount !== course.price ? course.discount : course.price;
+  const hasDiscount = course.discount && course.discount !== course.price;
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
@@ -495,24 +500,65 @@ function CoursePopup({ course, onClose, onAddToCart }) {
                     <span className="text-[#7b0b4c] font-medium">{course.level}</span>
                   </div>
                 )}
+                {/* عرض معلومات الخصم إذا كان متوفراً */}
+                {hasDiscount && (
+                  <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                    <span className="text-gray-600">الحالة:</span>
+                    <span className="bg-green-100 text-green-800 text-xs font-medium px-3 py-1 rounded-full border border-green-200">
+                      🏷️ عرض خاص
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Price Section */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="text-center mb-4">
+                {/* عرض سعر الخصم */}
                 <div className="text-3xl font-bold text-[#7b0b4c]">
-                  {formatCurrency(parseFloat(course.price?.replace(/[^\d.]/g, "") || 0))}
+                  {formatCurrency(parseFloat(displayPrice?.replace(/[^\d.]/g, "") || 0))}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">سعر الدورة</div>
+                
+                {/* عرض السعر الأصلي مشطوب إذا كان هناك خصم */}
+                {hasDiscount && course.price && (
+                  <div className="text-lg text-gray-500 line-through mt-1">
+                    {formatCurrency(parseFloat(course.price.replace(/[^\d.]/g, "") || 0))}
+                  </div>
+                )}
+                
+                <div className="text-sm text-gray-600 mt-1">
+                  {hasDiscount ? "السعر بعد الخصم" : "سعر الدورة"}
+                </div>
+
+                {/* عرض نسبة الخصم إذا كان متوفراً */}
+                {hasDiscount && course.price && displayPrice && (
+                  <div className="mt-2">
+                    <span className="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded-full">
+                      وفر {calculateDiscountPercentage(course.price, displayPrice)}%
+                    </span>
+                  </div>
+                )}
               </div>
 
               <button
                 onClick={() => onAddToCart(course)}
-                className="w-full bg-[#7b0b4c] text-white py-3 rounded-lg font-semibold hover:bg-[#5e0839] transition-colors"
+                className="w-full bg-[#7b0b4c] text-white py-3 rounded-lg font-semibold hover:bg-[#5e0839] transition-colors flex items-center justify-center gap-2"
               >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
                 أضف إلى السلة
               </button>
+
+              {/* ملاحظة حول الخصم */}
+              {hasDiscount && (
+                <div className="mt-3 text-center">
+                  <p className="text-xs text-green-600 bg-green-50 p-2 rounded-lg border border-green-200">
+                    🎉 هذا العرض لفترة محدودة فقط
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
