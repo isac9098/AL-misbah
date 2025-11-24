@@ -288,6 +288,17 @@ function SearchButton() {
     return course.discount && course.discount !== course.price;
   };
 
+  // دالة حساب نسبة الخصم
+  const calculateDiscountPercentage = (originalPrice, discountPrice) => {
+    const original = parseFloat(originalPrice.replace(/[^\d.]/g, "") || 0);
+    const discount = parseFloat(discountPrice.replace(/[^\d.]/g, "") || 0);
+    
+    if (original <= 0 || discount >= original) return 0;
+    
+    const percentage = ((original - discount) / original) * 100;
+    return Math.round(percentage);
+  };
+
   return (
     <div className="relative search-container">
       {/* زر البحث */}
@@ -425,6 +436,7 @@ function SearchButton() {
           course={selectedCourse} 
           onClose={handleClosePopup}
           onAddToCart={handleAddToCart}
+          calculateDiscountPercentage={calculateDiscountPercentage} // ✅ تمرير الدالة كـ prop
         />
       )}
 
@@ -441,7 +453,7 @@ function SearchButton() {
 }
 
 /* ======================= CoursePopup ======================= */
-function CoursePopup({ course, onClose, onAddToCart }) {
+function CoursePopup({ course, onClose, onAddToCart, calculateDiscountPercentage }) { // ✅ إضافة prop
   const { formatCurrency } = useApp();
 
   useEffect(() => {
@@ -532,7 +544,7 @@ function CoursePopup({ course, onClose, onAddToCart }) {
                 </div>
 
                 {/* عرض نسبة الخصم إذا كان متوفراً */}
-                {hasDiscount && course.price && displayPrice && (
+                {hasDiscount && course.price && displayPrice && calculateDiscountPercentage && (
                   <div className="mt-2">
                     <span className="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded-full">
                       وفر {calculateDiscountPercentage(course.price, displayPrice)}%
