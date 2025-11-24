@@ -197,7 +197,7 @@ function SearchButton() {
       try {
         const { data, error } = await supabase
           .from("courses")
-          .select("id, title, category, description, price, image")
+          .select("id, title, category, description, price, discount, image")
           .or(`title.ilike.%${query}%,category.ilike.%${query}%,description.ilike.%${query}%`)
           .limit(10);
 
@@ -248,7 +248,8 @@ function SearchButton() {
     if (!existingItem) {
       cart.push({
         ...course,
-        price: course.price || "0 QAR"
+        // استخدام سعر الخصم إذا كان متوفراً، وإلا استخدام السعر العادي
+        price: course.discount && course.discount !== course.price ? course.discount : course.price || "0 QAR"
       });
       localStorage.setItem("cart", JSON.stringify(cart));
       window.dispatchEvent(new Event("cartUpdated"));
@@ -276,6 +277,16 @@ function SearchButton() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
+
+  // دالة مساعدة للحصول على السعر المعروض
+  const getDisplayPrice = (course) => {
+    return course.discount && course.discount !== course.price ? course.discount : course.price;
+  };
+
+  // التحقق مما إذا كانت الدورة لديها خصم
+  const hasDiscount = (course) => {
+    return course.discount && course.discount !== course.price;
+  };
 
   return (
     <div className="relative search-container">
@@ -341,27 +352,47 @@ function SearchButton() {
                 <div className="px-3 py-2 text-xs text-gray-500 bg-gray-50 border-b">
                   {suggestions.length} نتيجة
                 </div>
-                {suggestions.map((course) => (
-                  <div
-                    key={course.id}
-                    onClick={() => handleSelect(course)}
-                    className="px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors group"
-                  >
-                    <div className="font-medium text-[#7b0b4c] mb-1 group-hover:text-[#5e0839]">
-                      {course.title}
+                {suggestions.map((course) => {
+                  const displayPrice = getDisplayPrice(course);
+                  const hasDisc = hasDiscount(course);
+                  
+                  return (
+                    <div
+                      key={course.id}
+                      onClick={() => handleSelect(course)}
+                      className="px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors group"
+                    >
+                      <div className="font-medium text-[#7b0b4c] mb-1 group-hover:text-[#5e0839]">
+                        {course.title}
+                      </div>
+                      {course.category && (
+                        <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block">
+                          {course.category}
+                        </div>
+                      )}
+                      {/* عرض وسم الخصم إذا كان هناك خصم */}
+                      {hasDisc && (
+                        <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full inline-block mr-1 border border-green-200">
+                          🏷️ عرض خاص
+                        </div>
+                      )}
+                      {displayPrice && (
+                        <div className="text-xs text-gray-600 mt-1">
+                          {/* عرض سعر الخصم */}
+                          <span className="text-[#7b0b4c] font-semibold">
+                            السعر: {formatCurrency(parseFloat(displayPrice.replace(/[^\d.]/g, "") || 0))}
+                          </span>
+                          {/* عرض السعر الأصلي مشطوب إذا كان هناك خصم */}
+                          {hasDisc && course.price && (
+                            <span className="text-gray-400 line-through mr-2 text-xs">
+                              {formatCurrency(parseFloat(course.price.replace(/[^\d.]/g, "") || 0))}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {course.category && (
-                      <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full inline-block">
-                        {course.category}
-                      </div>
-                    )}
-                    {course.price && (
-                      <div className="text-xs text-gray-600 mt-1">
-                        السعر: {formatCurrency(parseFloat(course.price.replace(/[^\d.]/g, "") || 0))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -408,7 +439,6 @@ function SearchButton() {
     </div>
   );
 }
-
 /* ======================= CoursePopup ======================= */
 function CoursePopup({ course, onClose, onAddToCart }) {
   const { formatCurrency } = useApp();
@@ -561,7 +591,9 @@ function CartButton() {
   }, []);
 
   const totalPrice = cart.reduce((sum, c) => {
-    const priceNumber = parseFloat(c.price.replace(/[^\d.]/g, "")) || 0;
+    // استخدام سعر الخصم إذا كان متوفراً، وإلا استخدام السعر العادي
+    const priceToUse = c.discount && c.discount !== c.price ? c.discount : c.price;
+    const priceNumber = parseFloat(priceToUse.replace(/[^\d.]/g, "")) || 0;
     return sum + priceNumber;
   }, 0);
 
@@ -582,7 +614,11 @@ function CartButton() {
     const message =
       "مرحباً! أود طلب الدورات التالية:\n\n" +
       cart
-        .map((c, i) => `${i + 1}- ${c.title} (${formatCurrency(parseFloat(c.price.replace(/[^\d.]/g, "")))})`)
+        .map((c, i) => {
+          // استخدام سعر الخصم في رسالة واتساب
+          const priceToUse = c.discount && c.discount !== c.price ? c.discount : c.price;
+          return `${i + 1}- ${c.title} (${formatCurrency(parseFloat(priceToUse.replace(/[^\d.]/g, "")))})`;
+        })
         .join("\n") +
       `\n\n${t("cart")} الإجمالي: ${formatCurrency(totalPrice)}`;
     window.open("https://wa.me/+97472041794?text=" + encodeURIComponent(message), "_blank");
@@ -613,30 +649,51 @@ function CartButton() {
         ) : (
           <>
             <ul className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-              {cart.map((c) => (
-                <li key={c.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-800 text-sm">{c.title}</div>
-                    {c.category && (
-                      <div className="text-xs text-gray-500 mt-1 bg-white px-2 py-1 rounded-full inline-block border border-gray-200">
-                        {c.category}
+              {cart.map((c) => {
+                // تحديد السعر المعروض (الخصم أولاً)
+                const displayPrice = c.discount && c.discount !== c.price ? c.discount : c.price;
+                const hasDiscount = c.discount && c.discount !== c.price;
+                
+                return (
+                  <li key={c.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800 text-sm">{c.title}</div>
+                      {c.category && (
+                        <div className="text-xs text-gray-500 mt-1 bg-white px-2 py-1 rounded-full inline-block border border-gray-200">
+                          {c.category}
+                        </div>
+                      )}
+                      {/* عرض وسم الخصم إذا كان هناك خصم */}
+                      {hasDiscount && (
+                        <div className="text-xs text-green-600 mt-1 bg-green-50 px-2 py-1 rounded-full inline-block border border-green-200">
+                          🏷️ عرض خاص
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        {/* عرض سعر الخصم */}
+                        <span className="text-[#7b0b4c] font-semibold text-sm whitespace-nowrap">
+                          {formatCurrency(parseFloat(displayPrice.replace(/[^\d.]/g, "")))}
+                        </span>
+                        {/* عرض السعر الأصلي مشطوب إذا كان هناك خصم */}
+                        {hasDiscount && (
+                          <div className="text-xs text-gray-400 line-through">
+                            {formatCurrency(parseFloat(c.price.replace(/[^\d.]/g, "")))}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[#7b0b4c] font-semibold text-sm whitespace-nowrap">
-                      {formatCurrency(parseFloat(c.price.replace(/[^\d.]/g, "")))}
-                    </span>
-                    <button 
-                      onClick={() => handleRemove(c.id)} 
-                      className="text-gray-400 hover:text-red-500 text-xs p-1 rounded-full hover:bg-red-50 transition-colors"
-                      aria-label="إزالة"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </li>
-              ))}
+                      <button 
+                        onClick={() => handleRemove(c.id)} 
+                        className="text-gray-400 hover:text-red-500 text-xs p-1 rounded-full hover:bg-red-50 transition-colors"
+                        aria-label="إزالة"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="flex justify-between items-center text-sm font-medium mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -668,9 +725,23 @@ function CartButton() {
         aria-label="السلة" 
         onClick={() => setOpen(true)}
       >
-        <ShoppingCart className="w-5 h-5 text-gray-700" />
+        {/* استبدال أيقونة السلة بأيقونة من مكتبة Heroicons */}
+        <svg 
+          className="w-6 h-6 text-gray-700" 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" 
+          />
+        </svg>
+        
         {cart.length > 0 && (
-          <span className="absolute -top-1 -left-1 bg-[#7b0b4c] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+          <span className="absolute -top-1 -right-1 bg-[#7b0b4c] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
             {cart.length}
           </span>
         )}
