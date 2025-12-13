@@ -1582,26 +1582,26 @@ function AdminManager({ showToast, userData }) {
 
   const validateAdminForm = () => {
     const errors = {};
-    
+
     if (!newAdminEmail.trim()) {
       errors.email = "البريد الإلكتروني مطلوب";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newAdminEmail)) {
       errors.email = "البريد الإلكتروني غير صحيح";
     }
-    
+
     if (!newAdminName.trim()) {
       errors.name = "الاسم الكامل مطلوب";
     } else if (newAdminName.trim().length < 2) {
       errors.name = "الاسم يجب أن يكون على الأقل حرفين";
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleAddAdmin = async (e) => {
     e.preventDefault();
-    
+
     if (!validateAdminForm()) {
       showToast("⚠️ يوجد أخطاء في النموذج، يرجى تصحيحها", "warning");
       return;
@@ -1650,7 +1650,7 @@ function AdminManager({ showToast, userData }) {
         }
 
         showToast(`✅ تم إنشاء المشرف ${newAdminName} بنجاح! كلمة المرور: 123456`, "success");
-        
+
         fetchAdmins();
         setNewAdminEmail("");
         setNewAdminName("");
@@ -1666,6 +1666,12 @@ function AdminManager({ showToast, userData }) {
   };
 
   const confirmDeleteAdmin = (adminId, adminName) => {
+    // التحقق مما إذا كان المستخدم يحاول حذف نفسه
+    if (adminId === userData.id) {
+      showToast("❌ لا يمكنك حذف حسابك الخاص", "error");
+      return;
+    }
+    
     showToast(
       `هل أنت متأكد من حذف المشرف "${adminName}"؟`,
       "confirm",
@@ -1677,6 +1683,11 @@ function AdminManager({ showToast, userData }) {
 
   async function deleteAdmin(adminId) {
     try {
+      // التحقق مما إذا كان المستخدم يحاول حذف نفسه
+      if (adminId === userData.id) {
+        throw new Error("لا يمكنك حذف حسابك الخاص");
+      }
+
       // حذف من جدول users أولاً
       const { error: userTableError } = await supabase
         .from('users')
@@ -1687,7 +1698,7 @@ function AdminManager({ showToast, userData }) {
 
       // حذف من Authentication
       const { error: authError } = await supabase.auth.admin.deleteUser(adminId);
-      
+
       if (authError) {
         console.warn("⚠️ تم حذف المشرف من القائمة ولكن قد يبقى في نظام المصادقة:", authError);
       }
@@ -1796,7 +1807,7 @@ function AdminManager({ showToast, userData }) {
         <h4 className="text-md font-semibold text-gray-800 mb-3">
           قائمة المشرفين ({adminsList.length})
         </h4>
-        
+
         {adminsList.length === 0 ? (
           <div className="text-center py-4 text-gray-500">
             <FaUser className="text-3xl mx-auto mb-2 opacity-50" />
@@ -1817,19 +1828,21 @@ function AdminManager({ showToast, userData }) {
                       <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs mt-1">
                         {getRoleLabel(admin.role)}
                       </span>
+                      <p className="text-xs text-gray-500 mt-1">
+                        أضيف بواسطة: {admin.created_by ? "مدير آخر" : "نظام"}
+                      </p>
                     </div>
                   </div>
                 </div>
-                
-                {admin.id !== userData.id && (
-                  <button
-                    onClick={() => confirmDeleteAdmin(admin.id, admin.name)}
-                    className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                    title="حذف المشرف"
-                  >
-                    <FaTrash />
-                  </button>
-                )}
+
+                <button
+                  onClick={() => confirmDeleteAdmin(admin.id, admin.name)}
+                  className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                  title="حذف المشرف"
+                  disabled={admin.id === userData.id}
+                >
+                  <FaTrash />
+                </button>
               </div>
             ))}
           </div>
