@@ -1537,10 +1537,10 @@ function AccountManager({ showToast, userName }) {
         </div>
       </div>
 
-      {/* ✅ إضافة قسم إدارة المشرفين للمشرف العام فقط */}
-      {userData?.role === 'super_admin' && (
-        <AdminManager showToast={showToast} userData={userData} />
-      )}
+      {/* ✅ إضافة قسم إدارة المشرفين لجميع المستخدمين المسجلين */}
+{userData && userData.id && (
+  <AdminManager showToast={showToast} userData={userData} />
+)}
     </div>
   );
 }
